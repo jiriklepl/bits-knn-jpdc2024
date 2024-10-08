@@ -1,0 +1,36 @@
+set(TOPK_SRC
+    detail/fused_kernel2.cu
+    detail/fused_kernel4.cu
+    detail/fused_kernel8.cu
+    detail/fused_kernel16.cu
+    detail/fused_kernel32.cu
+    detail/fused_kernel64.cu
+    detail/fused_kernel128.cu
+    detail/fused_tc_kernel_half_128.cu
+    detail/fused_tc_kernel_half_256.cu
+    detail/fused_tc_kernel_half_512.cu
+    detail/fused_tc_kernel_bfloat16_128.cu
+    detail/fused_tc_kernel_bfloat16_256.cu
+    detail/fused_tc_kernel_bfloat16_512.cu
+    detail/fused_tc_kernel_double_128.cu
+    detail/fused_tc_kernel_double_256.cu
+    detail/fused_tc_kernel_double_512.cu
+    detail/warp_select32.cu
+    detail/warp_select64.cu
+    detail/warp_select128.cu
+    detail/warp_select256.cu
+    detail/warp_select512.cu
+    detail/warp_select1024.cu
+    detail/warp_select2048.cu
+    detail/block_select32.cu
+    detail/block_select64.cu
+    detail/block_select128.cu
+    detail/block_select256.cu
+    detail/block_select512.cu
+    detail/block_select1024.cu
+    detail/block_select2048.cu
+    serial_knn.cpp
+    parallel_knn.cpp
+)
+
+target_sources(knn-static PRIVATE ${TOPK_SRC})

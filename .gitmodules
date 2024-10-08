@@ -1,0 +1,24 @@
+[submodule "external/cxxopts"]
+	path = external/cxxopts
+	url = https://github.com/jarro2783/cxxopts.git
+[submodule "external/faiss"]
+	path = external/faiss
+	url = https://github.com/facebookresearch/faiss.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "external/raft"]
+	path = external/raft
+	url = https://github.com/rapidsai/raft.git
+[submodule "external/gpu_topK_benchmark"]
+	path = external/gpu_topK_benchmark
+	url = https://github.com/ZhangJingrong/gpu_topK_benchmark.git
+[submodule "external/radik"]
+	path = external/radik
+	url = https://github.com/leefige/radik.git
+[submodule "external/Catch2"]
+	path = external/Catch2
+	url = https://github.com/catchorg/Catch2
+[submodule "external/cutlass"]
+	path = external/cutlass
+	url = https://github.com/NVIDIA/cutlass.git
