@@ -39,10 +39,6 @@ for config in "1048576 1024" "524288 2048" "262144 4096" "131072 8192"; do
             $prefix -a bits --items-per-thread $((k < 2048 ? 4 : 8))
         fi
         if [ "$k" -ge 128 ]; then
-            if [ "$k" -le 65536 ]; then
-                echo "bits-global" >&2
-                $prefix -a bits-global --items-per-thread 8
-            fi
             echo "two-stage-sample-select" >&2
             $prefix -a two-stage-sample-select
         fi

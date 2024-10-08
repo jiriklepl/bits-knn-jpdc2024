@@ -51,24 +51,3 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
 
     print(")", file=cmake)
     print("target_sources(knn-static PRIVATE ${DETAIL_SRC})", file=cmake)
-
-    # generate source files for the global kernel
-    def bits_global(buffer_size, block_size, batch_size, file):
-        print(f"DECL_BITS_GLOBAL_KERNEL({buffer_size}, {block_size}, {batch_size});", file=file)
-
-with open("topk/multipass/detail/CMakeLists.txt", "w") as cmake:
-    print("set(DETAIL_SRC", file=cmake)
-
-    for batch_size in range(1, 17):
-        for block_size in [128, 256, 512, 1024, 2048]:
-                name = f"bts_global_{batch_size}_{block_size}.cu"
-                path = f"topk/multipass/detail/{name}"
-
-                print(name, file=cmake)
-                with open(path, "w") as f:
-                    print(f"#include \"bits/topk/multipass/device/bits_global_kernel.cuh\"", file=f)
-                    for buffer_size in [2048, 32, 1024, 64, 512, 128, 256]:
-                        bits_global(buffer_size, block_size, batch_size, f)
-
-    print(")", file=cmake)
-    print("target_sources(knn-static PRIVATE ${DETAIL_SRC})", file=cmake)

@@ -45,12 +45,5 @@ for q in 64 256 512 1024 2048 4096 8192; do
         deg=${configs[1]:-1}
         items_per_thread=${configs[2]:-1}
         "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$items_per_thread" --deg "$deg" --seed 17 -a bits-prefetch --block-size "$block_size"
-
-        config=$(config_algorithm bits-global $q $k)
-        read -r -a configs <<<"$config"
-        block_size=${configs[0]:-256}
-        deg=${configs[1]:-1}
-        items_per_thread=${configs[2]:-1}
-        "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$items_per_thread" --deg "$deg" --seed 17 -a bits-global --block-size "$block_size"
     done
 done

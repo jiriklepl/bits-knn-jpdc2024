@@ -43,6 +43,7 @@ set(knn_sources
 
 # compile only required sources from FAISS
 set(faiss_sources
+    ${LIBS_DIR}/faiss/faiss/gpu/utils/DeviceUtils.cu
     ${LIBS_DIR}/faiss/faiss/gpu/utils/BlockSelectFloat.cu
     ${LIBS_DIR}/faiss/faiss/gpu/utils/blockselect/BlockSelectFloat1.cu
     ${LIBS_DIR}/faiss/faiss/gpu/utils/blockselect/BlockSelectFloat32.cu
@@ -118,9 +119,7 @@ target_compile_options(test PRIVATE "${OpenMP_CXX_FLAGS}")
 
 # compile all parts of the project
 add_subdirectory(${SRC_DIR}/distance)
-add_subdirectory(${SRC_DIR}/knn-graph)
 add_subdirectory(${SRC_DIR}/topk)
-add_subdirectory(${SRC_DIR}/topk/multipass/detail)
 add_subdirectory(${SRC_DIR}/topk/singlepass)
 add_subdirectory(${SRC_DIR}/topk/singlepass/detail)
 add_subdirectory(${SRC_DIR}/topk/multipass)

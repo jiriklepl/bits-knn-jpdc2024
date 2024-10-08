@@ -15,7 +15,6 @@
 
 #include <cxxopts.hpp>
 
-#include "bits/knn-graph/graph.hpp"
 #include "bits/knn.hpp"
 #include "bits/knn_args.hpp"
 #include "bits/layout.hpp"
@@ -42,7 +41,6 @@
 #include "bits/topk/serial_knn.hpp"
 
 #include "bits/topk/multipass/air_topk.hpp"
-#include "bits/topk/multipass/bits_global.hpp"
 #include "bits/topk/multipass/radik_knn.hpp"
 
 #include "bits/topk/singlepass/bits_knn.hpp"
@@ -126,8 +124,6 @@ try
     algorithms.push_back(std::make_unique<bits_knn>());
     algorithms.push_back(std::make_unique<bits_prefetch_knn>());
     algorithms.push_back(std::make_unique<single_query_bits>());
-
-    algorithms.push_back(std::make_unique<bits_global>());
 
     algorithms.push_back(std::make_unique<warp_select>());
     algorithms.push_back(std::make_unique<block_select>());
@@ -361,27 +357,6 @@ try
 
         // run knn
         const bool no_output = params["no-output"].as<bool>();
-
-        if (algorithm_id == "graph")
-        {
-            knn_graph g;
-            auto start = std::chrono::steady_clock::now();
-            g.prepare(args);
-            auto end = std::chrono::steady_clock::now();
-            std::chrono::duration<double> duration = end - start;
-            log(args, algorithm_id, generator_id, preprocessor_id, "prepare", 0, duration.count());
-
-            for (std::size_t i = 0; i < repeat_count; ++i)
-            {
-                start = std::chrono::steady_clock::now();
-                g.run();
-                end = std::chrono::steady_clock::now();
-                const std::chrono::duration<double> duration = end - start;
-                log(args, algorithm_id, generator_id, preprocessor_id, "graph", i,
-                    duration.count());
-            }
-            return 0;
-        }
 
         const auto alg_it =
             std::find_if(algorithms.begin(), algorithms.end(),

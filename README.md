@@ -214,7 +214,6 @@ Comparison of the best multi-query kernels for different configurations of kNN. 
   - output: `data/eval-mq.pdf` (Figure 5.12 in our thesis)
 - *implementation*:
   - bits: `src/topk/singlepass/bits_kernel.cuh` (option: `-a bits`)
-  - bits in global memory: `src/topk/multipass/bits_global.{cu,hpp}` (option: `-a bits-global`)
   - fused kernel: `src/topk/singlepass/fused_kernel.cuh` (option: `-a fused-regs`)
 
 ### Comparison with a CPU implementation
@@ -253,7 +252,6 @@ Comparison of a parallel CPU kNN implementation using the Eigen library for dist
 
 ### Multi-pass kernels
 
-- `bits-global`: adaptation of our single-pass, small k-selection kernel, which stores the top k result in global memory.
 - `cub-sort`: Radix sort from the CUB library, which calls multiple CUB sort kernels in parallel.
 - `cub-sort-seg`: segmented Radix sort implementation from the CUB library.
   - the `postprocessing` phase sorts the result using the segmented CUB sort.

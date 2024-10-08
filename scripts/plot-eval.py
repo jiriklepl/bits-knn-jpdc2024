@@ -27,7 +27,6 @@ def plot(file, hostname, jobid):
 
     data = data.replace({"algorithm": {
         "bits": "bits",
-        "bits-global": "bits in global memory (unsorted)",
     }})
 
     dist = data.loc[(data["algorithm"] == "magma-dist") & (data["phase"] == "distances")]

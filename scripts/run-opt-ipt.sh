@@ -47,10 +47,6 @@ for q in 64 256 512 1024 2048 4096 8192; do
                 if [ "$deg" -eq "1" ]; then
                     "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg "$deg" --seed 17 -a bits --block-size "$block_size"
                     "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg "$deg" --seed 17 -a bits-prefetch --block-size "$block_size"
-
-                    if [ "$k" -ge "$block_size" ]; then
-                        "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg "$deg" --seed 17 -a bits-global --block-size "$block_size"
-                    fi
                 fi
             done
         done
