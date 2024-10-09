@@ -33,4 +33,4 @@ set(TOPK_SRC
     parallel_knn.cpp
 )
 
-target_sources(knn-static PRIVATE ${TOPK_SRC})
+target_sources(topk PRIVATE ${TOPK_SRC})

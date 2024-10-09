@@ -8,7 +8,7 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/external)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/tests)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fno-omit-frame-pointer -g -Wno-unknown-pragmas")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-omit-frame-pointer -Wno-unknown-pragmas")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS ON)
 
@@ -19,10 +19,10 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --extended-lambda")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -lineinfo")
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -Wall,-Wextra,-Wno-unknown-pragmas,-fno-omit-frame-pointer,-g,-Wno-unknown-pragmas")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -Wall,-Wno-unknown-pragmas,-fno-omit-frame-pointer,-Wno-unknown-pragmas")
 set(CMAKE_CUDA_STANDARD 20)
 
-set(KNN_LIBRARIES knn-static CUDA::cudart CUDA::cublas CUDA::cuda_driver OpenMP::OpenMP_CXX)
+set(KNN_LIBRARIES CUDA::cudart CUDA::cublas CUDA::cuda_driver OpenMP::OpenMP_CXX)
 
 option(CMAKE_CUDA_ARCHITECTURES "" "native")
 
@@ -93,8 +93,20 @@ include_directories(
 )
 
 # Executables
-add_library(knn-static ${knn_sources} ${faiss_sources})
+add_library(knn-static SHARED ${knn_sources} ${faiss_sources})
+
+add_library(dist-all SHARED)
+add_library(dist-minimal SHARED)
+
+add_library(topk SHARED)
+add_library(topk-multipass-all SHARED)
+add_library(topk-multipass-minimal SHARED)
+add_library(topk-singlepass SHARED)
+add_library(topk-singlepass-detail-all SHARED)
+add_library(topk-singlepass-detail-minimal SHARED)
+
 add_executable(knn ${SRC_DIR}/main.cpp)
+add_executable(knn-minimal ${SRC_DIR}/main.cpp)
 add_executable(test)
 
 # add raft (air-topk)
@@ -106,15 +118,19 @@ add_subdirectory(${LIBS_DIR}/Catch2 EXCLUDE_FROM_ALL)
 # set cuda properties
 set_target_properties(knn-static PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(knn PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+set_target_properties(knn-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(test PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(raft PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 
 
 set_target_properties(knn-static PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(knn PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(knn-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 target_compile_options(knn-static PRIVATE "${OpenMP_CXX_FLAGS}")
 target_compile_options(knn PRIVATE "${OpenMP_CXX_FLAGS}")
+target_compile_options(knn-minimal PRIVATE "${OpenMP_CXX_FLAGS}")
 target_compile_options(test PRIVATE "${OpenMP_CXX_FLAGS}")
 
 # compile all parts of the project
@@ -126,5 +142,6 @@ add_subdirectory(${SRC_DIR}/topk/multipass)
 add_subdirectory(${TEST_DIR})
 
 # link
-target_link_libraries(knn PRIVATE ${KNN_LIBRARIES})
-target_link_libraries(test PRIVATE ${KNN_LIBRARIES} Catch2::Catch2WithMain)
+target_link_libraries(knn PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-multipass-all topk-singlepass topk-singlepass-detail-all)
+target_link_libraries(knn-minimal PRIVATE ${KNN_LIBRARIES} knn-static dist-minimal topk topk-multipass-minimal topk-singlepass topk-singlepass-detail-minimal)
+target_link_libraries(test PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-singlepass Catch2::Catch2WithMain)

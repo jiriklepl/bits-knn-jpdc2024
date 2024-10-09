@@ -1,4 +1,4 @@
-set(DETAIL_SRC
+set(TOPK_SINGLEPASS_ALL_SRC
 bts_2048_1_512.cu
 bts_16_1_512.cu
 bts_1024_1_512.cu
@@ -1032,4 +1032,21 @@ fc_4_8_4_4_8.cu
 fc_4_8_4_4_32.cu
 fc_4_8_4_4_16.cu
 )
-target_sources(knn-static PRIVATE ${DETAIL_SRC})
+target_sources(topk-singlepass-detail-all PRIVATE ${TOPK_SINGLEPASS_ALL_SRC})
+set(TOPK_SINGLEPASS_MINIMAL_SRC
+bts_2048_16_256.cu
+bts_16_16_256.cu
+bts_1024_16_256.cu
+bts_32_16_256.cu
+bts_512_16_256.cu
+bts_64_16_256.cu
+bts_256_16_256.cu
+bts_128_16_256.cu
+fc_8_4_2_2_128.cu
+fc_8_4_2_2_4.cu
+fc_8_4_2_2_64.cu
+fc_8_4_2_2_8.cu
+fc_8_4_2_2_32.cu
+fc_8_4_2_2_16.cu
+)
+target_sources(topk-singlepass-detail-minimal PRIVATE ${TOPK_SINGLEPASS_MINIMAL_SRC})

@@ -1,4 +1,4 @@
-set(SINGLEPASS_SRC
+set(TOPK_SINGLEPASS_SRC
     bits_knn.cu
     cub_knn.cu
     fused_cache_knn.cu
@@ -11,8 +11,8 @@ set(SINGLEPASS_SRC
     warp_select.cu
 )
 
-target_include_directories(knn-static PRIVATE ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/include/)
-target_link_directories(knn-static PUBLIC ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/third_party/)
+target_include_directories(topk-singlepass PRIVATE ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/include/)
+target_link_directories(topk-singlepass PUBLIC ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/third_party/)
 
-target_sources(knn-static PRIVATE ${SINGLEPASS_SRC})
-target_link_libraries(knn-static PRIVATE raft::raft spdlog::spdlog gridselect)
+target_sources(topk-singlepass PRIVATE ${TOPK_SINGLEPASS_SRC})
+target_link_libraries(topk-singlepass PRIVATE raft::raft gridselect)
