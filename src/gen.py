@@ -8,8 +8,8 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
     print("set(DETAIL_SRC", file=cmake)
 
     # generate source files for the bits kernel
-    def bits(prefetch, coalesced_write, add_norms, block_size, batch_size, k, file):
-        print(f"DECL_BITS_KERNEL({prefetch}, {coalesced_write}, {add_norms}, {block_size}, {batch_size}, {k});", file=file)
+    def bits(prefetch, add_norms, block_size, batch_size, k, file):
+        print(f"DECL_BITS_KERNEL({prefetch}, {add_norms}, {block_size}, {batch_size}, {k});", file=file)
 
     for batch_size in range(1, 17):
         # [128, 256, 512]
@@ -23,9 +23,8 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
                 with open(path, "w") as f:
                     print(f"#include \"bits/topk/singlepass/detail/bits_kernel.cuh\"", file=f)
                     for prefetch in ["false", "true"]:
-                        for coalesced_write in ["false"]:
                             for add_norms in ["false"]:
-                                bits(prefetch, coalesced_write, add_norms, block_size, batch_size, k, f)
+                                bits(prefetch, add_norms, block_size, batch_size, k, f)
 
     # generate source files for the fused cache kernel
     def fc(query_reg, db_reg, dim_reg, block_query_dim, block_db_dim, dim_mult, k, file):

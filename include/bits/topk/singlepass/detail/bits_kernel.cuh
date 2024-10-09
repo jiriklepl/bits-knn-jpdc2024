@@ -360,8 +360,6 @@ bits_kernel_process_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_
 /** Bitonic select (bits) kernel (small k, multi-query -- one query per thread block)
  *
  * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions.
- * @tparam COALESCED_WRITE if true, the top k array will be transposed before writing to global
- * memory (to coalesce global memory writes)
  * @tparam ADD_NORMS if true, the kernel will add @p norms to @p in_dist to finish distance
  * computation using cuBLAS.
  * @tparam BLOCK_SIZE number of threads in a thread block.
@@ -377,7 +375,7 @@ bits_kernel_process_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */
-template <bool PREFETCH, bool COALESCED_WRITE, bool ADD_NORMS, std::size_t BLOCK_SIZE,
+template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
           std::size_t BATCH_SIZE, std::size_t K>
 __global__ void bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
                             array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
@@ -462,29 +460,11 @@ __global__ void bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_
 
     shm_buffer.merge(topk_dist, topk_label, shm_buffer.size);
 
-    if constexpr (COALESCED_WRITE)
-    {
-        transpose_warp(topk_dist);
-        transpose_warp(topk_label);
-    }
-
     // copy the values to the output
 #pragma unroll
     for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
     {
-        constexpr std::size_t WARP_SIZE = 32;
-
-        std::size_t idx = 0;
-        if constexpr (COALESCED_WRITE)
-        {
-            const auto lane_id = threadIdx.x % WARP_SIZE;
-            idx = i * WARP_SIZE + lane_id;
-            idx += (threadIdx.x / WARP_SIZE) * WARP_SIZE * ITEMS_PER_THREAD;
-        }
-        else // the top k list is not transposed
-        {
-            idx = threadIdx.x * ITEMS_PER_THREAD + i;
-        }
+        const std::size_t idx = threadIdx.x * ITEMS_PER_THREAD + i;
 
         if (idx < k)
         {
@@ -496,18 +476,18 @@ __global__ void bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_
 
 /** Declare an instantiation of the bits kernel.
  */
-#define DECL_BITS_KERNEL(prefetch, coalesed_write, add_norms, block_size, batch_size, k)           \
-    template void run_bits_kernel<prefetch, coalesed_write, add_norms, block_size, batch_size, k>( \
+#define DECL_BITS_KERNEL(prefetch, add_norms, block_size, batch_size, k)           \
+    template void run_bits_kernel<prefetch, add_norms, block_size, batch_size, k>( \
         array_view<float, 2>, array_view<std::int32_t, 2>, array_view<float, 2>,                   \
         array_view<std::int32_t, 2>, std::size_t, const std::int32_t*, const float*, cudaStream_t)
 
-template <bool PREFETCH, bool COALESCED_WRITE, bool ADD_NORMS, std::size_t BLOCK_SIZE,
+template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
           std::size_t BATCH_SIZE, std::size_t K>
 void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
                      array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
                      std::size_t k, const std::int32_t* label_offsets, const float* norms, cudaStream_t stream)
 {
-    bits_kernel<PREFETCH, COALESCED_WRITE, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, K>
+    bits_kernel<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, K>
         <<<in_dist.size(0), BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist, out_label, k,
                                                      label_offsets, norms);
 }

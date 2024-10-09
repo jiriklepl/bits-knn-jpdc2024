@@ -12,8 +12,6 @@
 /** Bitonic select (bits) kernel (small k, multi-query -- one query per thread block)
  *
  * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions.
- * @tparam COALESCED_WRITE if true, the top k array will be transposed before writing to global
- * memory (to coalesce global memory writes)
  * @tparam ADD_NORMS if true, the kernel will add @p norms to @p in_dist to finish distance
  * computation using cuBLAS.
  * @tparam BLOCK_SIZE number of threads in a thread block.
@@ -29,7 +27,7 @@
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */
-template <bool PREFETCH, bool COALESCED_WRITE, bool ADD_NORMS, std::size_t BLOCK_SIZE,
+template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
           std::size_t BATCH_SIZE, std::size_t K>
 extern void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
                             array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
