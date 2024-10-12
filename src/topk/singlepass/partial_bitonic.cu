@@ -352,7 +352,7 @@ void partial_bitonic_soa_run(array_view<float, 2> input, array_view<float, 2> ou
     }
     else
     {
-        throw std::runtime_error("Unsupported k value");
+        throw std::runtime_error("Unsupported k value: " + std::to_string(k));
     }
 }
 
@@ -390,7 +390,7 @@ void partial_bitonic_aos_run(array_view<float, 2> input, array_view<float, 2> ou
     }
     else
     {
-        throw std::runtime_error("Unsupported k value");
+        throw std::runtime_error("Unsupported k value: " + std::to_string(k));
     }
 }
 
@@ -428,7 +428,7 @@ void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> o
     }
     else
     {
-        throw std::runtime_error("Unsupported k value");
+        throw std::runtime_error("Unsupported k value: " + std::to_string(k));
     }
 }
 
@@ -455,7 +455,7 @@ void partial_bitonic_soa_run(array_view<float, 2> input, array_view<float, 2> ou
     }
     else
     {
-        throw std::runtime_error("Unsupported block size");
+        throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
     }
 }
 
@@ -482,7 +482,7 @@ void partial_bitonic_aos_run(array_view<float, 2> input, array_view<float, 2> ou
     }
     else
     {
-        throw std::runtime_error("Unsupported block size");
+        throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
     }
 }
 
@@ -508,7 +508,7 @@ void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> o
     }
     else
     {
-        throw std::runtime_error("Unsupported block size");
+        throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
     }
 }
 

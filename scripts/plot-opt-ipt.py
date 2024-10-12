@@ -13,8 +13,8 @@ files = glob.glob("data/opt-ipt-*-*.csv")
 def plot(file, hostname, jobid):
     data = pd.read_csv(file, sep=',')
 
-    K = data["k"].unique().size
-    Q = data["query_count"].unique().size
+    K = data["k"].nunique()
+    Q = data["query_count"].nunique()
 
     NUM_ROWS = Q * 3
     NUM_COLS = (K + 2) // 3

@@ -33,7 +33,7 @@ void run(fused_tc_kernel_runner<Policy>& kernel)
     }
     else
     {
-        throw std::runtime_error{"Unsupported block size"};
+        throw std::runtime_error{"Unsupported block size: " + std::to_string(kernel.block_size)};
     }
 }
 
@@ -72,7 +72,7 @@ void run(fused_tc_kernel_runner<Policy>& kernel)
     }
     else
     {
-        throw std::runtime_error{"Unsupported k value"};
+        throw std::runtime_error{"Unsupported k value: " + std::to_string(kernel.k)};
     }
 }
 

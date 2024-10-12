@@ -121,10 +121,6 @@ public:
      */
     inline void no_output() { no_output_ = true; }
 
-    /** Use random unique distances instead of distances computed by `distances()`.
-     */
-    virtual void set_random_distances() {}
-
 protected:
     bool no_output_ = false;
     knn_args args_{};

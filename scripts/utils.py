@@ -22,15 +22,15 @@ def MEMORY_FLOAT_THROUGHPUT(hostname):
         # A100 80GB PCIe: https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/nvidia-a100-datasheet-nvidia-us-2188504-web.pdf
         return 1935.0 * 1024 * 1024 * 1024 / 4
     elif hostname.startswith("hopper01"):
-        # H100 PCIe: https://www.nvidia.com/content/dam/en-zz/Solutions/gtcs22/data-center/h100/PB-11133-001_v01.pdf
-        return 2.0 * 1024 * 1024 * 1024 * 1024 / 4
+        # H100 PCIe: https://resources.nvidia.com/en-us-tensor-core
+        return 2039.0 * 1024 * 1024 * 1024 / 4
     else:
         raise ValueError(f"unknown hostname: {hostname}")
 
 plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
 plt.rcParams['pgf.texsystem'] = 'pdflatex'
 plt.rcParams['font.family'] = 'serif'
-plt.rcParams['font.size'] = 11
+plt.rcParams['font.size'] = 14
 plt.rcParams['pgf.rcfonts'] = False
 plt.rcParams['text.usetex'] = True
 

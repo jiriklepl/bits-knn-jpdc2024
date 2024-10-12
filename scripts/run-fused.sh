@@ -4,6 +4,8 @@
 #SBATCH --gpus 1
 #SBATCH -p gpu-long
 #SBATCH --time=4:00:00
+#SBATCH --mem=0
+#SBATCH --exclusive
 
 root_dir="$SLURM_SUBMIT_DIR"
 if [ -z "$root_dir" ]; then
@@ -13,7 +15,7 @@ fi
 . "$root_dir/scripts/config.sh"
 
 repeat_count=20
-PROBLEM_SIZE=25
+PROBLEM_SIZE=30
 
 gpu_deduce
 
@@ -23,8 +25,7 @@ fi
 
 "$knn" --header
 for q_power in 10 11 12 13; do
-    # choose n_power so that sqrt(q) * N == 2^PROBLEM_SIZE
-    n_power=$((PROBLEM_SIZE - q_power / 2))
+    n_power=$((PROBLEM_SIZE - q_power))
 
     n=$((2 ** n_power))
     q=$((2 ** q_power))

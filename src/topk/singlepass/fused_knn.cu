@@ -32,7 +32,7 @@ void run(fused_kernel_runner& kernel)
     }
     else
     {
-        throw std::runtime_error{"Unsupported block size"};
+        throw std::runtime_error{"Unsupported block size: " + std::to_string(kernel.block_size)};
     }
 }
 
@@ -47,7 +47,8 @@ void run(fused_kernel_runner& kernel)
     }
     else
     {
-        throw std::runtime_error{"Unsupported point register count"};
+        throw std::runtime_error{"Unsupported point register count: " +
+                                 std::to_string(kernel.items_per_thread[1])};
     }
 }
 
@@ -70,7 +71,8 @@ void run(fused_kernel_runner& kernel)
     }
     else
     {
-        throw std::runtime_error{"Unsupported query register count"};
+        throw std::runtime_error{"Unsupported query register count: " +
+                                 std::to_string(kernel.items_per_thread[0])};
     }
 }
 
@@ -108,7 +110,7 @@ void run(fused_kernel_runner& kernel)
     }
     else
     {
-        throw std::runtime_error{"Unsupported k value"};
+        throw std::runtime_error{"Unsupported k value: " + std::to_string(kernel.k)};
     }
 }
 

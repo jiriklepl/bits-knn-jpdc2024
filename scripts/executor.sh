@@ -17,7 +17,8 @@ if [ "$3" == "build" ] || [ "$3" == "minimal-build" ] || [ "$3" == "all" ] || [ 
         exit 0
     fi
 
-    run_single cmake --build "$build_dir" --config Release --parallel 16 -t knn test
+    run_single cmake --build "$build_dir" --config Release --parallel 16 -t knn
+    run_single cmake --build "$build_dir" --config Release --parallel 16 -t test
 
     run_single "$build_dir"/test
 

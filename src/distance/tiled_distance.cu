@@ -113,7 +113,7 @@ void run_tiled_dist(array_view<float, 2> A, array_view<float, 2> B, array_view<f
     }
     else
     {
-        throw std::runtime_error("Unsupported tile size");
+        throw std::runtime_error("Unsupported tile size: " + std::to_string(tile_size));
     }
 }
 

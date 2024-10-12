@@ -505,7 +505,7 @@ void cub_knn::selection()
     }
     else
     {
-        throw std::runtime_error("Unsupported k value");
+        throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
     cuda_stream::make_default().sync();
@@ -566,7 +566,7 @@ void cub_direct::selection()
     }
     else
     {
-        throw std::runtime_error("Unsupported k value");
+        throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
     cuda_stream::make_default().sync();

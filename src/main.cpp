@@ -186,7 +186,7 @@ try
         ("q,query", "Number of query objects",
             cxxopts::value<std::string>()->default_value("1024"))
         ("d,dimension", "Dimension of objects",
-            cxxopts::value<std::string>()->default_value("10"))
+            cxxopts::value<std::string>()->default_value("1"))
         ("g,generator", "Data generator",
             cxxopts::value<std::string>()->default_value("uniform"))
         ("p,preprocessor", "Data preprocessor",
@@ -206,8 +206,6 @@ try
         ("deg", "degree of parallelism used for single-query problems",
             cxxopts::value<std::string>()->default_value("1"))
         ("no-output", "Do not copy the result back to CPU",
-            cxxopts::value<bool>()->default_value("false"))
-        ("random-distances", "Use random unique distances instead of actual distances.",
             cxxopts::value<bool>()->default_value("false"))
         ("header", "Print header with column names and exit",
             cxxopts::value<bool>()->default_value("false"))
@@ -396,11 +394,6 @@ try
             duration = end - start;
             log(args, algorithm_id, generator_id, preprocessor_id, "distances", i,
                 duration.count());
-
-            if (params["random-distances"].as<bool>())
-            {
-                alg->set_random_distances();
-            }
 
             // execute
             start = std::chrono::steady_clock::now();

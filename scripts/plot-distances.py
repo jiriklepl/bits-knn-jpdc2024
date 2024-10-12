@@ -12,8 +12,6 @@ import os
 files = glob.glob("data/distances-*-*.csv")
 
 def plot(file, hostname, jobid):
-    fig, ax = plt.subplots(nrows=2, ncols=2, sharey=True)
-    fig.subplots_adjust(top=0.94, bottom=0.22, hspace=0.35, wspace=0.2)
 
     data = pd.read_csv(file, sep=',')
     data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "distances")]
@@ -25,19 +23,20 @@ def plot(file, hostname, jobid):
         "tiled-dist": "Kuang et al.",
     }})
     data = data.filter(items=["point_count", "query_count", "algorithm", "dim", "time"])
-    # data = data.loc[data["query_count"].isin(data["query_count"].unique())]
 
-    assert data["query_count"].nunique() == 4, "Expected 4 different query counts"
+    ROWS=1
+    COLS=data["query_count"].nunique()
 
     #plt.yscale("log")
     plt.grid(alpha=0.4, linestyle="--")
+
+    fig, axes = plt.subplots(nrows=1, ncols=COLS, sharey=True)
 
     # plot each kernel
     i = 1
     algnums = {}
     for query_count, query_data in data.groupby("query_count"):
-        ax = plt.subplot(2, 2, i)
-        ax.set_title("single query" if query_count == 1 else f"{query_count} queries")
+        ax = plt.subplot(1, COLS, i)
         ax.grid(alpha=0.4, linestyle="--")
         query_data = query_data.filter(items=["algorithm", "dim", "point_count", "time"])
 
@@ -74,29 +73,44 @@ def plot(file, hostname, jobid):
                 marker=utils.SHAPES[algnums[alg]],
                 color=utils.COLORS[algnums[alg]],
                 label=alg)
+            
+        log_point_count = np.round(np.log2(point_count)).astype(int)
 
         ax.set_ylim(0, 1.1 * np.max(oracle_throughput))
+        ax.set_xlabel("Dimension (q=%d, n=$2^{%d}$)" % (query_count, log_point_count))
 
-        ax2 = ax.twinx()
-        ax2.set_ylim([0.0, 110])
-        ax2.plot([], [])
-        ax2.set_yticks([0, 50, 100])
-        ax2.set_yticklabels(["0 %", "50 %", "100 %"], rotation='vertical', verticalalignment='center')
+    fig.supylabel("Throughput [distances/s]", x=0.01, y=0.6)
+    # fig.supxlabel("Dimension", y=0.13)
+    fig.set_size_inches(4.4, 3)
 
+    # get size of the x-axis label in figure coordinates
+    font_height = ax.xaxis.label.get_window_extent().transformed(fig.transFigure.inverted()).height
 
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='lower center',  bbox_to_anchor=(0.5, -0.03), frameon=False, ncol=2)
+    legend = fig.legend(handles, labels, loc='lower center',  bbox_to_anchor=(0.5, -0.03), frameon=False, ncol=3)
 
-    fig.supylabel("Throughput [distances/s]")
-    fig.supxlabel("Dimension", y=0.13)
-    fig.set_size_inches(6, 5)
+    # legend size
+    try_height = 1
+    while True: # until the legend fits
+        try:
+            legend_width = legend.get_window_extent().transformed(fig.transFigure.inverted()).width * 4.5
+            plots_width = 3 * data["query_count"].nunique()
+            fig.set_size_inches(max(plots_width, legend_width),
+                                ROWS*3 + 1 + try_height)
+            legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
+
+            # adjust the plot to make room for the legend
+            fig.subplots_adjust(bottom=0.03 + legend_height*1.1 + font_height, top=.96, left=0.01+font_height/2, right=0.97, hspace=0.3)
+        except ValueError:
+            print(f"Legend does not fit, trying with {try_height}")
+            try_height += .5
+            continue
+        break
 
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(f"figures/distances-{hostname}-{jobid}.pgf")
     fig.savefig(f"figures/distances-{hostname}-{jobid}.pdf")
-
     plt.close(fig)
 
 for file in files:

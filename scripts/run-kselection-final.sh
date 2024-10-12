@@ -49,7 +49,7 @@ radix-adversarial:* | radix-adversarial)
 esac
 
 repeat_count=20
-PROBLEM_SIZE=25
+PROBLEM_SIZE=30
 
 gpu_deduce
 
@@ -61,8 +61,7 @@ fi
 for q_power in 6 8 10 12; do
     q=$((2 ** q_power))
 
-    # choose n_power so that sqrt(q) * N == 2^PROBLEM_SIZE
-    n_power=$((PROBLEM_SIZE - q_power / 2))
+    n_power=$((PROBLEM_SIZE - q_power))
 
     for k_power in {5..11}; do
         N=$((2 ** n_power))

@@ -402,7 +402,7 @@ void static_buffered_partial_bitonic::selection()
     }
     else
     {
-        throw std::runtime_error("Unsupported k value");
+        throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
     cuda_stream::make_default().sync();

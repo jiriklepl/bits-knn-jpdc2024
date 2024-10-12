@@ -15,14 +15,9 @@ fi
 . "$root_dir/scripts/config.sh"
 
 repeat_count=20
-PROBLEM_SIZE=25
+PROBLEM_SIZE=30
 
 gpu_deduce
-
-# we try to keep the ammount of work constant unless the input would be too large
-total_work=$((64 * 1024 * 32 * 1024 * 128))
-max_gb=16 # max memory in GiB
-max_floats=$((max_gb * 1024 * 1024 * 1024 / 4))
 
 if [ -z "$knn" ]; then
     print_error "knn executable not set"
@@ -30,13 +25,12 @@ fi
 
 "$knn" --header
 for q_power in 10 11 12 13; do
-    # choose n_power so that sqrt(q) * N == 2^PROBLEM_SIZE
-    n_power=$((PROBLEM_SIZE - q_power / 2))
+    n_power=$((PROBLEM_SIZE - q_power))
 
     q=$((2 ** q_power))
     n=$((2 ** n_power))
 
-    for dim in 4 8 16 32 64 128; do
+    for dim in 4 8 16 32 64 128 256; do
         config=$(config_distance baseline-dist $q $dim)
         read -r -a configs <<<"$config"
         block_size=${configs[0]:-256}

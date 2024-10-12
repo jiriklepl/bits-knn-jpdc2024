@@ -49,25 +49,20 @@ def plot(file, hostname, jobid):
         ax = plt.subplot(1, data["query_count"].nunique(), counter)
         counter += 1
 
-
         # extract baseline - partial sorting with Bitonic sort in shared memory
         baseline = query_data.loc[query_data["algorithm"] == baseline_name]
-
         assert len(baseline) > 0
 
-        baseline = baseline.filter(items=["k", "time"])
         baseline = baseline.groupby(['k'])['time'].mean()
 
         # compute speed-up for each algorithm
-        max_speedup = 0
         for alg in query_data["algorithm"].unique():
             time = query_data.loc[query_data["algorithm"] == alg]
-            time = time.filter(items=["k", "time"])
             time = time.groupby(['k'])['time'].mean()
+
             speedup = baseline / time
-            max_speedup = max(max_speedup, speedup.max())
-            print(alg)
-            print(speedup)
+
+            print(f"Speed-up for {alg} with {query_count} queries and {point_count} points: {speedup}")
 
             # plot the speed-up
             ax.errorbar(
@@ -82,40 +77,41 @@ def plot(file, hostname, jobid):
 
         log_point_count = np.round(np.log2(point_count)).astype(int)
         ax.set_xlabel("k " + f"(q={query_count}, n=$2^{{{log_point_count}}}$)")
+
         xticks = query_data["k"].unique().astype(int)
         log_xticks = np.round(np.log2(xticks)).astype(int)
         ax.set_xticks(ticks = xticks.astype(str))
         ax.set_xticklabels(f"$2^{{{int(x)}}}$" for x in log_xticks)
+
         ax.grid(alpha=0.4, linestyle="--")
         ax.set_ylim(0)
 
     fig.set_size_inches(4.5, 3)
     fig.subplots_adjust(bottom=0.37)
 
+    # get size of the x-axis label in figure coordinates
+    font_height = ax.xaxis.label.get_window_extent().transformed(fig.transFigure.inverted()).height
+
     # give enough space for the legend
     handles, labels = ax.get_legend_handles_labels()
     # sort both labels and handles by labels
     labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-    legend = fig.legend(handles, labels, loc='lower center', frameon=False, ncol=len(labels), fontsize='large')
-
+    legend = fig.legend(handles, labels, loc='lower center', frameon=False, ncol=len(labels))
 
     # legend size
     try_height = 1
-    while True:
+    while True: # until the legend fits
         try:
             legend_width = legend.get_window_extent().transformed(fig.transFigure.inverted()).width * 4.5
             plots_width = 3 * data["query_count"].nunique()
             fig.set_size_inches(max(plots_width, legend_width),
                                 4 + try_height)
-            legend_size = legend.get_window_extent().transformed(fig.transFigure.inverted())
-
-            # get size of the x-axis label in figure coordinates
-            font_height = ax.xaxis.label.get_window_extent().transformed(fig.transFigure.inverted()).height
+            legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height * 1.1
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.07 + legend_size.height + font_height, top=0.95, left=0.02, right=0.98)
-        # until the legend fits
+            fig.subplots_adjust(bottom=0.07 + legend_height + font_height, top=0.98, left=0.03, right=0.99)
         except ValueError:
+            print(f"Legend does not fit, trying with {try_height}")
             try_height += .5
             continue
         break
@@ -123,9 +119,7 @@ def plot(file, hostname, jobid):
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(file.replace("data", "figures").replace("csv", "pgf"))
     fig.savefig(file.replace("data", "figures").replace("csv", "pdf"))
-
     plt.close(fig)
 
 for file in files:

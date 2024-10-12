@@ -69,7 +69,7 @@ struct bits
         }
         else
         {
-            throw std::runtime_error("Unsupported k value");
+            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
         }
     }
 
@@ -142,7 +142,7 @@ struct bits
         }
         else
         {
-            throw std::runtime_error("Unsupported batch size");
+            throw std::runtime_error("Unsupported batch size: " + std::to_string(batch_size));
         }
     }
 
@@ -163,7 +163,7 @@ struct bits
         }
         else
         {
-            throw std::runtime_error("Unsupported block size");
+            throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
         }
     }
 };

@@ -50,7 +50,7 @@ struct fused_cache
         if (dim < DIM_TILE)
         {
             throw std::runtime_error{"Dimension of vectors must not be lower than " +
-                                     std::to_string(DIM_TILE)};
+                                     std::to_string(DIM_TILE) + ", but is " + std::to_string(dim)};
         }
 
         launch_fused_cache(kernel, grid, block);
@@ -86,7 +86,7 @@ struct fused_cache
         }
         else
         {
-            throw std::runtime_error{"Unsupported k value"};
+            throw std::runtime_error{"Unsupported k value: " + std::to_string(k)};
         }
     }
 
@@ -108,7 +108,7 @@ struct fused_cache
         }
         else
         {
-            throw std::runtime_error{"Unsupported dim_mult value"};
+            throw std::runtime_error{"Unsupported dim_mult value: " + std::to_string(dim_mult)};
         }
     }
 
@@ -129,7 +129,8 @@ struct fused_cache
         }
         else
         {
-            throw std::runtime_error{"Unsupported query_block_size value"};
+            throw std::runtime_error{"Unsupported query_block_size value: " +
+                                     std::to_string(query_block_size)};
         }
     }
 
@@ -151,7 +152,7 @@ struct fused_cache
         }
         else
         {
-            throw std::runtime_error{"Unsupported dim_reg value"};
+            throw std::runtime_error{"Unsupported dim_reg value: " + std::to_string(dim_reg)};
         }
     }
 
@@ -173,7 +174,7 @@ struct fused_cache
         }
         else
         {
-            throw std::runtime_error{"Unsupported db_reg value"};
+            throw std::runtime_error{"Unsupported db_reg value: " + std::to_string(db_reg)};
         }
     }
 
@@ -198,7 +199,7 @@ struct fused_cache
         }
         else
         {
-            throw std::runtime_error{"Unsupported queries_reg value"};
+            throw std::runtime_error{"Unsupported queries_reg value: " + std::to_string(queries_reg)};
         }
     }
 };

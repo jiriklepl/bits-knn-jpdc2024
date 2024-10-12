@@ -38,8 +38,6 @@ public:
      */
     virtual array_view<std::int32_t, 2> out_label_gpu();
 
-    void set_random_distances() override;
-
     float transfer_in_seconds() const override { return dist_impl_->transfer_seconds(); }
 
     float transfer_out_seconds() const override

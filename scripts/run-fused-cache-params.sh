@@ -4,6 +4,8 @@
 #SBATCH --gpus 1
 #SBATCH -p gpu-long
 #SBATCH --time=6:00:00
+#SBATCH --mem=0
+#SBATCH --exclusive
 
 root_dir="$SLURM_SUBMIT_DIR"
 if [ -z "$root_dir" ]; then
@@ -23,8 +25,7 @@ case "$deg" in
 esac
 
 repeat_count=20
-PROBLEM_SIZE=25
-# n_power=17
+PROBLEM_SIZE=30
 
 if [ -z "$knn" ]; then
     print_error "knn executable not set"
@@ -32,13 +33,12 @@ fi
 
 "$knn" --header
 for q_power in 8 9 10 11 12 13; do
-    # choose n_power so that sqrt(q) * N == 2^PROBLEM_SIZE
-    n_power=$((PROBLEM_SIZE - q_power / 2))
+    n_power=$((PROBLEM_SIZE - q_power))
 
     n=$((2 ** n_power))
     q=$((2 ** q_power))
 
-    for dim in 4 8 16 32 64; do
+    for dim in 4 8 16; do
         for k in 4 8 16 32 64 128; do
             # for deg in 1 2 4; do
                 # for rq in 2 4 8 16; do

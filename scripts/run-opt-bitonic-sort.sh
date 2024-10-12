@@ -13,7 +13,7 @@ fi
 . "$root_dir/scripts/config.sh"
 
 repeat_count=20
-PROBLEM_SIZE=25
+PROBLEM_SIZE=30
 
 gpu_deduce
 
@@ -23,8 +23,7 @@ fi
 
 "$knn" --header
 for q_power in 6 8 10 12; do
-    # choose n_power so that sqrt(q) * N == 2^PROBLEM_SIZE
-    n_power=$((PROBLEM_SIZE - q_power / 2))
+    n_power=$((PROBLEM_SIZE - q_power))
 
     n=$((2 ** n_power))
     q=$((2 ** q_power))

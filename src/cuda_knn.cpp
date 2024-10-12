@@ -27,30 +27,6 @@ array_view<float, 2> cuda_knn::out_dist_gpu() { return out_dist_gpu_.view(); }
 
 array_view<std::int32_t, 2> cuda_knn::out_label_gpu() { return out_label_gpu_.view(); }
 
-void cuda_knn::set_random_distances()
-{
-    constexpr std::size_t SEED = 5946569;
-    std::mt19937 eng(SEED);
-
-    // compute random offsets
-    std::vector<float> offset(query_count() * point_count());
-    for (std::size_t i = 0; i < query_count(); ++i)
-    {
-        for (std::size_t j = 0; j < point_count(); ++j)
-        {
-            const auto idx = i * point_count() + j;
-            offset[idx] = static_cast<float>(j);
-        }
-        std::shuffle(offset.begin() + i * point_count(), offset.begin() + (i + 1) * point_count(),
-                     eng);
-    }
-
-    // set distances to the random permutation
-    cuda_stream::make_default()
-        .copy_to_gpu_async(in_dist_gpu().data(), offset.data(), offset.size())
-        .sync();
-}
-
 std::vector<knn::pair_t> cuda_knn::finish()
 {
     if (no_output_)
