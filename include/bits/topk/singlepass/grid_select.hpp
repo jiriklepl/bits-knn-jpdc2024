@@ -4,8 +4,10 @@
 #include <cstddef>
 #include <string>
 
+#include <cuda_runtime.h>
+
+#include "bits/cuch.hpp"
 #include "bits/cuda_knn.hpp"
-#include "bits/cuda_ptr.hpp"
 
 class grid_select : public cuda_knn
 {

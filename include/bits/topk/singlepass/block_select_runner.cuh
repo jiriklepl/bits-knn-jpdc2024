@@ -45,11 +45,8 @@ struct block_select_runner
             throw std::runtime_error("Invalid parameters for block_select");
         }
 
-        // limit the block size for the largest K (there is not enough shared memory)
-        constexpr std::size_t ACTUAL_BLOCK_SIZE = K <= 1024 ? BLOCK_SIZE : 64;
-
-        faiss::gpu::blockSelect<float, std::int32_t, false, K, THREAD_QUEUE_SIZE, ACTUAL_BLOCK_SIZE>
-            <<<block_count, ACTUAL_BLOCK_SIZE>>>(dist_tensor, out_dist_tensor, out_label_tensor,
+        faiss::gpu::blockSelect<float, std::int32_t, false, K, THREAD_QUEUE_SIZE, BLOCK_SIZE>
+            <<<block_count, BLOCK_SIZE>>>(dist_tensor, out_dist_tensor, out_label_tensor,
                                                  std::numeric_limits<float>::infinity(), -1, k);
     }
 };

@@ -4,7 +4,6 @@
 
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
-#include "bits/expand.hpp"
 #include "bits/topk/singlepass/grid_select.hpp"
 
 void grid_select::selection()

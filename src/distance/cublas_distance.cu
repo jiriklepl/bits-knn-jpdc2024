@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "bits/array_view.hpp"
-#include "bits/cuda_ptr.hpp"
+#include "bits/cuch.hpp"
 #include "bits/knn_args.hpp"
 #include "bits/layout.hpp"
 

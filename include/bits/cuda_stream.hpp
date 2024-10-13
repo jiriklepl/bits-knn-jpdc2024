@@ -8,7 +8,7 @@
 #include <cuda_runtime.h>
 
 #include "bits/array_view.hpp"
-#include "bits/cuda_ptr.hpp"
+#include "bits/cuch.hpp"
 
 /** cudaStream_t wrapper which will automatically destroy the stream
  */

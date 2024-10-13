@@ -5,7 +5,7 @@
 
 #include <cuda_runtime.h>
 
-#include "bits/cuda_ptr.hpp"
+#include "bits/cuch.hpp"
 
 /** Allocator which allocates pinned memory (using cudaHostAlloc)
  */

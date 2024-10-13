@@ -7,7 +7,6 @@
 
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
-#include "bits/expand.hpp"
 #include "bits/topk/singlepass/warp_select.hpp"
 
 #include "bits/topk/singlepass/block_select_runner.cuh"
@@ -30,6 +29,11 @@ faiss::gpu::Tensor<T, DIM, true> to_tensor(array_view<T, DIM> view)
     }
 
     return faiss::gpu::Tensor<T, DIM, true>{view.data(), sizes, strides};
+}
+
+template <std::size_t... Options, typename F, typename... Args, typename Option>
+bool dynamic_switch(F&& f, Option option, Args&&... args) {
+    return ((option == Options && (std::forward<F>(f).template operator()<Options>(std::forward<Args>(args)...), true)) || ...);
 }
 
 } // namespace
@@ -197,11 +201,20 @@ void warp_select_tunable::selection()
                            .thread_queue_size = (std::int32_t)args_.items_per_thread[0],
                            .k = (std::int32_t)k()};
 
-    using thread_block_choice_t = choice<128>;
-    using thread_queue_choice_t = choice<2, 3, 4, 5, 6, 7, 8, 9, 10>;
-    using k_choice_t = choice<32, 64, 128, 256, 512, 1024, 2048>;
-
-    expand<thread_block_choice_t, thread_queue_choice_t, k_choice_t>(run);
+    if (!dynamic_switch<64, 128>([=, &run]<std::size_t BlockSize>() {
+            if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>([=, &run]<std::size_t ThreadQueueSize>() {
+                    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>([=, &run]<std::size_t K>() {
+                            run.template operator()<BlockSize, ThreadQueueSize, K>();
+                        }, run.k)) {
+                        throw std::runtime_error{"Unsupported k value: " + std::to_string(run.k)};
+                    }
+                }, run.thread_queue_size)) {
+                throw std::runtime_error{"Unsupported thread queue size: " + std::to_string(run.thread_queue_size)};
+            }
+        },
+        run.block_size)) {
+        throw std::runtime_error{"Unsupported block size: " + std::to_string(run.block_size)};
+    }
 
     cuda_stream::make_default().sync();
 }
@@ -288,11 +301,20 @@ void block_select_tunable::selection()
                                 static_cast<std::int32_t>(args_.items_per_thread[0]),
                             .k = static_cast<std::int32_t>(k())};
 
-    using thread_block_choice_t = choice<128>;
-    using thread_queue_choice_t = choice<2, 3, 4, 5, 6, 7, 8, 9, 10>;
-    using k_choice_t = choice<32, 64, 128, 256, 512, 1024, 2048>;
-
-    expand<thread_block_choice_t, thread_queue_choice_t, k_choice_t>(run);
+    if (!dynamic_switch<64, 128>([=, &run]<std::size_t BlockSize>() {
+            if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>([=, &run]<std::size_t ThreadQueueSize>() {
+                    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>([=, &run]<std::size_t K>() {
+                            run.template operator()<BlockSize, ThreadQueueSize, K>();
+                        }, run.k)) {
+                        throw std::runtime_error{"Unsupported k value: " + std::to_string(run.k)};
+                    }
+                }, run.thread_queue_size)) {
+                throw std::runtime_error{"Unsupported thread queue size: " + std::to_string(run.thread_queue_size)};
+            }
+        },
+        run.block_size)) {
+        throw std::runtime_error{"Unsupported block size: " + std::to_string(run.block_size)};
+    }
 
     cuda_stream::make_default().sync();
 }

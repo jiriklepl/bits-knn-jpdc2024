@@ -3,7 +3,7 @@
 
 #include <cuda_runtime.h>
 
-#include "bits/cuda_ptr.hpp"
+#include "bits/cuch.hpp"
 
 /** Wrapper for `cudaEvent_t`
  */

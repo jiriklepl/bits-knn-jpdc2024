@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/cuda_ptr.hpp"
 
 // use this tag in the cuda_array constructor to tell it to use pitched allocation
