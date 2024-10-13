@@ -212,250 +212,240 @@ try
         ("h,help", "Show help message and exit");
     // clang-format on
 
-    try
+    auto params = options.parse(argc, argv);
+
+    if (params.count("help") != 0)
     {
-        auto params = options.parse(argc, argv);
-
-        if (params.count("help") != 0)
-        {
-            print_help(options, algorithms);
-            return 0;
-        }
-
-        if (params.count("header") != 0)
-        {
-            print_log_header();
-            return 0;
-        }
-
-        // parse command line arguments
-        const std::size_t dim = parse_number(params["dimension"].as<std::string>());
-        const std::size_t k = parse_number(params["knn"].as<std::string>());
-        const std::size_t input_size = parse_number(params["number"].as<std::string>());
-        const std::size_t query_size = parse_number(params["query"].as<std::string>());
-        const std::size_t repeat_count = parse_number(params["repeat"].as<std::string>());
-        const std::size_t seed = parse_number(params["seed"].as<std::string>());
-        std::string algorithm_id = params["algorithm"].as<std::string>();
-        std::string generator_id = params["generator"].as<std::string>();
-        std::string preprocessor_id = params["preprocessor"].as<std::string>();
-        const std::size_t block_size = parse_number(params["block-size"].as<std::string>());
-        const std::string verify_alg = params["verify"].as<std::string>();
-        const std::string layout_points = params["point-layout"].as<std::string>();
-        const std::string layout_queries = params["query-layout"].as<std::string>();
-        const std::array<std::size_t, 3> items_per_thread =
-            parse_dim3(params["items-per-thread"].as<std::string>());
-
-        // do basic validation
-        if (dim <= 0)
-        {
-            std::cerr << "Dimension must be greater than 0" << '\n';
-            return 1;
-        }
-
-        if (input_size <= 0)
-        {
-            std::cerr << "Number of objects in the database must be greater than 0" << '\n';
-            return 1;
-        }
-
-        if (query_size <= 0)
-        {
-            std::cerr << "Number of query objects must be greater than 0" << '\n';
-            return 1;
-        }
-
-        if (k <= 0)
-        {
-            std::cerr << "Number of nearest neighbors must be greater than 0" << '\n';
-            return 1;
-        }
-
-        if (block_size <= 0)
-        {
-            std::cerr << "Block size must be greater than 0" << '\n';
-            return 1;
-        }
-
-        const auto generator_sep = generator_id.find(':');
-        std::string generator_params{};
-
-        if (generator_sep != std::string::npos)
-        {
-            generator_params = generator_id.substr(generator_sep + 1);
-            generator_id = generator_id.substr(0, generator_sep);
-        }
-
-        const auto gen_it =
-            std::find_if(generators.begin(), generators.end(),
-                         [&generator_id](auto& gen) { return gen->id() == generator_id; });
-        if (gen_it == generators.end())
-        {
-            std::cerr << "Unknown generator: '" << generator_id << "'" << '\n';
-            // TODO(jirka): print available generators
-            return 1;
-        }
-
-        const auto generator = gen_it->get();
-
-        generator->set_seed(seed);
-        if (generator_sep != std::string::npos)
-        {
-            generator->set_params(generator_params);
-        }
-
-        auto data = generator->generate(input_size, dim);
-        auto query = generator->generate(query_size, dim);
-
-        // preprocess data
-        const auto pre_it =
-            std::find_if(preprocessors.begin(), preprocessors.end(),
-                         [&preprocessor_id](auto& pre) { return pre->id() == preprocessor_id; });
-
-        if (pre_it == preprocessors.end())
-        {
-            std::cerr << "Unknown preprocessor: '" << preprocessor_id << "'" << '\n';
-            // TODO(jirka): print available preprocessors
-            return 1;
-        }
-
-        const auto preprocessor = pre_it->get();
-
-        preprocessor->preprocess(data, query, dim);
-
-        // create kNN instance
-        // TODO(jirka): add generator and preprocessor arguments
-        knn_args args{.points = data.data(),
-                      .queries = query.data(),
-                      .point_count = input_size,
-                      .query_count = query_size,
-                      .dim = dim,
-                      .points_layout = layout_points == "row" ? matrix_layout::row_major
-                                                              : matrix_layout::column_major,
-                      .queries_layout = layout_queries == "row" ? matrix_layout::row_major
-                                                                : matrix_layout::column_major,
-                      .dist_layout = matrix_layout::row_major,
-                      .dist_block_size = block_size,
-                      .selection_block_size = block_size,
-                      .k = k,
-                      .items_per_thread = items_per_thread,
-                      .deg = parse_number(params["deg"].as<std::string>())};
-
-        // transpose matrices to requested layout
-        if (args.points_layout == matrix_layout::column_major)
-        {
-            data = transpose(data.data(), args.point_count, args.dim);
-            args.points = data.data();
-        }
-
-        if (args.queries_layout == matrix_layout::column_major)
-        {
-            query = transpose(query.data(), args.query_count, args.dim);
-            args.queries = query.data();
-        }
-
-        // run knn
-        const bool no_output = params["no-output"].as<bool>();
-
-        const auto alg_it =
-            std::find_if(algorithms.begin(), algorithms.end(),
-                         [&algorithm_id](auto& alg) { return alg->id() == algorithm_id; });
-        if (alg_it == algorithms.end())
-        {
-            std::cerr << "Unknown algorithm: '" << algorithm_id << "'" << '\n';
-            print_help(options, algorithms);
-            return 1;
-        }
-
-        const auto alg = alg_it->get();
-        if (no_output)
-        {
-            alg->no_output();
-        }
-        alg->initialize(args);
-
-        // repeat the computation multiple times
-        for (std::size_t i = 0; i < repeat_count; ++i)
-        {
-            std::atomic<std::uint32_t> sink{0};
-
-            // prepare
-            auto start = std::chrono::steady_clock::now();
-            alg->prepare();
-            auto end = std::chrono::steady_clock::now();
-            std::chrono::duration<double> duration = end - start;
-            log(args, algorithm_id, generator_id, preprocessor_id, "prepare", i, duration.count());
-            log(args, algorithm_id, generator_id, preprocessor_id, "transfer-in", i,
-                alg->transfer_in_seconds());
-
-            // compute distances
-            start = std::chrono::steady_clock::now();
-            alg->distances();
-            end = std::chrono::steady_clock::now();
-            duration = end - start;
-            log(args, algorithm_id, generator_id, preprocessor_id, "distances", i,
-                duration.count());
-
-            // execute
-            start = std::chrono::steady_clock::now();
-            alg->selection();
-            end = std::chrono::steady_clock::now();
-            duration = end - start;
-            log(args, algorithm_id, generator_id, preprocessor_id, "selection", i,
-                duration.count());
-
-            // postprocessing (e.g., sorting if selection provides unsorted results)
-            start = std::chrono::steady_clock::now();
-            alg->postprocessing();
-            end = std::chrono::steady_clock::now();
-            duration = end - start;
-            log(args, algorithm_id, generator_id, preprocessor_id, "postprocessing", i,
-                duration.count());
-
-            // finish
-            start = std::chrono::steady_clock::now();
-            const auto result = alg->finish();
-            end = std::chrono::steady_clock::now();
-            duration = end - start;
-            log(args, algorithm_id, generator_id, preprocessor_id, "finish", i, duration.count());
-            log(args, algorithm_id, generator_id, preprocessor_id, "transfer-out", i,
-                alg->transfer_out_seconds());
-
-            if (!no_output)
-            {
-                for (std::size_t j = 0; j < k; ++j)
-                {
-                    sink += result[j].index;
-                }
-                std::cerr << "Checksum: " << sink << '\n';
-            }
-
-            // verify the results using some other implementation
-            if (params.count("verify") != 0)
-            {
-                for (auto& other_alg : algorithms)
-                {
-                    if (other_alg->id() != verify_alg)
-                    {
-                        continue;
-                    }
-
-                    other_alg->initialize(args);
-                    other_alg->prepare();
-                    other_alg->distances();
-                    other_alg->selection();
-                    const auto expected_result = other_alg->finish();
-                    verify(expected_result, result, k);
-                }
-            }
-        }
+        print_help(options, algorithms);
+        return 0;
     }
-    catch (std::exception& e)
+
+    if (params.count("header") != 0)
     {
-        std::cerr << e.what() << '\n';
+        print_log_header();
+        return 0;
+    }
+
+    // parse command line arguments
+    const std::size_t dim = parse_number(params["dimension"].as<std::string>());
+    const std::size_t k = parse_number(params["knn"].as<std::string>());
+    const std::size_t input_size = parse_number(params["number"].as<std::string>());
+    const std::size_t query_size = parse_number(params["query"].as<std::string>());
+    const std::size_t repeat_count = parse_number(params["repeat"].as<std::string>());
+    const std::size_t seed = parse_number(params["seed"].as<std::string>());
+    std::string algorithm_id = params["algorithm"].as<std::string>();
+    std::string generator_id = params["generator"].as<std::string>();
+    std::string preprocessor_id = params["preprocessor"].as<std::string>();
+    const std::size_t block_size = parse_number(params["block-size"].as<std::string>());
+    const std::string verify_alg = params["verify"].as<std::string>();
+    const std::string layout_points = params["point-layout"].as<std::string>();
+    const std::string layout_queries = params["query-layout"].as<std::string>();
+    const std::array<std::size_t, 3> items_per_thread =
+        parse_dim3(params["items-per-thread"].as<std::string>());
+
+    // do basic validation
+    if (dim <= 0)
+    {
+        std::cerr << "Dimension must be greater than 0" << '\n';
         return 1;
     }
 
-    return 0;
+    if (input_size <= 0)
+    {
+        std::cerr << "Number of objects in the database must be greater than 0" << '\n';
+        return 1;
+    }
+
+    if (query_size <= 0)
+    {
+        std::cerr << "Number of query objects must be greater than 0" << '\n';
+        return 1;
+    }
+
+    if (k <= 0)
+    {
+        std::cerr << "Number of nearest neighbors must be greater than 0" << '\n';
+        return 1;
+    }
+
+    if (block_size <= 0)
+    {
+        std::cerr << "Block size must be greater than 0" << '\n';
+        return 1;
+    }
+
+    const auto generator_sep = generator_id.find(':');
+    std::string generator_params{};
+
+    if (generator_sep != std::string::npos)
+    {
+        generator_params = generator_id.substr(generator_sep + 1);
+        generator_id = generator_id.substr(0, generator_sep);
+    }
+
+    const auto gen_it =
+        std::find_if(generators.begin(), generators.end(),
+                        [&generator_id](auto& gen) { return gen->id() == generator_id; });
+    if (gen_it == generators.end())
+    {
+        std::cerr << "Unknown generator: '" << generator_id << "'" << '\n';
+        // TODO(jirka): print available generators
+        return 1;
+    }
+
+    const auto generator = gen_it->get();
+
+    generator->set_seed(seed);
+    if (generator_sep != std::string::npos)
+    {
+        generator->set_params(generator_params);
+    }
+
+    auto data = generator->generate(input_size, dim);
+    auto query = generator->generate(query_size, dim);
+
+    // preprocess data
+    const auto pre_it =
+        std::find_if(preprocessors.begin(), preprocessors.end(),
+                        [&preprocessor_id](auto& pre) { return pre->id() == preprocessor_id; });
+
+    if (pre_it == preprocessors.end())
+    {
+        std::cerr << "Unknown preprocessor: '" << preprocessor_id << "'" << '\n';
+        // TODO(jirka): print available preprocessors
+        return 1;
+    }
+
+    const auto preprocessor = pre_it->get();
+
+    preprocessor->preprocess(data, query, dim);
+
+    // create kNN instance
+    // TODO(jirka): add generator and preprocessor arguments
+    knn_args args{.points = data.data(),
+                    .queries = query.data(),
+                    .point_count = input_size,
+                    .query_count = query_size,
+                    .dim = dim,
+                    .points_layout = layout_points == "row" ? matrix_layout::row_major
+                                                            : matrix_layout::column_major,
+                    .queries_layout = layout_queries == "row" ? matrix_layout::row_major
+                                                            : matrix_layout::column_major,
+                    .dist_layout = matrix_layout::row_major,
+                    .dist_block_size = block_size,
+                    .selection_block_size = block_size,
+                    .k = k,
+                    .items_per_thread = items_per_thread,
+                    .deg = parse_number(params["deg"].as<std::string>())};
+
+    // transpose matrices to requested layout
+    if (args.points_layout == matrix_layout::column_major)
+    {
+        data = transpose(data.data(), args.point_count, args.dim);
+        args.points = data.data();
+    }
+
+    if (args.queries_layout == matrix_layout::column_major)
+    {
+        query = transpose(query.data(), args.query_count, args.dim);
+        args.queries = query.data();
+    }
+
+    // run knn
+    const bool no_output = params["no-output"].as<bool>();
+
+    const auto alg_it =
+        std::find_if(algorithms.begin(), algorithms.end(),
+                        [&algorithm_id](auto& alg) { return alg->id() == algorithm_id; });
+    if (alg_it == algorithms.end())
+    {
+        std::cerr << "Unknown algorithm: '" << algorithm_id << "'" << '\n';
+        print_help(options, algorithms);
+        return 1;
+    }
+
+    const auto alg = alg_it->get();
+    if (no_output)
+    {
+        alg->no_output();
+    }
+    alg->initialize(args);
+
+    // repeat the computation multiple times
+    for (std::size_t i = 0; i < repeat_count; ++i)
+    {
+        std::atomic<std::uint32_t> sink{0};
+
+        // prepare
+        auto start = std::chrono::steady_clock::now();
+        alg->prepare();
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> duration = end - start;
+        log(args, algorithm_id, generator_id, preprocessor_id, "prepare", i, duration.count());
+        log(args, algorithm_id, generator_id, preprocessor_id, "transfer-in", i,
+            alg->transfer_in_seconds());
+
+        // compute distances
+        start = std::chrono::steady_clock::now();
+        alg->distances();
+        end = std::chrono::steady_clock::now();
+        duration = end - start;
+        log(args, algorithm_id, generator_id, preprocessor_id, "distances", i,
+            duration.count());
+
+        // execute
+        start = std::chrono::steady_clock::now();
+        alg->selection();
+        end = std::chrono::steady_clock::now();
+        duration = end - start;
+        log(args, algorithm_id, generator_id, preprocessor_id, "selection", i,
+            duration.count());
+
+        // postprocessing (e.g., sorting if selection provides unsorted results)
+        start = std::chrono::steady_clock::now();
+        alg->postprocessing();
+        end = std::chrono::steady_clock::now();
+        duration = end - start;
+        log(args, algorithm_id, generator_id, preprocessor_id, "postprocessing", i,
+            duration.count());
+
+        // finish
+        start = std::chrono::steady_clock::now();
+        const auto result = alg->finish();
+        end = std::chrono::steady_clock::now();
+        duration = end - start;
+        log(args, algorithm_id, generator_id, preprocessor_id, "finish", i, duration.count());
+        log(args, algorithm_id, generator_id, preprocessor_id, "transfer-out", i,
+            alg->transfer_out_seconds());
+
+        if (!no_output)
+        {
+            for (std::size_t j = 0; j < k; ++j)
+            {
+                sink += result[j].index;
+            }
+            std::cerr << "Checksum: " << sink << '\n';
+        }
+
+        // verify the results using some other implementation
+        if (params.count("verify") != 0)
+        {
+            for (auto& other_alg : algorithms)
+            {
+                if (other_alg->id() != verify_alg)
+                {
+                    continue;
+                }
+
+                other_alg->initialize(args);
+                other_alg->prepare();
+                other_alg->distances();
+                other_alg->selection();
+                const auto expected_result = other_alg->finish();
+                verify(expected_result, result, k);
+            }
+        }
+    }
 }
 catch (std::exception& e)
 {

@@ -44,8 +44,8 @@ struct fused_cache
                         .out_dist = out_dist,
                         .out_label = out_label};
 
-        dim3 block(BLOCK_QUERY_DIM, BLOCK_DB_DIM, 1);
-        dim3 grid((num_queries + QUERIES_PER_BLOCK - 1) / QUERIES_PER_BLOCK, 1, 1);
+        const dim3 block(BLOCK_QUERY_DIM, BLOCK_DB_DIM, 1);
+        const dim3 grid((num_queries + QUERIES_PER_BLOCK - 1) / QUERIES_PER_BLOCK, 1, 1);
 
         if (dim < DIM_TILE)
         {
