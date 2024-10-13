@@ -20,7 +20,7 @@ case "$deg" in
 1 | 2 | 4)
     ;;
 *)
-    print_error "Invalid deg: $deg"
+    print_error "Invalid deg (first cmd arg): $deg"
     ;;
 esac
 
@@ -40,16 +40,14 @@ for q_power in 8 9 10 11 12 13; do
 
     for dim in 4 8 16; do
         for k in 4 8 16 32 64 128; do
-            # for deg in 1 2 4; do
-                # for rq in 2 4 8 16; do
-                for rq in 4 8; do # prune 2, 16
-                    # for rn in 4 8 16; do
-                    for rn in 4 8; do # prune 16
-                        for rd in 1 2 4; do
-                            # for bq in 1 2 4; do
-                            for bq in 1 2; do # prune 4
-                                "$knn" --point-layout column --query-layout column -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --items-per-thread "$rq,$rn,$rd" --deg "$deg" --block-size "$bq" --seed 11 -a fused-cache
-                            done
+            # for rq in 2 4 8 16; do
+            for rq in 4 8; do # prune 2, 16
+                # for rn in 4 8 16; do
+                for rn in 4 8; do # prune 16
+                    for rd in 1 2 4; do
+                        # for bq in 1 2 4; do
+                        for bq in 1 2; do # prune 4
+                            "$knn" --point-layout column --query-layout column -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --items-per-thread "$rq,$rn,$rd" --deg "$deg" --block-size "$bq" --seed 11 -a fused-cache
                         done
                     done
                 done

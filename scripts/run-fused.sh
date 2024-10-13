@@ -43,31 +43,26 @@ for q_power in 10 11 12 13; do
                 "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a rapidsai-fused
             fi
 
-            # skip k=128, d=64 since we do not have enough registers/shared memory for this config
-            # we could likely use some smaller parameters to make it work but it would very likely
-            # be worse than the bits kernel
-            if [ "$k" -le 128 ] || [ "$dim" -le 64 ]; then
-                # config=$(config_algorithm fused-regs-tunable $q $k)
-                # read -r -a configs <<<"$config"
-                # block_size=${configs[0]:-256}
-                # items_per_thread=${configs[2]:-1}
-                # items_per_thread2=${configs[3]:-1}
-                # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-regs-tunable --items-per-thread "$items_per_thread,$items_per_thread2" --block-size "$block_size"
+            # config=$(config_algorithm fused-regs-tunable $q $k)
+            # read -r -a configs <<<"$config"
+            # block_size=${configs[0]:-256}
+            # items_per_thread=${configs[2]:-1}
+            # items_per_thread2=${configs[3]:-1}
+            # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-regs-tunable --items-per-thread "$items_per_thread,$items_per_thread2" --block-size "$block_size"
 
-                # config=$(config_algorithm fused-tc-half $q $k $dim)
-                # read -r -a configs <<<"$config"
-                # block_size=${configs[0]:-256}
-                # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-tc-half --block-size "$block_size"
+            # config=$(config_algorithm fused-tc-half $q $k $dim)
+            # read -r -a configs <<<"$config"
+            # block_size=${configs[0]:-256}
+            # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-tc-half --block-size "$block_size"
 
-                config=$(config_algorithm fused-cache $q $k $dim)
-                read -r -a configs <<<"$config"
-                block_size=${configs[0]:-1}
-                deg=${configs[1]:-1}
-                items_per_thread=${configs[2]:-1}
-                items_per_thread2=${configs[3]:-1}
-                items_per_thread3=${configs[4]:-1}
-                "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-cache --items-per-thread "$items_per_thread,$items_per_thread2,$items_per_thread3" --block-size "$block_size" --deg "$deg"
-            fi
+            config=$(config_algorithm fused-cache $q $k $dim)
+            read -r -a configs <<<"$config"
+            block_size=${configs[0]:-1}
+            deg=${configs[1]:-1}
+            items_per_thread=${configs[2]:-1}
+            items_per_thread2=${configs[3]:-1}
+            items_per_thread3=${configs[4]:-1}
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-cache --items-per-thread "$items_per_thread,$items_per_thread2,$items_per_thread3" --block-size "$block_size" --deg "$deg"
         done
     done
 done
