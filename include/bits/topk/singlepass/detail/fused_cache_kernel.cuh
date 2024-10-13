@@ -7,6 +7,7 @@
 #include <cuda_runtime.h>
 
 #include "bits/array_view.hpp"
+#include "bits/cuda_ptr.hpp"
 #include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_cache_kernel.hpp"
 
@@ -37,6 +38,7 @@ template <class Kernel>
 void launch_fused_cache(Kernel kernel, dim3 grid, dim3 block)
 {
     launch_fused_cache<Kernel><<<grid, block, sizeof(typename Kernel::tmp_storage_t)>>>(kernel);
+    CUCH(cudaGetLastError());
 }
 
 #endif // FUSED_KERNEL_CACHE_CUH_

@@ -377,9 +377,10 @@ bits_kernel_process_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_
  */
 template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
           std::size_t BATCH_SIZE, std::size_t K>
-__global__ void bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
-                            array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
-                            std::size_t k, const std::int32_t* label_offsets, const float* norms)
+__global__ void __launch_bounds__(BLOCK_SIZE)
+bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
+            array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
+            std::size_t k, const std::int32_t* label_offsets, const float* norms)
 {
     // number of items stored in registers of each thread
     constexpr std::size_t ITEMS_PER_THREAD = (K + BLOCK_SIZE - 1) / BLOCK_SIZE;
