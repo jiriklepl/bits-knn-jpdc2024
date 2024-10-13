@@ -96,9 +96,21 @@ for q_power in 6 8 10 12; do
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a grid-select -g "$generator" -p "$preprocessor"
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a radik -g "$generator" -p "$preprocessor"
 
-        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a warp-select-tuned -g "$generator" -p "$preprocessor"
-        # "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a warp-select -g "$generator" -p "$preprocessor"
-        # "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a block-select -g "$generator" -p "$preprocessor"
-        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a block-select-tuned -g "$generator" -p "$preprocessor"
+        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a warp-select -g "$generator" -p "$preprocessor"
+        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a block-select -g "$generator" -p "$preprocessor"
+
+        config=$(config_algorithm block-select-tunable $q $k)
+        read -r -a configs <<<"$config"
+        block_size=${configs[0]:-256}
+        deg=${configs[1]:-1}
+        thread_queue=${configs[2]:-1}
+        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 --items-per-thread "$thread_queue" -a block-select-tunable -g "$generator" -p "$preprocessor" --block-size "$block_size" --deg "$deg"
+
+        config=$(config_algorithm warp-select-tunable $q $k)
+        read -r -a configs <<<"$config"
+        block_size=${configs[0]:-256}
+        deg=${configs[1]:-1}
+        thread_queue=${configs[2]:-1}
+        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 --items-per-thread "$thread_queue" -a warp-select-tunable -g "$generator" -p "$preprocessor" --block-size "$block_size" --deg "$deg"
     done
 done
