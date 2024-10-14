@@ -100,7 +100,7 @@ def plot(file, hostname, jobid):
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.03 + legend_height*1.1 + font_height, top=.96, left=0.01+font_height/2, right=0.97, hspace=0.3)
+            fig.subplots_adjust(bottom=0.03 + legend_height*1.1 + font_height, top=.96, left=0.02+font_height/2, right=0.98, hspace=0.3)
         except ValueError:
             print(f"Legend does not fit, trying with {try_height}")
             try_height += .5

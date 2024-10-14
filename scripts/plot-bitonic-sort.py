@@ -86,8 +86,8 @@ def plot(file, hostname, jobid):
         ax.grid(alpha=0.4, linestyle="--")
         ax.set_ylim(0)
 
+    fig.supylabel("Speedup", x=0.005, y=0.6)
     fig.set_size_inches(4.5, 3)
-    fig.subplots_adjust(bottom=0.37)
 
     # get size of the x-axis label in figure coordinates
     font_height = ax.xaxis.label.get_window_extent().transformed(fig.transFigure.inverted()).height
@@ -109,7 +109,7 @@ def plot(file, hostname, jobid):
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height * 1.1
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.07 + legend_height + font_height, top=0.98, left=0.03, right=0.99)
+            fig.subplots_adjust(bottom=0.07 + legend_height + font_height, top=0.98, left=0.02+font_height/2, right=0.995)
         except ValueError:
             print(f"Legend does not fit, trying with {try_height}")
             try_height += .5

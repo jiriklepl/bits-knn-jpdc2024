@@ -5,8 +5,13 @@ import utils
 import glob
 import os
 
-# the file name is data/opt-ipt-HOSTNAME-JOBID.csv or data/fused-params-HOSTNAME-JOBID.csv or data/fused-cache-params-HOSTNAME-JOBID.csv or data/opt-bitonic-sort-HOSTNAME-JOBID.csv
-files = glob.glob("data/opt-ipt-*-*.csv") + glob.glob("data/fused-params-*-*.csv") + glob.glob("data/fused-cache-params-*-*.csv") + glob.glob("data/opt-bitonic-sort-*-*.csv")
+# the file name is data/opt-ipt-HOSTNAME-JOBID.csv or data/fused-params-HOSTNAME-JOBID.csv or ...
+files = glob.glob("data/opt-ipt-*-*.csv") + \
+        glob.glob("data/fused-params-*-*.csv") + \
+        glob.glob("data/fused-cache-params-*-*.csv") + \
+        glob.glob("data/opt-bitonic-sort-*-*.csv") + \
+        glob.glob("data/params-warp-select-*-*.csv") + \
+        glob.glob("data/params-block-select-*-*.csv")
 
 gpu_dict = {
     "ampere02": "A100",

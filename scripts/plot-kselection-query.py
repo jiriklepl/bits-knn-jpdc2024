@@ -53,7 +53,12 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, MEM
 def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     data = pd.read_csv(file)
 
-    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["algorithm"] != "warp-select") & (data["algorithm"] != "block-select") & (data["algorithm"] != "warp-select-tuned") & (data["algorithm"] != "bits")]
+    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["algorithm"] != "warp-select") & (data["algorithm"] != "block-select") & (data["algorithm"] != "warp-select-tunable") & (data["algorithm"] != "bits")]
+    
+    data = data.replace({"algorithm": {
+        "bits-prefetch": "bits",
+        "block-select-tunable": "block-select",
+    }})
 
     if not doing_fused:
         data = data.loc[(data["phase"] == "selection")]
@@ -159,6 +164,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
             col += 1
         row += 1
 
+    fig.supylabel("Throughput [distances/s]", x=0.005, y=0.6)
     fig.set_size_inches(4.5, ROWS*3)
 
     # get size of the x-axis label in figure coordinates
@@ -177,7 +183,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.03, right=0.97, hspace=0.3)
+            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.05, right=0.995-font_height/4, hspace=0.3, wspace=0.3)
         except ValueError:
             print(f"Legend does not fit, trying with {try_height}")
             try_height += .5
