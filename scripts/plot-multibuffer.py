@@ -7,12 +7,29 @@ import utils
 import glob
 import os
 
-# the file name is data/bitonic-sort-HOSTNAME-JOBID.csv or data/buffer-HOSTNAME-JOBID.csv
-files = glob.glob("data/bitonic-sort-*-*.csv") + glob.glob("data/buffer-*-*.csv")
+# the file name is data/buffer-HOSTNAME-JOBID.csv
+files = glob.glob("data/buffer-*-*.csv")
 
-def plot(file, hostname, jobid):
-    data = pd.read_csv(file, sep=',')
+def plot(files, hostname):
+    data = None
+
+    for file, jobid in files:
+        try:
+            sub_data = pd.read_csv(file, sep=',')
+        except Exception as e:
+            print(f"Failed to read {file}: {e}")
+            continue
+        
+        sub_data["hostname"] = hostname
+        sub_data["jobid"] = jobid
+        
+        data = sub_data if data is None else pd.concat([data, sub_data])
+        
+    if data is None:
+        return
+
     data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "selection")]
+
     if "partial-bitonic" in data["algorithm"].unique():
         data = data.replace({"algorithm": {
             "bits" : "bits",
@@ -25,11 +42,17 @@ def plot(file, hostname, jobid):
     elif "partial-bitonic-regs" in data["algorithm"].unique():
         data = data.replace({"algorithm": {
             "partial-bitonic-regs": "sort in regs",
-            "bits" : "bits (sort in regs + buffer)",
+            "bits" : "bits",
         }})
         baseline_name = "sort in regs"
     else:
         raise ValueError("Unknown data")
+
+    data["dataset"] = data["generator"]
+    data.loc[data["preprocessor"] == "ascending", "dataset"] += "-asc"
+    data.loc[data["preprocessor"] == "descending", "dataset"] += "-desc"
+
+    data.loc[data["algorithm"] != baseline_name, "algorithm"] += " (" + data.loc[data["algorithm"] != baseline_name, "dataset"] + " data)"
 
     fig, ax = plt.subplots(1, data["query_count"].nunique())
 
@@ -41,7 +64,7 @@ def plot(file, hostname, jobid):
         query_data = data.loc[data["query_count"] == query_count]
         point_count = query_data["point_count"].unique()
 
-        assert len(point_count) == 1
+        assert len(point_count) == 1, f"Multiple point counts: {point_count}"
 
         point_count = point_count[0]
 
@@ -50,7 +73,7 @@ def plot(file, hostname, jobid):
 
         # extract baseline - partial sorting with Bitonic sort in shared memory
         baseline = query_data.loc[query_data["algorithm"] == baseline_name]
-        assert len(baseline) > 0
+        assert len(baseline) > 0, f"Cannot determine baseline: {baseline}"
 
         baseline = baseline.groupby(['k'])['time'].mean()
 
@@ -118,12 +141,19 @@ def plot(file, hostname, jobid):
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(file.replace("data", "figures").replace("csv", "pdf"))
+    fig.savefig(f"figures/multibuffer-{hostname}.pdf", bbox_inches='tight')
     plt.close(fig)
 
+hosted_files = {}
 for file in files:
     hostname, jobid = file.split(".")[-2].split("-")[-2:]
+
+    if hostname not in hosted_files:
+        hosted_files[hostname] = []
+    hosted_files[hostname].append((file, jobid))
+
+for hostname, files in hosted_files.items():
     try:
-        plot(file, hostname, jobid)
+        plot(files, hostname)
     except Exception as e:
-        print(f"Failed to plot {file}: {e}")
+        print(f"Failed to plot {hostname}: {e}")
