@@ -101,14 +101,14 @@ for q_power in 6 8 10 12; do
 
         config=$(config_algorithm block-select-tunable $q $k)
         read -r -a configs <<<"$config"
-        block_size=${configs[0]:-256}
+        block_size=${configs[0]:-128}
         deg=${configs[1]:-1}
         thread_queue=${configs[2]:-1}
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 --items-per-thread "$thread_queue" -a block-select-tunable -g "$generator" -p "$preprocessor" --block-size "$block_size" --deg "$deg"
 
         config=$(config_algorithm warp-select-tunable $q $k)
         read -r -a configs <<<"$config"
-        block_size=${configs[0]:-256}
+        block_size=${configs[0]:-128}
         deg=${configs[1]:-1}
         thread_queue=${configs[2]:-1}
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 --items-per-thread "$thread_queue" -a warp-select-tunable -g "$generator" -p "$preprocessor" --block-size "$block_size" --deg "$deg"
