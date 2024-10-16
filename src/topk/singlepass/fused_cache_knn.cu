@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "bits/cuda_stream.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/fused_cache_kernel.hpp"
 #include "bits/topk/singlepass/fused_cache_knn.hpp"
 
@@ -60,33 +61,10 @@ struct fused_cache
               std::int32_t QUERY_BLOCK_DIM, std::int32_t DIM_MULT>
     void run(std::int32_t k)
     {
-        if (k == 4)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, 4>();
-        }
-        else if (k == 8)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, 8>();
-        }
-        else if (k == 16)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, 16>();
-        }
-        else if (k == 32)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, 32>();
-        }
-        else if (k == 64)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, 64>();
-        }
-        else if (k == 128)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, 128>();
-        }
-        else
-        {
-            throw std::runtime_error{"Unsupported k value: " + std::to_string(k)};
+        if (!dynamic_switch<4, 8, 16, 32, 64, 128>(k, [&]<std::size_t K>() {
+            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, K>();
+        })) {
+            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
         }
     }
 
@@ -94,43 +72,21 @@ struct fused_cache
               std::int32_t QUERY_BLOCK_DIM>
     void run(std::int32_t dim_mult, std::int32_t k)
     {
-        if (dim_mult == 1)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, 1>(k);
-        }
-        else if (dim_mult == 2)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, 2>(k);
-        }
-        else if (dim_mult == 4)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, 4>(k);
-        }
-        else
-        {
-            throw std::runtime_error{"Unsupported dim_mult value: " + std::to_string(dim_mult)};
+        if (!dynamic_switch<1, 2, 4>(dim_mult, [&]<std::size_t DIM_MULT>() {
+            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT>(k);
+        })) {
+            throw std::runtime_error("Unsupported dim_mult value: " + std::to_string(dim_mult));
         }
     }
 
     template <std::int32_t QUERY_REG, std::int32_t DB_REG, std::int32_t DIM_REG>
     void run(std::int32_t query_block_size, std::int32_t dim_mult, std::int32_t k)
     {
-        if (query_block_size == 1)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, 1>(dim_mult, k);
-        }
-        else if (query_block_size == 2)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, 2>(dim_mult, k);
-        }
-        else if (query_block_size == 4)
-        {
-            run<QUERY_REG, DB_REG, DIM_REG, 4>(dim_mult, k);
-        }
-        else
-        {
-            throw std::runtime_error{"Unsupported query_block_size value: " +
-                                     std::to_string(query_block_size)};
+        if (!dynamic_switch<1, 2, 4>(query_block_size, [&]<std::size_t QUERY_BLOCK_DIM>() {
+            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM>(dim_mult, k);
+        })) {
+            throw std::runtime_error("Unsupported query_block_size value: " +
+                                     std::to_string(query_block_size));
         }
     }
 
@@ -138,21 +94,10 @@ struct fused_cache
     void run(std::int32_t dim_reg, std::int32_t query_block_size, std::int32_t dim_mult,
              std::int32_t k)
     {
-        if (dim_reg == 1)
-        {
-            run<QUERY_REG, DB_REG, 1>(query_block_size, dim_mult, k);
-        }
-        else if (dim_reg == 2)
-        {
-            run<QUERY_REG, DB_REG, 2>(query_block_size, dim_mult, k);
-        }
-        else if (dim_reg == 4)
-        {
-            run<QUERY_REG, DB_REG, 4>(query_block_size, dim_mult, k);
-        }
-        else
-        {
-            throw std::runtime_error{"Unsupported dim_reg value: " + std::to_string(dim_reg)};
+        if (!dynamic_switch<1, 2, 4>(dim_reg, [&]<std::size_t DIM_REG>() {
+            run<QUERY_REG, DB_REG, DIM_REG>(query_block_size, dim_mult, k);
+        })) {
+            throw std::runtime_error("Unsupported dim_reg value: " + std::to_string(dim_reg));
         }
     }
 
@@ -160,46 +105,20 @@ struct fused_cache
     void run(std::int32_t db_reg, std::int32_t dim_reg, std::int32_t query_block_size,
              std::int32_t dim_mult, std::int32_t k)
     {
-        if (db_reg == 4)
-        {
-            run<QUERY_REG, 4>(dim_reg, query_block_size, dim_mult, k);
-        }
-        else if (db_reg == 8)
-        {
-            run<QUERY_REG, 8>(dim_reg, query_block_size, dim_mult, k);
-        }
-        else if (db_reg == 16)
-        {
-            run<QUERY_REG, 16>(dim_reg, query_block_size, dim_mult, k);
-        }
-        else
-        {
-            throw std::runtime_error{"Unsupported db_reg value: " + std::to_string(db_reg)};
+        if (!dynamic_switch<4, 8, 16>(db_reg, [&]<std::size_t DB_REG>() {
+            run<QUERY_REG, DB_REG>(dim_reg, query_block_size, dim_mult, k);
+        })) {
+            throw std::runtime_error("Unsupported db_reg value: " + std::to_string(db_reg));
         }
     }
 
     void run(std::int32_t queries_reg, std::int32_t db_reg, std::int32_t dim_reg,
              std::int32_t query_block_size, std::int32_t dim_mult, std::int32_t k)
     {
-        if (queries_reg == 2)
-        {
-            run<2>(db_reg, dim_reg, query_block_size, dim_mult, k);
-        }
-        else if (queries_reg == 4)
-        {
-            run<4>(db_reg, dim_reg, query_block_size, dim_mult, k);
-        }
-        else if (queries_reg == 8)
-        {
-            run<8>(db_reg, dim_reg, query_block_size, dim_mult, k);
-        }
-        else if (queries_reg == 16)
-        {
-            run<16>(db_reg, dim_reg, query_block_size, dim_mult, k);
-        }
-        else
-        {
-            throw std::runtime_error{"Unsupported queries_reg value: " + std::to_string(queries_reg)};
+        if (!dynamic_switch<2, 4, 8, 16>(queries_reg, [&]<std::size_t QUERY_REG>() {
+            run<QUERY_REG>(db_reg, dim_reg, query_block_size, dim_mult, k);
+        })) {
+            throw std::runtime_error("Unsupported queries_reg value: " + std::to_string(queries_reg));
         }
     }
 };

@@ -8,6 +8,7 @@
 #include <cuda_runtime.h>
 
 #include "bits/cuda_stream.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
 
 #include "bits/ptx_utils.cuh"
@@ -358,50 +359,22 @@ void static_buffered_partial_bitonic::selection()
     auto out_dist = out_dist_gpu();
     auto out_label = out_label_gpu();
     const auto shm_size = 2 * k() * (sizeof(float) + sizeof(std::int32_t));
-    const auto block_size = std::max<std::size_t>(k() / 4, 128);
+    const auto block_size = selection_block_size();
 
     // use warp shuffles in bitonic sort
     constexpr bool USE_WARP_SORT = true;
     // prefetch the next batch of distances
     constexpr bool PREFETCH_NEXT_BATCH = false;
 
-    if (k() == 32)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 32, 128, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 64)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 64, 128, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 128)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 128, 128, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 256)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 256, 128, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 512)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 512, 128, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 1024)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 1024, 256, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 2048)
-    {
-        buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, 2048, 512, 2>
-            <<<block_count, block_size, shm_size>>>(dist, out_dist, out_label);
-    }
-    else
-    {
+    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k(), [=]<std::size_t K>() {
+        if (!dynamic_switch<128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
+            constexpr std::size_t BATCH_SIZE = 2;
+            buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, K, BlockSize, BATCH_SIZE>
+                <<<block_count, BlockSize, shm_size>>>(dist, out_dist, out_label);
+        })) {
+            throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
+        }
+    })) {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 

@@ -7,6 +7,7 @@
 #include <cuda_runtime.h>
 
 #include "bits/cuda_stream.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/partial_bitonic.hpp"
 
 #include "bits/topk/bitonic_sort.cuh"
@@ -290,170 +291,22 @@ __global__ void partial_bitonic_regs_kernel(array_view<float, 2> input,
     }
 }
 
-template <bool USE_WARP_SORT, std::size_t K, std::size_t BLOCK_SIZE>
-void partial_bitonic_soa_run(array_view<float, 2> input, array_view<float, 2> out_dist,
-                             array_view<std::int32_t, 2> out_label)
-{
-    partial_bitonic_soa<USE_WARP_SORT, K, BLOCK_SIZE>
-        <<<input.size(0), BLOCK_SIZE,
-           2 * K * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(input, out_dist,
-                                                                                    out_label);
-}
-
-template <bool USE_WARP_SORT, std::size_t K, std::size_t BLOCK_SIZE>
-void partial_bitonic_aos_run(array_view<float, 2> input, array_view<float, 2> out_dist,
-                             array_view<std::int32_t, 2> out_label)
-{
-    partial_bitonic_aos<USE_WARP_SORT, K, BLOCK_SIZE>
-        <<<input.size(0), BLOCK_SIZE,
-           2 * K * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(input, out_dist,
-                                                                                    out_label);
-}
-
-template <std::size_t BLOCK_SIZE, std::size_t K>
-void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> out_dist,
-                              array_view<std::int32_t, 2> out_label)
-{
-    partial_bitonic_regs_kernel<K, BLOCK_SIZE>
-        <<<input.size(0), BLOCK_SIZE>>>(input, out_dist, out_label);
-}
-
-template <bool USE_WARP_SORT, std::size_t BLOCK_SIZE>
-void partial_bitonic_soa_run(array_view<float, 2> input, array_view<float, 2> out_dist,
-                             array_view<std::int32_t, 2> out_label, std::size_t k)
-{
-    if (k == 32)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 32, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 64)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 64, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 128)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 128, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 256)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 256, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 512)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 512, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 1024)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 1024, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 2048)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 2048, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else
-    {
-        throw std::runtime_error("Unsupported k value: " + std::to_string(k));
-    }
-}
-
-template <bool USE_WARP_SORT, std::size_t BLOCK_SIZE>
-void partial_bitonic_aos_run(array_view<float, 2> input, array_view<float, 2> out_dist,
-                             array_view<std::int32_t, 2> out_label, std::size_t k)
-{
-    if (k == 32)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 32, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 64)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 64, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 128)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 128, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 256)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 256, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 512)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 512, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 1024)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 1024, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else if (k == 2048)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 2048, BLOCK_SIZE>(input, out_dist, out_label);
-    }
-    else
-    {
-        throw std::runtime_error("Unsupported k value: " + std::to_string(k));
-    }
-}
-
-template <std::size_t BLOCK_SIZE>
-void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> out_dist,
-                              array_view<std::int32_t, 2> out_label, std::size_t k)
-{
-    if (k == 32)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 32>(input, out_dist, out_label);
-    }
-    else if (k == 64)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 64>(input, out_dist, out_label);
-    }
-    else if (k == 128)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 128>(input, out_dist, out_label);
-    }
-    else if (k == 256)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 256>(input, out_dist, out_label);
-    }
-    else if (k == 512)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 512>(input, out_dist, out_label);
-    }
-    else if (k == 1024)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 1024>(input, out_dist, out_label);
-    }
-    else if (k == 2048)
-    {
-        partial_bitonic_regs_run<BLOCK_SIZE, 2048>(input, out_dist, out_label);
-    }
-    else
-    {
-        throw std::runtime_error("Unsupported k value: " + std::to_string(k));
-    }
-}
-
 template <bool USE_WARP_SORT>
 void partial_bitonic_soa_run(array_view<float, 2> input, array_view<float, 2> out_dist,
                              array_view<std::int32_t, 2> out_label, std::size_t block_size,
                              std::size_t k)
 {
-    if (block_size == 64)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 64>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 128)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 128>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 256)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 256>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 512)
-    {
-        partial_bitonic_soa_run<USE_WARP_SORT, 512>(input, out_dist, out_label, k);
-    }
-    else
+    if (!dynamic_switch<64, 128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
+        if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k, [=]<std::size_t K>() {
+            partial_bitonic_soa<USE_WARP_SORT, K, BlockSize>
+                <<<input.size(0), BlockSize,
+                2 * K * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(input, out_dist,
+                                                                                            out_label);
+        }))
+        {
+            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
+        }
+    }))
     {
         throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
     }
@@ -464,23 +317,17 @@ void partial_bitonic_aos_run(array_view<float, 2> input, array_view<float, 2> ou
                              array_view<std::int32_t, 2> out_label, std::size_t block_size,
                              std::size_t k)
 {
-    if (block_size == 64)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 64>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 128)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 128>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 256)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 256>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 512)
-    {
-        partial_bitonic_aos_run<USE_WARP_SORT, 512>(input, out_dist, out_label, k);
-    }
-    else
+    if (!dynamic_switch<64, 128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
+        if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k, [=]<std::size_t K>() {
+            partial_bitonic_aos<USE_WARP_SORT, K, BlockSize>
+                <<<input.size(0), BlockSize,
+                2 * K * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(input, out_dist,
+                                                                                            out_label);
+        }))
+        {
+            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
+        }
+    }))
     {
         throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
     }
@@ -490,23 +337,15 @@ void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> o
                               array_view<std::int32_t, 2> out_label, std::size_t block_size,
                               std::size_t k)
 {
-    if (block_size == 64)
-    {
-        partial_bitonic_regs_run<64>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 128)
-    {
-        partial_bitonic_regs_run<128>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 256)
-    {
-        partial_bitonic_regs_run<256>(input, out_dist, out_label, k);
-    }
-    else if (block_size == 512)
-    {
-        partial_bitonic_regs_run<512>(input, out_dist, out_label, k);
-    }
-    else
+    if (!dynamic_switch<64, 128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
+        if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k, [=]<std::size_t K>() {
+            partial_bitonic_regs_kernel<K, BlockSize>
+                <<<input.size(0), BlockSize>>>(input, out_dist, out_label);
+        }))
+        {
+            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
+        }
+    }))
     {
         throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
     }

@@ -7,7 +7,7 @@
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
-
+#include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/bits_kernel.hpp"
 #include "bits/topk/singlepass/bits_knn.hpp"
 
@@ -23,146 +23,21 @@ struct bits
     const std::int32_t* label_offsets;
     const float* norms;
 
-    template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
-              std::size_t BATCH_SIZE, std::size_t K>
-    void run(std::size_t k)
-    {
-        run_bits_kernel<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, K>(
-            in_dist, in_label, out_dist, out_label, k, label_offsets, norms);
-    }
-
-    template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
-              std::size_t BATCH_SIZE>
-    void run(std::size_t k)
-    {
-        if (k > 0 && k <= 16)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 16>(k);
-        }
-        else if (k > 0 && k <= 32)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 32>(k);
-        }
-        else if (k > 0 && k <= 64)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 64>(k);
-        }
-        else if (k > 0 && k <= 128)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 128>(k);
-        }
-        else if (k > 0 && k <= 256)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 256>(k);
-        }
-        else if (k > 0 && k <= 512)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 512>(k);
-        }
-        else if (k > 0 && k <= 1024)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 1024>(k);
-        }
-        else if (k > 0 && k <= 2048)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, 2048>(k);
-        }
-        else
-        {
-            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
-        }
-    }
-
-    template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE>
-    void run(std::size_t batch_size, std::size_t k)
-    {
-        if (batch_size == 1)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 1>(k);
-        }
-        else if (batch_size == 2)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 2>(k);
-        }
-        else if (batch_size == 3)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 3>(k);
-        }
-        else if (batch_size == 4)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 4>(k);
-        }
-        else if (batch_size == 5)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 5>(k);
-        }
-        else if (batch_size == 6)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 6>(k);
-        }
-        else if (batch_size == 7)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 7>(k);
-        }
-        else if (batch_size == 8)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 8>(k);
-        }
-        else if (batch_size == 9)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 9>(k);
-        }
-        else if (batch_size == 10)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 10>(k);
-        }
-        else if (batch_size == 11)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 11>(k);
-        }
-        else if (batch_size == 12)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 12>(k);
-        }
-        else if (batch_size == 13)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 13>(k);
-        }
-        else if (batch_size == 14)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 14>(k);
-        }
-        else if (batch_size == 15)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 15>(k);
-        }
-        else if (batch_size == 16)
-        {
-            run<PREFETCH, ADD_NORMS, BLOCK_SIZE, 16>(k);
-        }
-        else
-        {
-            throw std::runtime_error("Unsupported batch size: " + std::to_string(batch_size));
-        }
-    }
-
     template <bool PREFETCH, bool ADD_NORMS>
     void run(std::size_t block_size, std::size_t batch_size, std::size_t k)
     {
-        if (block_size == 128)
-        {
-            run<PREFETCH, ADD_NORMS, 128>(batch_size, k);
-        }
-        else if (block_size == 256)
-        {
-            run<PREFETCH, ADD_NORMS, 256>(batch_size, k);
-        }
-        else if (block_size == 512)
-        {
-            run<PREFETCH, ADD_NORMS, 512>(batch_size, k);
-        }
-        else
-        {
+        if (!dynamic_switch<128, 256, 512>(block_size, [=, *this]<std::size_t BlockSize>() {
+            if (!dynamic_switch<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16>(batch_size, [=, *this]<std::size_t BatchSize>() {
+                if (k <= 0 || !dynamic_switch_le<16, 32, 64, 128, 256, 512, 1024, 2048>(k, [=, *this]<std::size_t K>() {
+                    run_bits_kernel<PREFETCH, ADD_NORMS, BlockSize, BatchSize, K>(
+                        in_dist, in_label, out_dist, out_label, k, label_offsets, norms);
+                })) {
+                    throw std::runtime_error("Unsupported k value: " + std::to_string(k));
+                }
+            })) {
+                throw std::runtime_error("Unsupported batch size: " + std::to_string(batch_size));
+            }
+        })) {
             throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
         }
     }
@@ -173,10 +48,10 @@ __global__ void populate_label_offsets_kernel(std::int32_t* label_offsets, std::
 {
     const std::size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (idx < query_count * parallel_count)
-    {
-        label_offsets[idx] = idx % parallel_count * column_count;
-    }
+    if (idx >= query_count * parallel_count)
+        return;
+
+    label_offsets[idx] = idx % parallel_count * column_count;
 }
 
 } // namespace

@@ -396,15 +396,15 @@ struct distance_computation
             {
                 if (dim < num_dim && idx < num_vectors)
                 {
-                    if (op == load::shm)
+                    if constexpr (op == load::shm)
                     {
                         tmp_storage.db[dim][idx] = data[idx];
                     }
-                    else if (op == load::reg)
+                    else if constexpr (op == load::reg)
                     {
                         preload_db[dim][i] = data[idx];
                     }
-                    else if (op == load::move)
+                    else if constexpr (op == load::move)
                     {
                         tmp_storage.db[dim][idx] = preload_db[dim][i];
                     }

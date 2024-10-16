@@ -4,6 +4,7 @@
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_tc_knn.hpp"
 #include "bits/topk/singlepass/fused_tc_policy.hpp"
@@ -19,20 +20,9 @@ namespace
 template <typename Policy, std::int32_t K>
 void run(fused_tc_kernel_runner<Policy>& kernel)
 {
-    if (kernel.block_size == 128)
-    {
-        kernel.template operator()<K, 128>();
-    }
-    else if (kernel.block_size == 256)
-    {
-        kernel.template operator()<K, 256>();
-    }
-    else if (kernel.block_size == 512)
-    {
-        kernel.template operator()<K, 512>();
-    }
-    else
-    {
+    if (!dynamic_switch<128, 256, 512>(kernel.block_size, [&]<std::size_t BlockSize>() {
+        kernel.template operator()<K, BlockSize>();
+    })) {
         throw std::runtime_error{"Unsupported block size: " + std::to_string(kernel.block_size)};
     }
 }
@@ -42,36 +32,9 @@ void run(fused_tc_kernel_runner<Policy>& kernel)
 template <typename Policy>
 void run(fused_tc_kernel_runner<Policy>& kernel)
 {
-    if (kernel.k == 2)
-    {
-        run<Policy, 2>(kernel);
-    }
-    else if (kernel.k == 4)
-    {
-        run<Policy, 4>(kernel);
-    }
-    else if (kernel.k == 8)
-    {
-        run<Policy, 8>(kernel);
-    }
-    else if (kernel.k == 16)
-    {
-        run<Policy, 16>(kernel);
-    }
-    else if (kernel.k == 32)
-    {
-        run<Policy, 32>(kernel);
-    }
-    else if (kernel.k == 64)
-    {
-        run<Policy, 64>(kernel);
-    }
-    else if (kernel.k == 128)
-    {
-        run<Policy, 128>(kernel);
-    }
-    else
-    {
+    if (!dynamic_switch<2, 4, 8, 16, 32, 64, 128>(kernel.k, [&]<std::size_t K>() {
+        run<Policy, K>(kernel);
+    })) {
         throw std::runtime_error{"Unsupported k value: " + std::to_string(kernel.k)};
     }
 }

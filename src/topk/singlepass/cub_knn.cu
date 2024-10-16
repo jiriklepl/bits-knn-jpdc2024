@@ -7,6 +7,7 @@
 #include <cub/block/block_radix_sort.cuh>
 
 #include "bits/cuda_stream.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/cub_knn.hpp"
 
 #include "bits/topk/bitonic_sort_static.cuh"
@@ -461,50 +462,11 @@ void cub_knn::selection()
 
     constexpr std::size_t BATCH_SIZE = 8;
 
-    if (k() == 32)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 64;
-        cub_kernel<32, THREADS_PER_BLOCK, BATCH_SIZE>
+    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k(), [&]<std::size_t K>() {
+        constexpr std::size_t THREADS_PER_BLOCK = (K <= 256) ? 64 : 128;
+        cub_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
             <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 64)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 64;
-        cub_kernel<64, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 128)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 64;
-        cub_kernel<128, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 256)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 64;
-        cub_kernel<256, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 512)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_kernel<512, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 1024)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_kernel<1024, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 2048)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_kernel<2048, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else
-    {
+    })) {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
@@ -522,50 +484,11 @@ void cub_direct::selection()
 
     constexpr std::size_t BATCH_SIZE = 8;
 
-    if (k() == 32)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 32;
-        cub_direct_kernel<32, THREADS_PER_BLOCK, BATCH_SIZE>
+    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k(), [&]<std::size_t K>() {
+        constexpr std::size_t THREADS_PER_BLOCK = (K <= 32) ? 32 : 128;
+        cub_direct_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
             <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 64)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_direct_kernel<64, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 128)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_direct_kernel<128, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 256)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_direct_kernel<256, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 512)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_direct_kernel<512, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 1024)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_direct_kernel<1024, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else if (k() == 2048)
-    {
-        constexpr std::size_t THREADS_PER_BLOCK = 128;
-        cub_direct_kernel<2048, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    }
-    else
-    {
+    })) {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
