@@ -33,9 +33,7 @@ def plot(file, hostname, jobid):
     data = data.replace({"algorithm": {
         "bits": "bits (our implementation)",
         "warp-select": "WarpSelect",
-        "warp-select-tuned": "WarpSelect with tuned parameters",
         "block-select": "BlockSelect",
-        "block-select-tuned": "BlockSelect with tuned parameters"
     }})
 
     # compute the maximum throughput that is shown in the plot

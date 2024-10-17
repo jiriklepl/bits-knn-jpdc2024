@@ -29,26 +29,10 @@ public:
     void selection() override;
 };
 
-class block_select_tuned : public warp_select
-{
-public:
-    std::string id() const override { return "block-select-tuned"; }
-
-    void selection() override;
-};
-
 class warp_select_tunable : public warp_select
 {
 public:
     std::string id() const override { return "warp-select-tunable"; }
-
-    void selection() override;
-};
-
-class warp_select_tuned : public warp_select
-{
-public:
-    std::string id() const override { return "warp-select-tuned"; }
 
     void selection() override;
 };

@@ -19,8 +19,6 @@ def plot(file, hostname, jobid):
                     (data["phase"] == "selection") &
                     (data["algorithm"].isin([
                             "bits",
-                            "block-select-tuned",
-                            "warp-select-tuned"
                         ])) &
                     (data["point_count"] >= 32 * 1024)]
     # compute throughput
@@ -33,9 +31,7 @@ def plot(file, hostname, jobid):
     data = data.replace({"algorithm": {
         "bits": "bits (our implementation)",
         "warp-select": "WarpSelect",
-        "warp-select-tuned": "WarpSelect with tuned parameters",
         "block-select": "BlockSelect",
-        "block-select-tuned": "BlockSelect with tuned parameters"
     }})
 
     # compute the maximum throughput that is shown in the plot

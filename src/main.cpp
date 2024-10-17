@@ -129,8 +129,6 @@ try
     algorithms.push_back(std::make_unique<block_select>());
     algorithms.push_back(std::make_unique<warp_select_tunable>());
     algorithms.push_back(std::make_unique<block_select_tunable>());
-    algorithms.push_back(std::make_unique<warp_select_tuned>());
-    algorithms.push_back(std::make_unique<block_select_tuned>());
 
     algorithms.push_back(std::make_unique<air_topk>());
     algorithms.push_back(std::make_unique<grid_select>());
