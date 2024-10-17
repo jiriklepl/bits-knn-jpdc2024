@@ -1,4 +1,4 @@
-#include "bits/topk/singlepass/fused_kernel.cuh"
+#include "bits/topk/singlepass/detail/fused_kernel.cuh"
 
 template void fused_kernel_runner::operator()<8, 2, 4, 4>();
 template void fused_kernel_runner::operator()<8, 4, 4, 4>();

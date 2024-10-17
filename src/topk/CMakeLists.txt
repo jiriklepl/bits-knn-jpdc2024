@@ -1,4 +1,6 @@
 set(TOPK_SRC
+    serial_knn.cpp
+    parallel_knn.cpp
     detail/fused_kernel2.cu
     detail/fused_kernel4.cu
     detail/fused_kernel8.cu
@@ -29,8 +31,6 @@ set(TOPK_SRC
     detail/block_select512.cu
     detail/block_select1024.cu
     detail/block_select2048.cu
-    serial_knn.cpp
-    parallel_knn.cpp
 )
 
 target_sources(topk PRIVATE ${TOPK_SRC})

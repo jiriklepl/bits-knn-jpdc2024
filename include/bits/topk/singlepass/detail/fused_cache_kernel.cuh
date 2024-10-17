@@ -24,6 +24,9 @@
                            k>,                                                                     \
         dim3, dim3)
 
+namespace
+{
+
 template <class Kernel>
 __global__ void __launch_bounds__(Kernel::BLOCK_SIZE, Kernel::MIN_BLOCKS_PER_SM)
     launch_fused_cache(Kernel kernel)
@@ -33,6 +36,8 @@ __global__ void __launch_bounds__(Kernel::BLOCK_SIZE, Kernel::MIN_BLOCKS_PER_SM)
     kernel.set_tmp_storage(reinterpret_cast<typename Kernel::tmp_storage_t*>(shm));
     kernel.run();
 }
+
+} // namespace
 
 template <class Kernel>
 void launch_fused_cache(Kernel kernel, dim3 grid, dim3 block)

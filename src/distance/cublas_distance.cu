@@ -27,6 +27,7 @@ __global__ void squared_length_kernel(array_view<float, 2> points, float* length
     const auto points_count = points.size(POINTS_DIM);
     const auto dim = points.size(OTHER_DIM);
     const auto idx = blockIdx.x * blockDim.x + threadIdx.x;
+
     if (idx >= points_count)
     {
         return;

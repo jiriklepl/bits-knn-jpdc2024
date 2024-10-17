@@ -7,7 +7,7 @@
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 
-struct fused_tc_kernel_half_policy
+struct fused_tc_half_policy
 {
     using input_t = half;
     using output_t = float;
@@ -33,7 +33,7 @@ struct fused_tc_kernel_half_policy
     static __forceinline__ __host__ __device__ input_t zero_input() { return __float2half(0.0f); }
 };
 
-struct fused_tc_kernel_bfloat16_policy
+struct fused_tc_bfloat16_policy
 {
     using input_t = __nv_bfloat16;
     using output_t = float;
@@ -62,7 +62,7 @@ struct fused_tc_kernel_bfloat16_policy
     }
 };
 
-struct fused_tc_kernel_double_policy
+struct fused_tc_double_policy
 {
     using input_t = double;
     using output_t = double;

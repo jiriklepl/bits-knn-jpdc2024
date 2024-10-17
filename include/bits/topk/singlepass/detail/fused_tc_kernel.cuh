@@ -1,5 +1,5 @@
-#ifndef FUSED_TC_KERNEL_CUH_
-#define FUSED_TC_KERNEL_CUH_
+#ifndef DETAIL_FUSED_TC_KERNEL_CUH_
+#define DETAIL_FUSED_TC_KERNEL_CUH_
 
 #include <algorithm>
 #include <cassert>
@@ -17,9 +17,12 @@
 
 #include "bits/array_view.hpp"
 #include "bits/knn.hpp"
+#include "bits/topk/singlepass/fused_tc_kernel_runner.hpp"
+#include "bits/topk/singlepass/fused_tc_policy.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
-#include "bits/topk/singlepass/fused_tc_policy.hpp"
+
+namespace {
 
 /** Merge `ARRAY_COUNT` buffers in shared memory with top k results.
  *
@@ -186,8 +189,8 @@ fused_tc_kernel(array_view<typename Policy::input_t, 2> points, array_view<float
     constexpr std::int32_t CUDA_ARCH{0};
 #endif
     if constexpr (CUDA_ARCH < 800 &&
-                  (std::is_same<Policy, fused_tc_kernel_bfloat16_policy>::value ||
-                   std::is_same<Policy, fused_tc_kernel_double_policy>::value))
+                  (std::is_same<Policy, fused_tc_bfloat16_policy>::value ||
+                   std::is_same<Policy, fused_tc_double_policy>::value))
     {
         // not supported
         asm volatile("trap;");
@@ -442,153 +445,42 @@ fused_tc_kernel(array_view<typename Policy::input_t, 2> points, array_view<float
     }
 }
 
-/** Run the fused kernel.
+} // namespace
+
+/** Run the fused tensor core kernel.
  */
 template <typename Policy>
-struct fused_tc_kernel_runner
+template <std::int32_t K, std::int32_t BLOCK_SIZE>
+void fused_tc_kernel_runner<Policy>::operator()()
 {
-    /** Matrix of the database vectors on the GPU.
-     */
-    array_view<float, 2> points;
 
-    /** Matrix of the query vectors on the GPU.
-     */
-    array_view<float, 2> queries;
+    const auto dim = points.size(1);
+    const auto point_count = points.size(0);
+    const auto query_count = queries.size(0);
 
-    /** Top k distances for each query.
-     */
-    array_view<float, 2> out_dist;
+    constexpr auto PTILE_SIZE = Policy::POINT_TILE_SIZE * Policy::DIM_TILE_SIZE;
+    constexpr auto QTILE_SIZE = Policy::QUERY_TILE_SIZE * Policy::DIM_TILE_SIZE;
 
-    /** Top k labels for each query.
-     */
-    array_view<std::int32_t, 2> out_label;
+    const auto aligned_point_count = (point_count + PTILE_SIZE - 1) / PTILE_SIZE * PTILE_SIZE;
+    const auto aligned_query_count = (query_count + QTILE_SIZE - 1) / QTILE_SIZE * QTILE_SIZE;
 
-    array_view<typename Policy::input_t, 2> in_points;
-    array_view<typename Policy::input_t, 2> in_queries;
+    constexpr std::int32_t QUERY_BATCH = Policy::QUERY_TILE_SIZE;
+    constexpr std::int32_t POINT_BATCH =
+        BLOCK_SIZE / 32 * Policy::POINT_TILE_SIZE * Policy::QUERY_TILE_SIZE / QUERY_BATCH;
 
-    array_view<typename Policy::input_t, 2> in_point_residues;
-    array_view<typename Policy::input_t, 2> in_query_residues;
+    constexpr dim3 block(QUERY_BATCH, BLOCK_SIZE / QUERY_BATCH);
+    const dim3 grid((query_count + QUERY_BATCH - 1) / QUERY_BATCH, 1);
 
-    array_view<float, 1> in_point_norms;
-    array_view<float, 1> in_query_norms;
+    // prepare the input
+    prepare_points<256, Policy, Policy::POINT_TILE_SIZE>
+        <<<(aligned_point_count + 255) / 256, 256>>>(points, in_points, in_point_norms);
+    prepare_points<256, Policy, Policy::QUERY_TILE_SIZE>
+        <<<(aligned_query_count + 255) / 256, 256>>>(queries, in_queries, in_query_norms);
 
-    /** Size of the output.
-     */
-    std::size_t k;
+    // call the kernel
+    fused_tc_kernel<K, QUERY_BATCH, POINT_BATCH, BLOCK_SIZE, Policy>
+        <<<grid, block>>>(in_points, in_point_norms, in_queries, in_query_norms, out_dist,
+                            out_label, dim, point_count, query_count);
+}
 
-    /** Number of threads in each thread block.
-     */
-    std::size_t block_size;
-
-    /** TODO: Add description.
-     */
-    template <std::int32_t K, std::int32_t BLOCK_SIZE>
-    void operator()()
-    {
-
-        const auto dim = points.size(1);
-        const auto point_count = points.size(0);
-        const auto query_count = queries.size(0);
-
-        constexpr auto PTILE_SIZE = Policy::POINT_TILE_SIZE * Policy::DIM_TILE_SIZE;
-        constexpr auto QTILE_SIZE = Policy::QUERY_TILE_SIZE * Policy::DIM_TILE_SIZE;
-
-        const auto aligned_point_count = (point_count + PTILE_SIZE - 1) / PTILE_SIZE * PTILE_SIZE;
-        const auto aligned_query_count = (query_count + QTILE_SIZE - 1) / QTILE_SIZE * QTILE_SIZE;
-
-        constexpr std::int32_t QUERY_BATCH = Policy::QUERY_TILE_SIZE;
-        constexpr std::int32_t POINT_BATCH =
-            BLOCK_SIZE / 32 * Policy::POINT_TILE_SIZE * Policy::QUERY_TILE_SIZE / QUERY_BATCH;
-
-        constexpr dim3 block(QUERY_BATCH, BLOCK_SIZE / QUERY_BATCH);
-        const dim3 grid((query_count + QUERY_BATCH - 1) / QUERY_BATCH, 1);
-
-        // prepare the input
-        prepare_points<256, Policy, Policy::POINT_TILE_SIZE>
-            <<<(aligned_point_count + 255) / 256, 256>>>(points, in_points, in_point_norms);
-        prepare_points<256, Policy, Policy::QUERY_TILE_SIZE>
-            <<<(aligned_query_count + 255) / 256, 256>>>(queries, in_queries, in_query_norms);
-
-        // call the kernel
-        fused_tc_kernel<K, QUERY_BATCH, POINT_BATCH, BLOCK_SIZE, Policy>
-            <<<grid, block>>>(in_points, in_point_norms, in_queries, in_query_norms, out_dist,
-                              out_label, dim, point_count, query_count);
-    }
-};
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<2, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<4, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<8, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<16, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<32, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<64, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<128, 128>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<2, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<4, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<8, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<16, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<32, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<64, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<128, 256>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<2, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<4, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<8, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<16, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<32, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<64, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_half_policy>::operator()<128, 512>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<2, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<4, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<8, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<16, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<32, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<64, 128>();
-extern template void
-fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<128, 128>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<2, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<4, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<8, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<16, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<32, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<64, 256>();
-extern template void
-fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<128, 256>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<2, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<4, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<8, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<16, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<32, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<64, 512>();
-extern template void
-fused_tc_kernel_runner<fused_tc_kernel_bfloat16_policy>::operator()<128, 512>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<2, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<4, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<8, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<16, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<32, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<64, 128>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<128, 128>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<2, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<4, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<8, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<16, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<32, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<64, 256>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<128, 256>();
-
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<2, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<4, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<8, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<16, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<32, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<64, 512>();
-extern template void fused_tc_kernel_runner<fused_tc_kernel_double_policy>::operator()<128, 512>();
-
-#endif // FUSED_TC_KERNEL_CUH_
+#endif // DETAIL_FUSED_TC_KERNEL_CUH_

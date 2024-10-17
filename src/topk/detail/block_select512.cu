@@ -1,5 +1,14 @@
-#include "bits/topk/singlepass/block_select_runner.cuh"
+#include "bits/topk/singlepass/detail/block_select.cuh"
 
+template void block_select_runner::operator()<64, 2, 512>();
+template void block_select_runner::operator()<64, 3, 512>();
+template void block_select_runner::operator()<64, 4, 512>();
+template void block_select_runner::operator()<64, 5, 512>();
+template void block_select_runner::operator()<64, 6, 512>();
+template void block_select_runner::operator()<64, 7, 512>();
+template void block_select_runner::operator()<64, 8, 512>();
+template void block_select_runner::operator()<64, 9, 512>();
+template void block_select_runner::operator()<64, 10, 512>();
 template void block_select_runner::operator()<128, 2, 512>();
 template void block_select_runner::operator()<128, 3, 512>();
 template void block_select_runner::operator()<128, 4, 512>();

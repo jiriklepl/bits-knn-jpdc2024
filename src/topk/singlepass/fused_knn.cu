@@ -5,10 +5,10 @@
 
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
+#include "bits/topk/singlepass/fused_kernel_runner.hpp"
 #include "bits/topk/singlepass/fused_knn.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
-#include "bits/topk/singlepass/fused_kernel.cuh"
 
 namespace
 {

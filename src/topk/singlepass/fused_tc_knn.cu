@@ -6,11 +6,11 @@
 #include "bits/cuda_stream.hpp"
 #include "bits/dynamic_switch.hpp"
 #include "bits/knn.hpp"
+#include "bits/topk/singlepass/fused_tc_kernel_runner.hpp"
 #include "bits/topk/singlepass/fused_tc_knn.hpp"
 #include "bits/topk/singlepass/fused_tc_policy.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
-#include "bits/topk/singlepass/fused_tc_kernel.cuh"
 
 namespace
 {
@@ -99,11 +99,11 @@ void fused_tc_knn<Policy>::selection()
     cuda_stream::make_default().sync();
 }
 
-template void fused_tc_knn<fused_tc_kernel_half_policy>::initialize(const knn_args& args);
-template void fused_tc_knn<fused_tc_kernel_half_policy>::selection();
+template void fused_tc_knn<fused_tc_half_policy>::initialize(const knn_args& args);
+template void fused_tc_knn<fused_tc_half_policy>::selection();
 
-template void fused_tc_knn<fused_tc_kernel_bfloat16_policy>::initialize(const knn_args& args);
-template void fused_tc_knn<fused_tc_kernel_bfloat16_policy>::selection();
+template void fused_tc_knn<fused_tc_bfloat16_policy>::initialize(const knn_args& args);
+template void fused_tc_knn<fused_tc_bfloat16_policy>::selection();
 
-template void fused_tc_knn<fused_tc_kernel_double_policy>::initialize(const knn_args& args);
-template void fused_tc_knn<fused_tc_kernel_double_policy>::selection();
+template void fused_tc_knn<fused_tc_double_policy>::initialize(const knn_args& args);
+template void fused_tc_knn<fused_tc_double_policy>::selection();

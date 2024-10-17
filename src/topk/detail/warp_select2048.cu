@@ -1,5 +1,14 @@
-#include "bits/topk/singlepass/warp_select_runner.cuh"
+#include "bits/topk/singlepass/detail/warp_select.cuh"
 
+template void warp_select_runner::operator()<64, 2, 2048>();
+template void warp_select_runner::operator()<64, 3, 2048>();
+template void warp_select_runner::operator()<64, 4, 2048>();
+template void warp_select_runner::operator()<64, 5, 2048>();
+template void warp_select_runner::operator()<64, 6, 2048>();
+template void warp_select_runner::operator()<64, 7, 2048>();
+template void warp_select_runner::operator()<64, 8, 2048>();
+template void warp_select_runner::operator()<64, 9, 2048>();
+template void warp_select_runner::operator()<64, 10, 2048>();
 template void warp_select_runner::operator()<128, 2, 2048>();
 template void warp_select_runner::operator()<128, 3, 2048>();
 template void warp_select_runner::operator()<128, 4, 2048>();

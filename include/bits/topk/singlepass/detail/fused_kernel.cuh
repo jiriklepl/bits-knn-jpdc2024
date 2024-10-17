@@ -12,8 +12,11 @@
 
 #include "bits/array_view.hpp"
 #include "bits/knn.hpp"
+#include "bits/topk/singlepass/fused_kernel_runner.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
+
+namespace {
 
 /** Merge `ARRAY_COUNT` buffers in shared memory with top k results.
  *
@@ -417,170 +420,44 @@ __global__ void fused_kernel(array_view<float, 2> queries, array_view<float, 2> 
     }
 }
 
-/** Run the fused kernel.
- */
-struct fused_kernel_runner
-{
-    /** Matrix of the database vectors on the GPU.
-     */
-    array_view<float, 2> points;
+} // namespace
 
-    /** Matrix of the query vectors on the GPU.
-     */
-    array_view<float, 2> queries;
-
-    /** Top k distances for each query.
-     */
-    array_view<float, 2> out_dist;
-
-    /** Top k labels for each query.
-     */
-    array_view<std::int32_t, 2> out_label;
-
-    /** Size of the output.
-     */
-    std::size_t k;
-
-    /** Number of threads in each thread block.
-     */
-    std::size_t block_size;
-
-    /** Items per thread from command line.
-     *
-     * The first item is the number of registers for queries. The second item is the number of
-     * registers for database vectors.
-     */
-    std::array<std::size_t, 3> items_per_thread;
-
-    /** Run the fused kernel.
-     *
-     * @tparam K the size of the output.
-     * @tparam REG_QUERY_COUNT number of registers for queries.
-     * @tparam REG_POINT_COUNT number of registers for database vectors.
-     * @tparam BLOCK_QUERY_DIM size of each thread block along the query dimension. All thread
-     * blocks have 128 threads in total.
-     */
-    template <std::int32_t K, std::int32_t REG_QUERY_COUNT, std::int32_t REG_POINT_COUNT,
+template <std::int32_t K, std::int32_t REG_QUERY_COUNT, std::int32_t REG_POINT_COUNT,
               std::int32_t BLOCK_QUERY_DIM>
-    void operator()()
+void fused_kernel_runner::operator()()
+{
+    constexpr std::int32_t BLOCK_POINT_DIM = 128 / BLOCK_QUERY_DIM;
+    constexpr std::int32_t QUERIES_PER_BLOCK = REG_QUERY_COUNT * BLOCK_QUERY_DIM;
+    constexpr std::int32_t POINTS_PER_BLOCK = REG_POINT_COUNT * BLOCK_POINT_DIM;
+    constexpr std::int32_t DIM_BLOCK = 1;
+
+    // the configuration doesn't match the template parameters
+    if (k != K || block_size != BLOCK_QUERY_DIM || items_per_thread[0] != REG_QUERY_COUNT ||
+        items_per_thread[1] != REG_POINT_COUNT)
     {
-        constexpr std::int32_t BLOCK_POINT_DIM = 128 / BLOCK_QUERY_DIM;
-        constexpr std::int32_t QUERIES_PER_BLOCK = REG_QUERY_COUNT * BLOCK_QUERY_DIM;
-        constexpr std::int32_t POINTS_PER_BLOCK = REG_POINT_COUNT * BLOCK_POINT_DIM;
-        constexpr std::int32_t DIM_BLOCK = 1;
-
-        // the configuration doesn't match the template parameters
-        if (k != K || block_size != BLOCK_QUERY_DIM || items_per_thread[0] != REG_QUERY_COUNT ||
-            items_per_thread[1] != REG_POINT_COUNT)
-        {
-            return;
-        }
-
-        const auto dim = points.size(0);
-        const auto point_count = points.size(1);
-        const auto query_count = queries.size(1);
-
-        const dim3 block(BLOCK_QUERY_DIM, BLOCK_POINT_DIM);
-        const dim3 grid((query_count + QUERIES_PER_BLOCK - 1) / QUERIES_PER_BLOCK, 1);
-
-        // compute size of the shared memory
-        const std::int32_t topk_matrix_size =
-            K * QUERIES_PER_BLOCK * (sizeof(float) + sizeof(std::int32_t));
-        const std::int32_t query_window_size = dim * QUERIES_PER_BLOCK * sizeof(float);
-        const std::int32_t point_window_size = dim * POINTS_PER_BLOCK * sizeof(float);
-        const std::int32_t buffer_length_size = QUERIES_PER_BLOCK * sizeof(std::int32_t);
-        const std::int32_t shm_size =
-            query_window_size + point_window_size + topk_matrix_size + buffer_length_size;
-
-        // call the kernel
-        fused_kernel<REG_POINT_COUNT, REG_QUERY_COUNT, DIM_BLOCK, K, BLOCK_QUERY_DIM,
-                     BLOCK_POINT_DIM><<<grid, block, shm_size>>>(
-            queries, points, out_dist, out_label, dim, point_count, query_count);
+        return; // TODO: throw an exception
     }
-};
 
-extern template void fused_kernel_runner::operator()<2, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<2, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<2, 8, 4, 4>();
+    const auto dim = points.size(0);
+    const auto point_count = points.size(1);
+    const auto query_count = queries.size(1);
 
-extern template void fused_kernel_runner::operator()<2, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<2, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<2, 8, 4, 8>();
+    const dim3 block(BLOCK_QUERY_DIM, BLOCK_POINT_DIM);
+    const dim3 grid((query_count + QUERIES_PER_BLOCK - 1) / QUERIES_PER_BLOCK, 1);
 
-extern template void fused_kernel_runner::operator()<2, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<2, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<2, 8, 4, 16>();
+    // compute size of the shared memory
+    const std::int32_t topk_matrix_size =
+        K * QUERIES_PER_BLOCK * (sizeof(float) + sizeof(std::int32_t));
+    const std::int32_t query_window_size = dim * QUERIES_PER_BLOCK * sizeof(float);
+    const std::int32_t point_window_size = dim * POINTS_PER_BLOCK * sizeof(float);
+    const std::int32_t buffer_length_size = QUERIES_PER_BLOCK * sizeof(std::int32_t);
+    const std::int32_t shm_size =
+        query_window_size + point_window_size + topk_matrix_size + buffer_length_size;
 
-extern template void fused_kernel_runner::operator()<4, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<4, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<4, 8, 4, 4>();
-
-extern template void fused_kernel_runner::operator()<4, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<4, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<4, 8, 4, 8>();
-
-extern template void fused_kernel_runner::operator()<4, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<4, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<4, 8, 4, 16>();
-
-extern template void fused_kernel_runner::operator()<8, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<8, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<8, 8, 4, 4>();
-
-extern template void fused_kernel_runner::operator()<8, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<8, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<8, 8, 4, 8>();
-
-extern template void fused_kernel_runner::operator()<8, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<8, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<8, 8, 4, 16>();
-
-extern template void fused_kernel_runner::operator()<16, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<16, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<16, 8, 4, 4>();
-
-extern template void fused_kernel_runner::operator()<16, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<16, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<16, 8, 4, 8>();
-
-extern template void fused_kernel_runner::operator()<16, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<16, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<16, 8, 4, 16>();
-
-extern template void fused_kernel_runner::operator()<32, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<32, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<32, 8, 4, 4>();
-
-extern template void fused_kernel_runner::operator()<32, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<32, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<32, 8, 4, 8>();
-
-extern template void fused_kernel_runner::operator()<32, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<32, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<32, 8, 4, 16>();
-
-extern template void fused_kernel_runner::operator()<64, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<64, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<64, 8, 4, 4>();
-
-extern template void fused_kernel_runner::operator()<64, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<64, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<64, 8, 4, 8>();
-
-extern template void fused_kernel_runner::operator()<64, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<64, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<64, 8, 4, 16>();
-
-extern template void fused_kernel_runner::operator()<128, 2, 4, 4>();
-extern template void fused_kernel_runner::operator()<128, 4, 4, 4>();
-extern template void fused_kernel_runner::operator()<128, 8, 4, 4>();
-
-extern template void fused_kernel_runner::operator()<128, 2, 4, 8>();
-extern template void fused_kernel_runner::operator()<128, 4, 4, 8>();
-extern template void fused_kernel_runner::operator()<128, 8, 4, 8>();
-
-extern template void fused_kernel_runner::operator()<128, 2, 4, 16>();
-extern template void fused_kernel_runner::operator()<128, 4, 4, 16>();
-extern template void fused_kernel_runner::operator()<128, 8, 4, 16>();
+    // call the kernel
+    fused_kernel<REG_POINT_COUNT, REG_QUERY_COUNT, DIM_BLOCK, K, BLOCK_QUERY_DIM,
+                    BLOCK_POINT_DIM><<<grid, block, shm_size>>>(
+        queries, points, out_dist, out_label, dim, point_count, query_count);
+}
 
 #endif // FUSED_KERNEL_CUH_

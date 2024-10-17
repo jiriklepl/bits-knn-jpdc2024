@@ -19,6 +19,8 @@
 #include "bits/topk/bitonic_sort_regs.cuh"
 #include "bits/transpose.cuh"
 
+namespace {
+
 /** Broadcast the largest value in a sorted, block-wide register array @p topk
  *
  * @tparam K Size of the block-wide array @p topk
@@ -474,6 +476,8 @@ bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
         }
     }
 }
+
+} // namespace
 
 /** Declare an instantiation of the bits kernel.
  */

@@ -35,17 +35,17 @@ protected:
     cuda_array<float, 1> in_query_norms_gpu_;
 };
 
-class fused_tc_half_knn : public fused_tc_knn<fused_tc_kernel_half_policy>
+class fused_tc_half_knn : public fused_tc_knn<fused_tc_half_policy>
 {
     std::string id() const override { return "fused-tc-half"; }
 };
 
-class fused_tc_bfloat16_knn : public fused_tc_knn<fused_tc_kernel_bfloat16_policy>
+class fused_tc_bfloat16_knn : public fused_tc_knn<fused_tc_bfloat16_policy>
 {
     std::string id() const override { return "fused-tc-bfloat16"; }
 };
 
-class fused_tc_double_knn : public fused_tc_knn<fused_tc_kernel_double_policy>
+class fused_tc_double_knn : public fused_tc_knn<fused_tc_double_policy>
 {
     std::string id() const override { return "fused-tc-double"; }
 };
