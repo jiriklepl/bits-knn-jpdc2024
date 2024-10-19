@@ -10,6 +10,8 @@
 #include "bits/topk/singlepass/fused_tc_knn.hpp"
 #include "bits/topk/singlepass/fused_tc_policy.hpp"
 
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
+
 #include "bits/topk/bitonic_sort_regs.cuh"
 
 namespace
@@ -32,7 +34,7 @@ void run(fused_tc_kernel_runner<Policy>& kernel)
 template <typename Policy>
 void run(fused_tc_kernel_runner<Policy>& kernel)
 {
-    if (!dynamic_switch<2, 4, 8, 16, 32, 64, 128>(kernel.k, [&]<std::size_t K>() {
+    if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_K_VALUES>(kernel.k, [&]<std::size_t K>() {
         run<Policy, K>(kernel);
     })) {
         throw std::runtime_error{"Unsupported k value: " + std::to_string(kernel.k)};

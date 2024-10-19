@@ -101,9 +101,9 @@ add_library(dist-minimal SHARED)
 add_library(topk SHARED)
 add_library(topk-multipass-all SHARED)
 add_library(topk-multipass-minimal SHARED)
-add_library(topk-singlepass SHARED)
-add_library(topk-singlepass-detail-all SHARED)
-add_library(topk-singlepass-detail-minimal SHARED)
+add_library(topk-singlepass-all SHARED)
+add_library(topk-singlepass-minimal SHARED)
+# add_library(topk-singlepass-test SHARED)
 
 add_executable(knn ${SRC_DIR}/main.cpp)
 add_executable(knn-minimal ${SRC_DIR}/main.cpp)
@@ -142,6 +142,6 @@ add_subdirectory(${SRC_DIR}/topk/multipass)
 add_subdirectory(${TEST_DIR})
 
 # link
-target_link_libraries(knn PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-multipass-all topk-singlepass topk-singlepass-detail-all)
-target_link_libraries(knn-minimal PRIVATE ${KNN_LIBRARIES} knn-static dist-minimal topk topk-multipass-minimal topk-singlepass topk-singlepass-detail-minimal)
-target_link_libraries(test PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-singlepass Catch2::Catch2WithMain)
+target_link_libraries(knn PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-multipass-all topk-singlepass-all)
+target_link_libraries(knn-minimal PRIVATE ${KNN_LIBRARIES} knn-static dist-minimal topk topk-multipass-minimal topk-singlepass-minimal)
+target_link_libraries(test PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-singlepass-all Catch2::Catch2WithMain) # TODO: add topk-singlepass-test

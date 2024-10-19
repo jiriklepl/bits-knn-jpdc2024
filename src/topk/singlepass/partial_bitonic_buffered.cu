@@ -11,6 +11,8 @@
 #include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
 
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
+
 #include "bits/ptx_utils.cuh"
 #include "bits/topk/bitonic_sort.cuh"
 #include "bits/topk/bitonic_sort_static.cuh"
@@ -366,7 +368,7 @@ void static_buffered_partial_bitonic::selection()
     // prefetch the next batch of distances
     constexpr bool PREFETCH_NEXT_BATCH = false;
 
-    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k(), [=]<std::size_t K>() {
+    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k(), [=]<std::size_t K>() {
         if (!dynamic_switch<128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
             constexpr std::size_t BATCH_SIZE = 2;
             buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, K, BlockSize, BATCH_SIZE>

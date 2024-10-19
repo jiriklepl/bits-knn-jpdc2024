@@ -10,6 +10,8 @@
 #include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/cub_knn.hpp"
 
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
+
 #include "bits/topk/bitonic_sort_static.cuh"
 
 namespace
@@ -462,7 +464,7 @@ void cub_knn::selection()
 
     constexpr std::size_t BATCH_SIZE = 8;
 
-    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k(), [&]<std::size_t K>() {
+    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k(), [&]<std::size_t K>() {
         constexpr std::size_t THREADS_PER_BLOCK = (K <= 256) ? 64 : 128;
         cub_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
             <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
@@ -484,7 +486,7 @@ void cub_direct::selection()
 
     constexpr std::size_t BATCH_SIZE = 8;
 
-    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(k(), [&]<std::size_t K>() {
+    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k(), [&]<std::size_t K>() {
         constexpr std::size_t THREADS_PER_BLOCK = (K <= 32) ? 32 : 128;
         cub_direct_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
             <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);

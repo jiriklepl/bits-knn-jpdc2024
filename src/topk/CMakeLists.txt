@@ -17,6 +17,7 @@ set(TOPK_SRC
     detail/fused_tc_kernel_double_128.cu
     detail/fused_tc_kernel_double_256.cu
     detail/fused_tc_kernel_double_512.cu
+    detail/warp_select16.cu
     detail/warp_select32.cu
     detail/warp_select64.cu
     detail/warp_select128.cu
@@ -24,6 +25,7 @@ set(TOPK_SRC
     detail/warp_select512.cu
     detail/warp_select1024.cu
     detail/warp_select2048.cu
+    detail/block_select16.cu
     detail/block_select32.cu
     detail/block_select64.cu
     detail/block_select128.cu

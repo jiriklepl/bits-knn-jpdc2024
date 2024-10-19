@@ -9,6 +9,8 @@
 #include "bits/topk/singlepass/fused_cache_kernel.hpp"
 #include "bits/topk/singlepass/fused_cache_knn.hpp"
 
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
+
 #include "bits/topk/singlepass/fused_cache_kernel_structs.cuh"
 
 namespace
@@ -61,7 +63,7 @@ struct fused_cache
               std::int32_t QUERY_BLOCK_DIM, std::int32_t DIM_MULT>
     void run(std::int32_t k)
     {
-        if (!dynamic_switch<4, 8, 16, 32, 64, 128>(k, [&]<std::size_t K>() {
+        if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_CACHE_K_VALUES>(k, [&]<std::size_t K>() {
             run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, K>();
         })) {
             throw std::runtime_error("Unsupported k value: " + std::to_string(k));

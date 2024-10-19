@@ -10,6 +10,8 @@
 #include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/warp_select.hpp"
 
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
+
 #include "bits/topk/singlepass/block_select_runner.cuh"
 #include "bits/topk/singlepass/warp_select_runner.cuh"
 
@@ -199,7 +201,7 @@ void warp_select_tunable::selection()
 
     if (!dynamic_switch<64, 128>(run.block_size, [=, &run]<std::size_t BlockSize>() {
             if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>(run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
-                    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(run.k, [=, &run]<std::size_t K>() {
+                    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(run.k, [=, &run]<std::size_t K>() {
                             run.template operator()<BlockSize, ThreadQueueSize, K>();
                         })) {
                         throw std::runtime_error{"Unsupported k value: " + std::to_string(run.k)};
@@ -228,7 +230,7 @@ void block_select_tunable::selection()
 
     if (!dynamic_switch<64, 128>(run.block_size, [=, &run]<std::size_t BlockSize>() {
             if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>(run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
-                    if (!dynamic_switch<32, 64, 128, 256, 512, 1024, 2048>(run.k, [=, &run]<std::size_t K>() {
+                    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(run.k, [=, &run]<std::size_t K>() {
                             run.template operator()<BlockSize, ThreadQueueSize, K>();
                         })) {
                         throw std::runtime_error{"Unsupported k value: " + std::to_string(run.k)};

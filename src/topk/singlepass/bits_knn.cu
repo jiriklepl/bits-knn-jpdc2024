@@ -11,6 +11,8 @@
 #include "bits/topk/singlepass/bits_kernel.hpp"
 #include "bits/topk/singlepass/bits_knn.hpp"
 
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
+
 namespace
 {
 
@@ -28,7 +30,7 @@ struct bits
     {
         if (!dynamic_switch<128, 256, 512>(block_size, [=, *this]<std::size_t BlockSize>() {
             if (!dynamic_switch<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16>(batch_size, [=, *this]<std::size_t BatchSize>() {
-                if (k <= 0 || !dynamic_switch_le<16, 32, 64, 128, 256, 512, 1024, 2048>(k, [=, *this]<std::size_t K>() {
+                if (k <= 0 || !dynamic_switch_le<TOPK_SINGLEPASS_K_VALUES>(k, [=, *this]<std::size_t K>() {
                     run_bits_kernel<PREFETCH, ADD_NORMS, BlockSize, BatchSize, K>(
                         in_dist, in_label, out_dist, out_label, k, label_offsets, norms);
                 })) {

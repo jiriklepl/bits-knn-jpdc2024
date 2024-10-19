@@ -5,8 +5,11 @@
 
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/fused_kernel_runner.hpp"
 #include "bits/topk/singlepass/fused_knn.hpp"
+
+#include "bits/topk/singlepass/detail/definitions_common.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
 
@@ -18,19 +21,9 @@ namespace
 template <std::size_t K, std::int32_t REG_QUERY_COUNT, std::int32_t REG_POINT_COUNT>
 void run(fused_kernel_runner& kernel)
 {
-    if (kernel.block_size == 4)
-    {
-        kernel.operator()<K, REG_QUERY_COUNT, REG_POINT_COUNT, 4>();
-    }
-    else if (kernel.block_size == 8)
-    {
-        kernel.operator()<K, REG_QUERY_COUNT, REG_POINT_COUNT, 8>();
-    }
-    else if (kernel.block_size == 16)
-    {
-        kernel.operator()<K, REG_QUERY_COUNT, REG_POINT_COUNT, 16>();
-    }
-    else
+    if (!dynamic_switch<4, 8, 16>(kernel.block_size, [&]<std::size_t BLOCK_SIZE>() {
+        kernel.template operator()<K, REG_QUERY_COUNT, REG_POINT_COUNT, BLOCK_SIZE>();
+    }))
     {
         throw std::runtime_error{"Unsupported block size: " + std::to_string(kernel.block_size)};
     }
@@ -41,11 +34,9 @@ void run(fused_kernel_runner& kernel)
 template <std::size_t K, std::int32_t REG_QUERY_COUNT>
 void run(fused_kernel_runner& kernel)
 {
-    if (kernel.items_per_thread[1] == 4)
-    {
-        run<K, REG_QUERY_COUNT, 4>(kernel);
-    }
-    else
+    if (!dynamic_switch<4>(kernel.items_per_thread[1], [&]<std::size_t REG_POINT_COUNT>() {
+        run<K, REG_QUERY_COUNT, REG_POINT_COUNT>(kernel);
+    }))
     {
         throw std::runtime_error{"Unsupported point register count: " +
                                  std::to_string(kernel.items_per_thread[1])};
@@ -57,19 +48,9 @@ void run(fused_kernel_runner& kernel)
 template <std::size_t K>
 void run(fused_kernel_runner& kernel)
 {
-    if (kernel.items_per_thread[0] == 2)
-    {
-        run<K, 2>(kernel);
-    }
-    else if (kernel.items_per_thread[0] == 4)
-    {
-        run<K, 4>(kernel);
-    }
-    else if (kernel.items_per_thread[0] == 8)
-    {
-        run<K, 8>(kernel);
-    }
-    else
+    if (!dynamic_switch<2, 4, 8>(kernel.items_per_thread[0], [&]<std::size_t REG_QUERY_COUNT>() {
+        run<K, REG_QUERY_COUNT>(kernel);
+    }))
     {
         throw std::runtime_error{"Unsupported query register count: " +
                                  std::to_string(kernel.items_per_thread[0])};
@@ -80,35 +61,9 @@ void run(fused_kernel_runner& kernel)
  */
 void run(fused_kernel_runner& kernel)
 {
-    if (kernel.k == 2)
-    {
-        run<2>(kernel);
-    }
-    else if (kernel.k == 4)
-    {
-        run<4>(kernel);
-    }
-    else if (kernel.k == 8)
-    {
-        run<8>(kernel);
-    }
-    else if (kernel.k == 16)
-    {
-        run<16>(kernel);
-    }
-    else if (kernel.k == 32)
-    {
-        run<32>(kernel);
-    }
-    else if (kernel.k == 64)
-    {
-        run<64>(kernel);
-    }
-    else if (kernel.k == 128)
-    {
-        run<128>(kernel);
-    }
-    else
+    if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_K_VALUES>(kernel.k, [&]<std::size_t K>() {
+        run<K>(kernel);
+    }))
     {
         throw std::runtime_error{"Unsupported k value: " + std::to_string(kernel.k)};
     }
