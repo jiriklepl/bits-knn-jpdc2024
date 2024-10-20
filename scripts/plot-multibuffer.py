@@ -41,16 +41,16 @@ def plot(files, hostname):
         baseline_name = "baseline"
     elif "partial-bitonic-regs" in data["algorithm"].unique():
         data = data.replace({"algorithm": {
-            "partial-bitonic-regs": "sort in regs",
+            "partial-bitonic-regs": "sort in regs (any data)",
             "bits" : "bits",
         }})
-        baseline_name = "sort in regs"
+        baseline_name = "sort in regs (any data)"
     else:
         raise ValueError("Unknown data")
 
-    data["dataset"] = data["generator"]
-    data.loc[data["preprocessor"] == "ascending", "dataset"] += "-asc"
-    data.loc[data["preprocessor"] == "descending", "dataset"] += "-desc"
+    data["dataset"] = "random"
+    data.loc[data["preprocessor"] == "ascending", "dataset"] = "ascending"
+    data.loc[data["preprocessor"] == "descending", "dataset"] = "descending"
 
     data.loc[data["algorithm"] != baseline_name, "algorithm"] += " (" + data.loc[data["algorithm"] != baseline_name, "dataset"] + " data)"
 

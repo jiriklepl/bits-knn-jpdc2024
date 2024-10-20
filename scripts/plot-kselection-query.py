@@ -12,18 +12,15 @@ kselection_files = glob.glob("data/kselection-query-*-*.csv")
 fused_files = glob.glob("data/fused-*-*.csv")
 
 # MEMORY_FLOAT_THROUGHPUT (0 : do not plot theoretical throughput)
-def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, MEMORY_FLOAT_THROUGHPUT : float):
+def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max_throughput : float, MEMORY_FLOAT_THROUGHPUT : float):
     i = 0
     for alg in algorithms:
         ax.plot(df.loc[df["algorithm"] == alg]["k"].astype(str), df.loc[df["algorithm"] == alg]["throughput"], utils.SHAPES[i] + '-', label=alg, color=utils.COLORS[i])
 
-        # alg_max_throughput = df.loc[df["algorithm"] == alg]["throughput"].max()
-        # ax.axhline(y=alg_max_throughput, linestyle=':', color=utils.COLORS[i], alpha=0.5, label=None)
-
         i += 1
 
     if MEMORY_FLOAT_THROUGHPUT > 0:
-        ax.axhline(y=MEMORY_FLOAT_THROUGHPUT, color='black', linestyle='--', label='Throughput at memory bandwidth')
+        ax.axhline(y=MEMORY_FLOAT_THROUGHPUT, color='black', linestyle='--', label='Throughput limit')
 
         ax2 = ax.twinx()
         ax2.set_ylim([0.0, 110])
@@ -43,7 +40,7 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, MEM
     if MEMORY_FLOAT_THROUGHPUT > 0:
         ax.set_ylim(0, MEMORY_FLOAT_THROUGHPUT * 1.1)
     else:
-        ax.set_ylim(0, None)
+        ax.set_ylim(0, max_throughput * 1.1)
 
     ax.grid(True, which="both", ls="--", alpha=0.4)
 
@@ -54,13 +51,14 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     data = pd.read_csv(file)
 
     data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["algorithm"] != "warp-select") & (data["algorithm"] != "block-select") & (data["algorithm"] != "warp-select-tunable") & (data["algorithm"] != "bits")]
-    
-    data = data.replace({"algorithm": {
-        "bits-prefetch": "bits",
-        "block-select-tunable": "block-select",
-    }})
+
 
     if not doing_fused:
+        data = data.replace({"algorithm": {
+            "bits-prefetch": "bits",
+            "block-select-tunable": "block-select",
+        }})
+
         data = data.loc[(data["phase"] == "selection")]
 
         # Ensure that the mean time corresponds to the selection phase
@@ -68,14 +66,18 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
 
         # Data have to be moved from the device to SMs
         MEMORY_FLOAT_THROUGHPUT = utils.MEMORY_FLOAT_THROUGHPUT(hostname)
+    else: # if doing_fused:
+        data = data.replace({"algorithm": {
+            "bits-prefetch": "bits + MAGMA",
+            "block-select-tunable": "block-select",
+        }})
 
-    else:
         data = data.loc[((data["phase"] == "selection") | (data["phase"] == "distances"))]
 
         # Ensure that the mean time corresponds to the addition of the selection and distances phases
         data["time"] = data["time"] * 2
 
-        instadist = data.loc[data["algorithm"].str.contains("fused") == False].copy()
+        instadist = data.loc[data["algorithm"] == "bits + MAGMA"].copy()
         loc = instadist["phase"] == "distances"
 
         instadist_point_count = instadist.loc[loc, "point_count"]
@@ -92,7 +94,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
         instadist_store = instadist_point_count * instadist_query_count / utils.MEMORY_FLOAT_THROUGHPUT(hostname)
 
         # The theoretical throughput of distance computation
-        instadist["algorithm"] = instadist["algorithm"] + "-instadist"
+        instadist["algorithm"] = "bits + zero computation"
         instadist.loc[loc, "time"] = instadist_load + instadist_store
 
         data = pd.concat([data, instadist])
@@ -129,9 +131,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     assert len(dataset) == 1, "Multiple datasets in the same file"
     dataset = dataset[0]
 
-    fig, axes = plt.subplots(nrows=ROWS, ncols=COLS, sharex="row")
-    # fig.text(0.005, 0.5, "Throughput [distances/s]", va='center', rotation='vertical', fontsize=14)
-    # fig.text(0.525, 0.05, r'$log_{2}(K)$', ha='center',fontsize=14)
+    fig, axes = plt.subplots(nrows=ROWS, ncols=COLS)
 
     axes = fig.get_axes()
 
@@ -139,6 +139,8 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     data = data.groupby(["k", "query_count", "point_count", "algorithm", "dim"]).agg({"time": "mean"}).reset_index()
 
     data["throughput"] = data["point_count"] * data["query_count"] / data["time"]
+    
+    max_throughput = data["throughput"].max()
 
     row = 0
     for dim in sorted(data["dim"].unique()):
@@ -158,9 +160,9 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
                         title += f" dim={dim}"
 
                     if index==0:
-                        handles, labels = genFig(data_N,axes[index],title,algorithms,MEMORY_FLOAT_THROUGHPUT)
+                        handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
                     else:
-                        genFig(data_N,axes[index],title,algorithms,MEMORY_FLOAT_THROUGHPUT)
+                        genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
             col += 1
         row += 1
 

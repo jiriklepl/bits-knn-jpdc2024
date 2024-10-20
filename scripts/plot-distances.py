@@ -74,13 +74,18 @@ def plot(file, hostname, jobid):
                 color=utils.COLORS[algnums[alg]],
                 label=alg)
             
-        log_point_count = np.round(np.log2(point_count)).astype(int)
+        xticks = query_data["dim"].unique()
+        log_x = np.round(np.log2(xticks)).astype(int)
+        ax.set_xticks(xticks.astype(str))
+        ax.set_xticklabels([f"$2^{{{int(x)}}}$" for x in log_x])
 
         ax.set_ylim(0, 1.1 * np.max(oracle_throughput))
-        ax.set_xlabel("Dimension (q=%d, n=$2^{%d}$)" % (query_count, log_point_count))
+
+        log_point_count = np.round(np.log2(point_count)).astype(int)
+        ax.set_xlabel("d (q=%d, n=$2^{%d}$)" % (query_count, log_point_count))
 
     fig.supylabel("Throughput [distances/s]", x=0.01, y=0.6)
-    # fig.supxlabel("Dimension", y=0.13)
+    # fig.supxlabel("d", y=0.13)
     fig.set_size_inches(4.4, 3)
 
     # get size of the x-axis label in figure coordinates
