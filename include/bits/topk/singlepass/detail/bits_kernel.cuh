@@ -19,7 +19,8 @@
 #include "bits/topk/bitonic_sort_regs.cuh"
 #include "bits/transpose.cuh"
 
-namespace {
+namespace
+{
 
 /** Broadcast the largest value in a sorted, block-wide register array @p topk
  *
@@ -377,12 +378,12 @@ bits_kernel_process_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
-          std::size_t BATCH_SIZE, std::size_t K>
+template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+          std::size_t K>
 __global__ void __launch_bounds__(BLOCK_SIZE)
-bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
-            array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
-            std::size_t k, const std::int32_t* label_offsets, const float* norms)
+    bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
+                array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label, std::size_t k,
+                const std::int32_t* label_offsets, const float* norms)
 {
     // number of items stored in registers of each thread
     constexpr std::size_t ITEMS_PER_THREAD = (K + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -481,16 +482,17 @@ bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
 
 /** Declare an instantiation of the bits kernel.
  */
-#define DECL_BITS_KERNEL(prefetch, add_norms, block_size, batch_size, k)           \
-    template void run_bits_kernel<prefetch, add_norms, block_size, batch_size, k>( \
+#define DECL_BITS_KERNEL(prefetch, add_norms, block_size, batch_size, k)                           \
+    template void run_bits_kernel<prefetch, add_norms, block_size, batch_size, k>(                 \
         array_view<float, 2>, array_view<std::int32_t, 2>, array_view<float, 2>,                   \
         array_view<std::int32_t, 2>, std::size_t, const std::int32_t*, const float*, cudaStream_t)
 
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
-          std::size_t BATCH_SIZE, std::size_t K>
+template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+          std::size_t K>
 void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
                      array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
-                     std::size_t k, const std::int32_t* label_offsets, const float* norms, cudaStream_t stream)
+                     std::size_t k, const std::int32_t* label_offsets, const float* norms,
+                     cudaStream_t stream)
 {
     bits_kernel<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, K>
         <<<in_dist.size(0), BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist, out_label, k,

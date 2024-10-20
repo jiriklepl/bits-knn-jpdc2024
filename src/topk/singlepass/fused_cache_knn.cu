@@ -64,8 +64,9 @@ struct fused_cache
     void run(std::int32_t k)
     {
         if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_CACHE_K_VALUES>(k, [&]<std::size_t K>() {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, K>();
-        })) {
+                run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT, K>();
+            }))
+        {
             throw std::runtime_error("Unsupported k value: " + std::to_string(k));
         }
     }
@@ -75,8 +76,9 @@ struct fused_cache
     void run(std::int32_t dim_mult, std::int32_t k)
     {
         if (!dynamic_switch<1, 2, 4>(dim_mult, [&]<std::size_t DIM_MULT>() {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT>(k);
-        })) {
+                run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT>(k);
+            }))
+        {
             throw std::runtime_error("Unsupported dim_mult value: " + std::to_string(dim_mult));
         }
     }
@@ -85,8 +87,9 @@ struct fused_cache
     void run(std::int32_t query_block_size, std::int32_t dim_mult, std::int32_t k)
     {
         if (!dynamic_switch<1, 2, 4>(query_block_size, [&]<std::size_t QUERY_BLOCK_DIM>() {
-            run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM>(dim_mult, k);
-        })) {
+                run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM>(dim_mult, k);
+            }))
+        {
             throw std::runtime_error("Unsupported query_block_size value: " +
                                      std::to_string(query_block_size));
         }
@@ -97,8 +100,9 @@ struct fused_cache
              std::int32_t k)
     {
         if (!dynamic_switch<1, 2, 4>(dim_reg, [&]<std::size_t DIM_REG>() {
-            run<QUERY_REG, DB_REG, DIM_REG>(query_block_size, dim_mult, k);
-        })) {
+                run<QUERY_REG, DB_REG, DIM_REG>(query_block_size, dim_mult, k);
+            }))
+        {
             throw std::runtime_error("Unsupported dim_reg value: " + std::to_string(dim_reg));
         }
     }
@@ -108,8 +112,9 @@ struct fused_cache
              std::int32_t dim_mult, std::int32_t k)
     {
         if (!dynamic_switch<4, 8, 16>(db_reg, [&]<std::size_t DB_REG>() {
-            run<QUERY_REG, DB_REG>(dim_reg, query_block_size, dim_mult, k);
-        })) {
+                run<QUERY_REG, DB_REG>(dim_reg, query_block_size, dim_mult, k);
+            }))
+        {
             throw std::runtime_error("Unsupported db_reg value: " + std::to_string(db_reg));
         }
     }
@@ -118,9 +123,11 @@ struct fused_cache
              std::int32_t query_block_size, std::int32_t dim_mult, std::int32_t k)
     {
         if (!dynamic_switch<2, 4, 8, 16>(queries_reg, [&]<std::size_t QUERY_REG>() {
-            run<QUERY_REG>(db_reg, dim_reg, query_block_size, dim_mult, k);
-        })) {
-            throw std::runtime_error("Unsupported queries_reg value: " + std::to_string(queries_reg));
+                run<QUERY_REG>(db_reg, dim_reg, query_block_size, dim_mult, k);
+            }))
+        {
+            throw std::runtime_error("Unsupported queries_reg value: " +
+                                     std::to_string(queries_reg));
         }
     }
 };

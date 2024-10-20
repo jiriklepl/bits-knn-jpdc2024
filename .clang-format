@@ -1,0 +1,31 @@
+Language: Cpp
+BasedOnStyle: LLVM
+
+ColumnLimit: 100
+IndentWidth: 4
+InsertNewlineAtEOF: true
+
+SortIncludes: true
+SortUsingDeclarations: true
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+AlwaysBreakTemplateDeclarations: Yes
+AccessModifierOffset: -4
+
+SeparateDefinitionBlocks: Always

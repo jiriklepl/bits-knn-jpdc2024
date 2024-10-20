@@ -35,9 +35,8 @@ __device__ __forceinline__ void bitonic_step(Layout values, std::uint32_t stride
         const auto target = i ^ stride;
         assert(target > i);
 
-        const bool swap = ORDER == order_t::ascending
-                              ? values.dist(i) > values.dist(target)
-                              : values.dist(i) < values.dist(target);
+        const bool swap = ORDER == order_t::ascending ? values.dist(i) > values.dist(target)
+                                                      : values.dist(i) < values.dist(target);
 
         if (swap)
         {
@@ -117,9 +116,8 @@ __device__ __forceinline__ void block_merge(Layout values, std::uint32_t stride,
             const auto target = i ^ mask;
             assert(target > i);
 
-            const bool swap = ORDER == order_t::ascending
-                                  ? values.dist(i) > values.dist(target)
-                                  : values.dist(i) < values.dist(target);
+            const bool swap = ORDER == order_t::ascending ? values.dist(i) > values.dist(target)
+                                                          : values.dist(i) < values.dist(target);
 
             if (swap)
             {

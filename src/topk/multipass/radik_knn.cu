@@ -6,9 +6,9 @@
 
 #include <radik/RadixSelect/topk_radixselect.h>
 
-#include "bits/knn_args.hpp"
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
+#include "bits/knn_args.hpp"
 #include "bits/topk/multipass/radik_knn.hpp"
 
 void radik_knn::initialize(const knn_args& args)
@@ -36,8 +36,8 @@ void radik_knn::selection()
     auto stream = cuda_stream::make_default();
 
     topKRadixSelectL<std::int32_t, LARGEST, ASCEND, WITHSCALE, WITHIDXIN, float, PADDING>(
-        in_dist.data(), nullptr, out_dist.data(), out_label.data(), workspace_, task_len_.data(), query_count(), k(), stream.get()
-    );
+        in_dist.data(), nullptr, out_dist.data(), out_label.data(), workspace_, task_len_.data(),
+        query_count(), k(), stream.get());
 
     cuda_stream::make_default().sync();
 }

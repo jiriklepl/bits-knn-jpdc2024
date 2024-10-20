@@ -18,5 +18,4 @@ inline void handle_cuda_error(cudaError_t error, const char* path, int line, con
     }
 }
 
-
 #endif // CUCH_HPP_

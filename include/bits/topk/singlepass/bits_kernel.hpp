@@ -27,8 +27,8 @@
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE,
-          std::size_t BATCH_SIZE, std::size_t K>
+template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+          std::size_t K>
 extern void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
                             array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
                             std::size_t k, const std::int32_t* label_offsets = nullptr,

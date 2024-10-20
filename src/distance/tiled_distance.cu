@@ -2,8 +2,8 @@
 #include <stdexcept>
 
 #include "bits/array_view.hpp"
-#include "bits/dynamic_switch.hpp"
 #include "bits/distance/tiled_distance.hpp"
+#include "bits/dynamic_switch.hpp"
 #include "bits/layout.hpp"
 
 namespace
@@ -101,8 +101,8 @@ void run_tiled_dist(array_view<float, 2> A, array_view<float, 2> B, array_view<f
     block_count *= (A.size(0) + tile_size - 1) / tile_size;
 
     if (!dynamic_switch<8, 16, 32>(tile_size, [&]<std::size_t TileSize>() {
-        tile_dist_kernel<TileSize, TileSize><<<block_count, block_size>>>(A, B, dist);
-    }))
+            tile_dist_kernel<TileSize, TileSize><<<block_count, block_size>>>(A, B, dist);
+        }))
     {
         throw std::runtime_error("Unsupported tile size: " + std::to_string(tile_size));
     }

@@ -465,10 +465,11 @@ void cub_knn::selection()
     constexpr std::size_t BATCH_SIZE = 8;
 
     if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k(), [&]<std::size_t K>() {
-        constexpr std::size_t THREADS_PER_BLOCK = (K <= 256) ? 64 : 128;
-        cub_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    })) {
+            constexpr std::size_t THREADS_PER_BLOCK = (K <= 256) ? 64 : 128;
+            cub_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
+                <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
+        }))
+    {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
@@ -487,10 +488,11 @@ void cub_direct::selection()
     constexpr std::size_t BATCH_SIZE = 8;
 
     if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k(), [&]<std::size_t K>() {
-        constexpr std::size_t THREADS_PER_BLOCK = (K <= 32) ? 32 : 128;
-        cub_direct_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
-            <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
-    })) {
+            constexpr std::size_t THREADS_PER_BLOCK = (K <= 32) ? 32 : 128;
+            cub_direct_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
+                <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
+        }))
+    {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 

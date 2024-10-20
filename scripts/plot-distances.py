@@ -73,7 +73,7 @@ def plot(file, hostname, jobid):
                 marker=utils.SHAPES[algnums[alg]],
                 color=utils.COLORS[algnums[alg]],
                 label=alg)
-            
+
         xticks = query_data["dim"].unique()
         log_x = np.round(np.log2(xticks)).astype(int)
         ax.set_xticks(xticks.astype(str))

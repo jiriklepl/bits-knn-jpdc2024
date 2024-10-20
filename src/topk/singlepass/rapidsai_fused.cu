@@ -2,10 +2,10 @@
 #include <cstdint>
 
 // #include <raft/core/device_resources.hpp>
-#include <raft/spatial/knn/detail/fused_l2_knn-inl.cuh>
 #include <raft/distance/detail/distance.cuh>
 #include <raft/distance/detail/distance_ops/l2_exp.cuh>
 #include <raft/distance/detail/distance_ops/l2_unexp.cuh>
+#include <raft/spatial/knn/detail/fused_l2_knn-inl.cuh>
 
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
@@ -15,7 +15,6 @@ void rapidsai_fused::initialize(const knn_args& args)
 {
     // skip allocation in cuda_knn::initialize()
     knn::initialize(args);
-
 
     out_dist_gpu_ = cuda_array<float, 2>{{query_count(), k()}};
     out_label_gpu_ = cuda_array<std::int32_t, 2>{{query_count(), k()}};
@@ -39,7 +38,8 @@ void rapidsai_fused::initialize(const knn_args& args)
             }
         }
 
-        cuda_stream::make_default().copy_to_gpu_async(queries_gpu_.view(), queries_transposed.data());
+        cuda_stream::make_default().copy_to_gpu_async(queries_gpu_.view(),
+                                                      queries_transposed.data());
     }
 
     if (row_major_index_)
@@ -87,8 +87,8 @@ void rapidsai_fused::selection()
     const auto metric = raft::distance::DistanceType::L2Expanded;
 
     raft::spatial::knn::detail::fusedL2Knn<std::int32_t, float>(
-        dim(), out_label.data(), out_dist.data(), points.data(), queries.data(), point_count(), query_count(), k(), row_major_index_, row_major_query_, stream.get(), metric
-    );
+        dim(), out_label.data(), out_dist.data(), points.data(), queries.data(), point_count(),
+        query_count(), k(), row_major_index_, row_major_query_, stream.get(), metric);
 
     cuda_stream::make_default().sync();
 }

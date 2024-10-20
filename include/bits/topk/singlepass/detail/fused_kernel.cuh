@@ -16,7 +16,8 @@
 
 #include "bits/topk/bitonic_sort_regs.cuh"
 
-namespace {
+namespace
+{
 
 /** Merge `ARRAY_COUNT` buffers in shared memory with top k results.
  *
@@ -423,7 +424,7 @@ __global__ void fused_kernel(array_view<float, 2> queries, array_view<float, 2> 
 } // namespace
 
 template <std::int32_t K, std::int32_t REG_QUERY_COUNT, std::int32_t REG_POINT_COUNT,
-              std::int32_t BLOCK_QUERY_DIM>
+          std::int32_t BLOCK_QUERY_DIM>
 void fused_kernel_runner::operator()()
 {
     constexpr std::int32_t BLOCK_POINT_DIM = 128 / BLOCK_QUERY_DIM;
@@ -455,9 +456,9 @@ void fused_kernel_runner::operator()()
         query_window_size + point_window_size + topk_matrix_size + buffer_length_size;
 
     // call the kernel
-    fused_kernel<REG_POINT_COUNT, REG_QUERY_COUNT, DIM_BLOCK, K, BLOCK_QUERY_DIM,
-                    BLOCK_POINT_DIM><<<grid, block, shm_size>>>(
-        queries, points, out_dist, out_label, dim, point_count, query_count);
+    fused_kernel<REG_POINT_COUNT, REG_QUERY_COUNT, DIM_BLOCK, K, BLOCK_QUERY_DIM, BLOCK_POINT_DIM>
+        <<<grid, block, shm_size>>>(queries, points, out_dist, out_label, dim, point_count,
+                                    query_count);
 }
 
 #endif // FUSED_KERNEL_CUH_

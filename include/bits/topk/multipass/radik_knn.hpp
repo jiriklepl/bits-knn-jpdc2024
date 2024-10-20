@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "bits/knn_args.hpp"
 #include "bits/cuda_knn.hpp"
+#include "bits/knn_args.hpp"
 
 class radik_knn : public cuda_knn
 {

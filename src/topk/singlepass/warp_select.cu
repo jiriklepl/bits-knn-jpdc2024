@@ -200,16 +200,23 @@ void warp_select_tunable::selection()
                            .k = (std::int32_t)k()};
 
     if (!dynamic_switch<64, 128>(run.block_size, [=, &run]<std::size_t BlockSize>() {
-            if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>(run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
-                    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(run.k, [=, &run]<std::size_t K>() {
-                            run.template operator()<BlockSize, ThreadQueueSize, K>();
-                        })) {
-                        throw std::runtime_error{"Unsupported k value: " + std::to_string(run.k)};
-                    }
-                })) {
-                throw std::runtime_error{"Unsupported thread queue size: " + std::to_string(run.thread_queue_size)};
+            if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>(
+                    run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
+                        if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(
+                                run.k, [=, &run]<std::size_t K>() {
+                                    run.template operator()<BlockSize, ThreadQueueSize, K>();
+                                }))
+                        {
+                            throw std::runtime_error{"Unsupported k value: " +
+                                                     std::to_string(run.k)};
+                        }
+                    }))
+            {
+                throw std::runtime_error{"Unsupported thread queue size: " +
+                                         std::to_string(run.thread_queue_size)};
             }
-        })) {
+        }))
+    {
         throw std::runtime_error{"Unsupported block size: " + std::to_string(run.block_size)};
     }
 
@@ -229,16 +236,23 @@ void block_select_tunable::selection()
                             .k = static_cast<std::int32_t>(k())};
 
     if (!dynamic_switch<64, 128>(run.block_size, [=, &run]<std::size_t BlockSize>() {
-            if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>(run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
-                    if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(run.k, [=, &run]<std::size_t K>() {
-                            run.template operator()<BlockSize, ThreadQueueSize, K>();
-                        })) {
-                        throw std::runtime_error{"Unsupported k value: " + std::to_string(run.k)};
-                    }
-                })) {
-                throw std::runtime_error{"Unsupported thread queue size: " + std::to_string(run.thread_queue_size)};
+            if (!dynamic_switch<2, 3, 4, 5, 6, 7, 8, 9, 10>(
+                    run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
+                        if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(
+                                run.k, [=, &run]<std::size_t K>() {
+                                    run.template operator()<BlockSize, ThreadQueueSize, K>();
+                                }))
+                        {
+                            throw std::runtime_error{"Unsupported k value: " +
+                                                     std::to_string(run.k)};
+                        }
+                    }))
+            {
+                throw std::runtime_error{"Unsupported thread queue size: " +
+                                         std::to_string(run.thread_queue_size)};
             }
-        })) {
+        }))
+    {
         throw std::runtime_error{"Unsupported block size: " + std::to_string(run.block_size)};
     }
 

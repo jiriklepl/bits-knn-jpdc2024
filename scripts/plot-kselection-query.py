@@ -33,9 +33,9 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
     ax.set_xlabel(f"k ({title})")
 
     xticks = df["k"].unique()
-    log_xticks = np.round(np.log2(xticks)).astype(int) 
+    log_xticks = np.round(np.log2(xticks)).astype(int)
     ax.set_xticks(ticks = xticks.astype(str))
-    ax.set_xticklabels([f"$2^{{{int(x)}}}$" for x in log_xticks])  
+    ax.set_xticklabels([f"$2^{{{int(x)}}}$" for x in log_xticks])
 
     if MEMORY_FLOAT_THROUGHPUT > 0:
         ax.set_ylim(0, MEMORY_FLOAT_THROUGHPUT * 1.1)
@@ -139,7 +139,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     data = data.groupby(["k", "query_count", "point_count", "algorithm", "dim"]).agg({"time": "mean"}).reset_index()
 
     data["throughput"] = data["point_count"] * data["query_count"] / data["time"]
-    
+
     max_throughput = data["throughput"].max()
 
     row = 0

@@ -22,7 +22,8 @@
 
 #include "bits/topk/bitonic_sort_regs.cuh"
 
-namespace {
+namespace
+{
 
 /** Merge `ARRAY_COUNT` buffers in shared memory with top k results.
  *
@@ -188,9 +189,8 @@ fused_tc_kernel(array_view<typename Policy::input_t, 2> points, array_view<float
 #else
     constexpr std::int32_t CUDA_ARCH{0};
 #endif
-    if constexpr (CUDA_ARCH < 800 &&
-                  (std::is_same<Policy, fused_tc_bfloat16_policy>::value ||
-                   std::is_same<Policy, fused_tc_double_policy>::value))
+    if constexpr (CUDA_ARCH < 800 && (std::is_same<Policy, fused_tc_bfloat16_policy>::value ||
+                                      std::is_same<Policy, fused_tc_double_policy>::value))
     {
         // not supported
         asm volatile("trap;");
@@ -480,7 +480,7 @@ void fused_tc_kernel_runner<Policy>::operator()()
     // call the kernel
     fused_tc_kernel<K, QUERY_BATCH, POINT_BATCH, BLOCK_SIZE, Policy>
         <<<grid, block>>>(in_points, in_point_norms, in_queries, in_query_norms, out_dist,
-                            out_label, dim, point_count, query_count);
+                          out_label, dim, point_count, query_count);
 }
 
 #endif // DETAIL_FUSED_TC_KERNEL_CUH_

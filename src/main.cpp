@@ -283,7 +283,7 @@ try
 
     const auto gen_it =
         std::find_if(generators.begin(), generators.end(),
-                        [&generator_id](auto& gen) { return gen->id() == generator_id; });
+                     [&generator_id](auto& gen) { return gen->id() == generator_id; });
     if (gen_it == generators.end())
     {
         std::cerr << "Unknown generator: '" << generator_id << "'" << '\n';
@@ -305,7 +305,7 @@ try
     // preprocess data
     const auto pre_it =
         std::find_if(preprocessors.begin(), preprocessors.end(),
-                        [&preprocessor_id](auto& pre) { return pre->id() == preprocessor_id; });
+                     [&preprocessor_id](auto& pre) { return pre->id() == preprocessor_id; });
 
     if (pre_it == preprocessors.end())
     {
@@ -321,20 +321,20 @@ try
     // create kNN instance
     // TODO(jirka): add generator and preprocessor arguments
     knn_args args{.points = data.data(),
-                    .queries = query.data(),
-                    .point_count = input_size,
-                    .query_count = query_size,
-                    .dim = dim,
-                    .points_layout = layout_points == "row" ? matrix_layout::row_major
+                  .queries = query.data(),
+                  .point_count = input_size,
+                  .query_count = query_size,
+                  .dim = dim,
+                  .points_layout = layout_points == "row" ? matrix_layout::row_major
+                                                          : matrix_layout::column_major,
+                  .queries_layout = layout_queries == "row" ? matrix_layout::row_major
                                                             : matrix_layout::column_major,
-                    .queries_layout = layout_queries == "row" ? matrix_layout::row_major
-                                                            : matrix_layout::column_major,
-                    .dist_layout = matrix_layout::row_major,
-                    .dist_block_size = block_size,
-                    .selection_block_size = block_size,
-                    .k = k,
-                    .items_per_thread = items_per_thread,
-                    .deg = parse_number(params["deg"].as<std::string>())};
+                  .dist_layout = matrix_layout::row_major,
+                  .dist_block_size = block_size,
+                  .selection_block_size = block_size,
+                  .k = k,
+                  .items_per_thread = items_per_thread,
+                  .deg = parse_number(params["deg"].as<std::string>())};
 
     // transpose matrices to requested layout
     if (args.points_layout == matrix_layout::column_major)
@@ -354,7 +354,7 @@ try
 
     const auto alg_it =
         std::find_if(algorithms.begin(), algorithms.end(),
-                        [&algorithm_id](auto& alg) { return alg->id() == algorithm_id; });
+                     [&algorithm_id](auto& alg) { return alg->id() == algorithm_id; });
     if (alg_it == algorithms.end())
     {
         std::cerr << "Unknown algorithm: '" << algorithm_id << "'" << '\n';
@@ -388,16 +388,14 @@ try
         alg->distances();
         end = std::chrono::steady_clock::now();
         duration = end - start;
-        log(args, algorithm_id, generator_id, preprocessor_id, "distances", i,
-            duration.count());
+        log(args, algorithm_id, generator_id, preprocessor_id, "distances", i, duration.count());
 
         // execute
         start = std::chrono::steady_clock::now();
         alg->selection();
         end = std::chrono::steady_clock::now();
         duration = end - start;
-        log(args, algorithm_id, generator_id, preprocessor_id, "selection", i,
-            duration.count());
+        log(args, algorithm_id, generator_id, preprocessor_id, "selection", i, duration.count());
 
         // postprocessing (e.g., sorting if selection provides unsorted results)
         start = std::chrono::steady_clock::now();

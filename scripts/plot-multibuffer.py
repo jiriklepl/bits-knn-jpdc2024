@@ -19,12 +19,12 @@ def plot(files, hostname):
         except Exception as e:
             print(f"Failed to read {file}: {e}")
             continue
-        
+
         sub_data["hostname"] = hostname
         sub_data["jobid"] = jobid
-        
+
         data = sub_data if data is None else pd.concat([data, sub_data])
-        
+
     if data is None:
         return
 

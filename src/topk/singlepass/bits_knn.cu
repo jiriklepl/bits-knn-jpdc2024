@@ -29,17 +29,25 @@ struct bits
     void run(std::size_t block_size, std::size_t batch_size, std::size_t k)
     {
         if (!dynamic_switch<128, 256, 512>(block_size, [=, *this]<std::size_t BlockSize>() {
-            if (!dynamic_switch<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16>(batch_size, [=, *this]<std::size_t BatchSize>() {
-                if (k <= 0 || !dynamic_switch_le<TOPK_SINGLEPASS_K_VALUES>(k, [=, *this]<std::size_t K>() {
-                    run_bits_kernel<PREFETCH, ADD_NORMS, BlockSize, BatchSize, K>(
-                        in_dist, in_label, out_dist, out_label, k, label_offsets, norms);
-                })) {
-                    throw std::runtime_error("Unsupported k value: " + std::to_string(k));
+                if (!dynamic_switch<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                                    16>(batch_size, [=, *this]<std::size_t BatchSize>() {
+                        if (k <= 0 ||
+                            !dynamic_switch_le<TOPK_SINGLEPASS_K_VALUES>(
+                                k, [=, *this]<std::size_t K>() {
+                                    run_bits_kernel<PREFETCH, ADD_NORMS, BlockSize, BatchSize, K>(
+                                        in_dist, in_label, out_dist, out_label, k, label_offsets,
+                                        norms);
+                                }))
+                        {
+                            throw std::runtime_error("Unsupported k value: " + std::to_string(k));
+                        }
+                    }))
+                {
+                    throw std::runtime_error("Unsupported batch size: " +
+                                             std::to_string(batch_size));
                 }
-            })) {
-                throw std::runtime_error("Unsupported batch size: " + std::to_string(batch_size));
-            }
-        })) {
+            }))
+        {
             throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
         }
     }

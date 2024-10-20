@@ -20,7 +20,7 @@ void block_select_runner::operator()()
 
     faiss::gpu::blockSelect<float, std::int32_t, false, K, THREAD_QUEUE_SIZE, BLOCK_SIZE>
         <<<block_count, BLOCK_SIZE>>>(dist_tensor, out_dist_tensor, out_label_tensor,
-                                                std::numeric_limits<float>::infinity(), -1, k);
+                                      std::numeric_limits<float>::infinity(), -1, k);
 }
 
 #endif // DETAIL_BLOCK_SELECT_CUH_

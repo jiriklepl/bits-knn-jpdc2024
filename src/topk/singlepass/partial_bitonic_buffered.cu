@@ -369,14 +369,17 @@ void static_buffered_partial_bitonic::selection()
     constexpr bool PREFETCH_NEXT_BATCH = false;
 
     if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k(), [=]<std::size_t K>() {
-        if (!dynamic_switch<128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
-            constexpr std::size_t BATCH_SIZE = 2;
-            buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, K, BlockSize, BATCH_SIZE>
-                <<<block_count, BlockSize, shm_size>>>(dist, out_dist, out_label);
-        })) {
-            throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
-        }
-    })) {
+            if (!dynamic_switch<128, 256, 512>(block_size, [=]<std::size_t BlockSize>() {
+                    constexpr std::size_t BATCH_SIZE = 2;
+                    buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, K, BlockSize,
+                                                 BATCH_SIZE>
+                        <<<block_count, BlockSize, shm_size>>>(dist, out_dist, out_label);
+                }))
+            {
+                throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));
+            }
+        }))
+    {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
     }
 
