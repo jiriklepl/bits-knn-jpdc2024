@@ -37,7 +37,17 @@ for package in "$(realpath .)" "$EXTERNAL_DIR"/*; do
     if [ -d "$package" ]; then
         if [ -f "$package/.git" ] || [ -d "$package/.git" ]; then
             git -C "$package" fetch --quiet
-            git -C "$package" fetch --tags --quiet
+            if ! git -C "$package" fetch --tags --quiet; then
+                if git -C "$package" fetch --dry-run --tags --force; then
+                    echo "Force the suggested update for $package? [y/N]"
+                    read -r response </dev/tty
+                    if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
+                        git -C "$package" fetch --tags --force --quiet
+                    fi
+                else
+                    echo "No tags update available for $package"
+                fi
+            fi
 
             REMOTE_CODENAME=$(git -C "$package" remote -v | awk '/fetch/{print $1; exit}')
 
