@@ -11,6 +11,16 @@
 
 #include "bits/topk/singlepass/detail/definitions_common.hpp"
 
+#ifdef TOPK_SINGLEPASS_USE_MINIMAL
+#include "bits/topk/singlepass/detail/definitions_minimal.hpp"
+#else
+#ifndef TOPK_SINGLEPASS_USE_ALL
+#define TOPK_SINGLEPASS_USE_ALL // to suppress further errors
+#error "TOPK_SINGLEPASS_USE_ALL or TOPK_SINGLEPASS_USE_MINIMAL must be defined"
+#endif
+#include "bits/topk/singlepass/detail/definitions_all.hpp"
+#endif
+
 #include "bits/topk/singlepass/fused_cache_kernel_structs.cuh"
 
 namespace
@@ -75,7 +85,7 @@ struct fused_cache
               std::int32_t QUERY_BLOCK_DIM>
     void run(std::int32_t dim_mult, std::int32_t k)
     {
-        if (!dynamic_switch<1, 2, 4>(dim_mult, [&]<std::size_t DIM_MULT>() {
+        if (!dynamic_switch<TOPK_SINGLEPASS_FC_DIM_MULTS>(dim_mult, [&]<std::size_t DIM_MULT>() {
                 run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM, DIM_MULT>(k);
             }))
         {
@@ -86,9 +96,10 @@ struct fused_cache
     template <std::int32_t QUERY_REG, std::int32_t DB_REG, std::int32_t DIM_REG>
     void run(std::int32_t query_block_size, std::int32_t dim_mult, std::int32_t k)
     {
-        if (!dynamic_switch<1, 2, 4>(query_block_size, [&]<std::size_t QUERY_BLOCK_DIM>() {
-                run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM>(dim_mult, k);
-            }))
+        if (!dynamic_switch<TOPK_SINGLEPASS_FC_BLOCK_QUERY_DIMS>(
+                query_block_size, [&]<std::size_t QUERY_BLOCK_DIM>() {
+                    run<QUERY_REG, DB_REG, DIM_REG, QUERY_BLOCK_DIM>(dim_mult, k);
+                }))
         {
             throw std::runtime_error("Unsupported query_block_size value: " +
                                      std::to_string(query_block_size));
@@ -99,7 +110,7 @@ struct fused_cache
     void run(std::int32_t dim_reg, std::int32_t query_block_size, std::int32_t dim_mult,
              std::int32_t k)
     {
-        if (!dynamic_switch<1, 2, 4>(dim_reg, [&]<std::size_t DIM_REG>() {
+        if (!dynamic_switch<TOPK_SINGLEPASS_FC_DIM_REGS>(dim_reg, [&]<std::size_t DIM_REG>() {
                 run<QUERY_REG, DB_REG, DIM_REG>(query_block_size, dim_mult, k);
             }))
         {
@@ -111,7 +122,7 @@ struct fused_cache
     void run(std::int32_t db_reg, std::int32_t dim_reg, std::int32_t query_block_size,
              std::int32_t dim_mult, std::int32_t k)
     {
-        if (!dynamic_switch<4, 8, 16>(db_reg, [&]<std::size_t DB_REG>() {
+        if (!dynamic_switch<TOPK_SINGLEPASS_FC_DB_REGS>(db_reg, [&]<std::size_t DB_REG>() {
                 run<QUERY_REG, DB_REG>(dim_reg, query_block_size, dim_mult, k);
             }))
         {
@@ -122,9 +133,10 @@ struct fused_cache
     void run(std::int32_t queries_reg, std::int32_t db_reg, std::int32_t dim_reg,
              std::int32_t query_block_size, std::int32_t dim_mult, std::int32_t k)
     {
-        if (!dynamic_switch<2, 4, 8, 16>(queries_reg, [&]<std::size_t QUERY_REG>() {
-                run<QUERY_REG>(db_reg, dim_reg, query_block_size, dim_mult, k);
-            }))
+        if (!dynamic_switch<TOPK_SINGLEPASS_FC_QUERY_REGS>(
+                queries_reg, [&]<std::size_t QUERY_REG>() {
+                    run<QUERY_REG>(db_reg, dim_reg, query_block_size, dim_mult, k);
+                }))
         {
             throw std::runtime_error("Unsupported queries_reg value: " +
                                      std::to_string(queries_reg));

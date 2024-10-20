@@ -22,9 +22,9 @@ namespace
 template <typename Policy, std::int32_t K>
 void run(fused_tc_kernel_runner<Policy>& kernel)
 {
-    if (!dynamic_switch<128, 256, 512>(kernel.block_size, [&]<std::size_t BlockSize>() {
-            kernel.template operator()<K, BlockSize>();
-        }))
+    if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_TC_BLOCK_SIZES>(
+            kernel.block_size,
+            [&]<std::size_t BlockSize>() { kernel.template operator()<K, BlockSize>(); }))
     {
         throw std::runtime_error{"Unsupported block size: " + std::to_string(kernel.block_size)};
     }

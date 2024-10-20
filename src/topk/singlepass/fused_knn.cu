@@ -21,9 +21,10 @@ namespace
 template <std::size_t K, std::int32_t REG_QUERY_COUNT, std::int32_t REG_POINT_COUNT>
 void run(fused_kernel_runner& kernel)
 {
-    if (!dynamic_switch<4, 8, 16>(kernel.block_size, [&]<std::size_t BLOCK_SIZE>() {
-            kernel.template operator()<K, REG_QUERY_COUNT, REG_POINT_COUNT, BLOCK_SIZE>();
-        }))
+    if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_BLOCK_QUERY_DIMS>(
+            kernel.block_size, [&]<std::size_t BLOCK_SIZE>() {
+                kernel.template operator()<K, REG_QUERY_COUNT, REG_POINT_COUNT, BLOCK_SIZE>();
+            }))
     {
         throw std::runtime_error{"Unsupported block size: " + std::to_string(kernel.block_size)};
     }
@@ -34,9 +35,10 @@ void run(fused_kernel_runner& kernel)
 template <std::size_t K, std::int32_t REG_QUERY_COUNT>
 void run(fused_kernel_runner& kernel)
 {
-    if (!dynamic_switch<4>(kernel.items_per_thread[1], [&]<std::size_t REG_POINT_COUNT>() {
-            run<K, REG_QUERY_COUNT, REG_POINT_COUNT>(kernel);
-        }))
+    if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_POINTS_REGS>(
+            kernel.items_per_thread[1], [&]<std::size_t REG_POINT_COUNT>() {
+                run<K, REG_QUERY_COUNT, REG_POINT_COUNT>(kernel);
+            }))
     {
         throw std::runtime_error{"Unsupported point register count: " +
                                  std::to_string(kernel.items_per_thread[1])};
@@ -48,9 +50,9 @@ void run(fused_kernel_runner& kernel)
 template <std::size_t K>
 void run(fused_kernel_runner& kernel)
 {
-    if (!dynamic_switch<2, 4, 8>(kernel.items_per_thread[0], [&]<std::size_t REG_QUERY_COUNT>() {
-            run<K, REG_QUERY_COUNT>(kernel);
-        }))
+    if (!dynamic_switch<TOPK_SINGLEPASS_FUSED_QUERY_REGS>(
+            kernel.items_per_thread[0],
+            [&]<std::size_t REG_QUERY_COUNT>() { run<K, REG_QUERY_COUNT>(kernel); }))
     {
         throw std::runtime_error{"Unsupported query register count: " +
                                  std::to_string(kernel.items_per_thread[0])};

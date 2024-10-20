@@ -22,7 +22,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -lineinfo")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -Wall,-Wno-unknown-pragmas,-fno-omit-frame-pointer,-Wno-unknown-pragmas")
 set(CMAKE_CUDA_STANDARD 20)
 
-set(KNN_LIBRARIES CUDA::cudart CUDA::cublas CUDA::cuda_driver OpenMP::OpenMP_CXX)
+set(KNN_LIBRARIES CUDA::cudart CUDA::cuda_driver)
 
 option(CMAKE_CUDA_ARCHITECTURES "" "native")
 
@@ -98,7 +98,13 @@ add_library(knn-static SHARED ${knn_sources} ${faiss_sources})
 add_library(dist-all SHARED)
 add_library(dist-minimal SHARED)
 
+target_link_libraries(dist-all PRIVATE CUDA::cublas)
+target_link_libraries(dist-minimal PRIVATE CUDA::cublas)
+
 add_library(topk SHARED)
+
+target_link_libraries(topk PRIVATE OpenMP::OpenMP_CXX)
+
 add_library(topk-multipass-all SHARED)
 add_library(topk-multipass-minimal SHARED)
 add_library(topk-singlepass-all SHARED)
@@ -120,18 +126,37 @@ set_target_properties(knn-static PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARC
 set_target_properties(knn PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(knn-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(test PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+
 set_target_properties(raft PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 
+set_target_properties(dist-all PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+set_target_properties(dist-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+
+set_target_properties(topk PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+set_target_properties(topk-multipass-all PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+set_target_properties(topk-multipass-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+set_target_properties(topk-singlepass-all PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+set_target_properties(topk-singlepass-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
+# set_target_properties(topk-singlepass-test PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 
 set_target_properties(knn-static PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(knn PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(knn-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-target_compile_options(knn-static PRIVATE "${OpenMP_CXX_FLAGS}")
-target_compile_options(knn PRIVATE "${OpenMP_CXX_FLAGS}")
-target_compile_options(knn-minimal PRIVATE "${OpenMP_CXX_FLAGS}")
-target_compile_options(test PRIVATE "${OpenMP_CXX_FLAGS}")
+set_target_properties(raft PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+set_target_properties(dist-all PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(dist-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+set_target_properties(topk PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(topk-multipass-all PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(topk-multipass-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(topk-singlepass-all PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(topk-singlepass-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+# set_target_properties(topk-singlepass-test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+target_compile_options(topk PRIVATE "${OpenMP_CXX_FLAGS}")
 
 # compile all parts of the project
 add_subdirectory(${SRC_DIR}/distance)

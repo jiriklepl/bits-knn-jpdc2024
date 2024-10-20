@@ -2,6 +2,9 @@
 #include <cstddef>
 #include <iostream>
 
+#include <cublas_v2.h>
+#include <cuda_runtime.h>
+
 #include "bits/array_view.hpp"
 #include "bits/cuch.hpp"
 #include "bits/knn_args.hpp"
