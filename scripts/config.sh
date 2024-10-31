@@ -17,7 +17,9 @@ gpu_deduce() {
     if [ -z "$worker" ] || [ -z "$GPU" ]; then
         # try to determine the GPU from the CUDA_ARCHITECTURES variable using nvidia-smi
         if [ -n "$worker" ]; then
-            if [ "$worker" == "ampere02" ]; then
+            if [ "$worker" == "ampere01" ]; then
+                GPU="L40"
+            elif [ "$worker" == "ampere02" ]; then
                 GPU="A100"
             elif [ "$worker" == "hopper01" ]; then
                 GPU="H100"
@@ -48,6 +50,12 @@ gpu_deduce() {
                 GPU="H100"
                 if [ -z "$CUDA_ARCHITECTURES" ]; then
                     CUDA_ARCHITECTURES="90"
+                fi
+                ;;
+            *"NVIDIA L40"* | *"Tesla L40"*)
+                GPU="L40"
+                if [ -z "$CUDA_ARCHITECTURES" ]; then
+                    CUDA_ARCHITECTURES="89"
                 fi
                 ;;
             *)
@@ -113,6 +121,7 @@ config_generic() {
         }
         $col["algorithm"] == algorithm && (GPU == "None" || $col["GPU"] == GPU) {
             new_score = 0
+            new_slack = 1
 
             if (col["block_size"] && $col["block_size"] != "") {
                 new_block_size = $col["block_size"]
@@ -138,9 +147,9 @@ config_generic() {
                 if (col["query_count"] && $col["query_count"] != "") {
                     if ($col["query_count"] >= query_count) {
                         new_score += 1
-                        new_slack = (1.0 * $col["query_count"] / query_count)
-                    } else {
-                        new_slack = (1.0 * query_count / $col["query_count"])
+                        new_slack *= (1.0 * $col["query_count"] / query_count)
+                    } else { # $col["query_count"] < query_count
+                        new_slack *= (1.0 * query_count / $col["query_count"])
                     }
                 }
             }
@@ -150,7 +159,7 @@ config_generic() {
                     if ($col["k"] >= k) {
                         new_score += 1
                         new_slack *= (1.0 * $col["k"] / k)
-                    } else {
+                    } else { # $col["k"] < k
                         new_slack *= (1.0 * k / $col["k"])
                     }
                 }
@@ -161,7 +170,7 @@ config_generic() {
                     if ($col["dim"] >= dim) {
                         new_score += 1
                         new_slack *= (1.0 * $col["dim"] / dim)
-                    } else {
+                    } else { # $col["dim"] < dim
                         new_slack *= (1.0 * dim / $col["dim"])
                     }
                 }

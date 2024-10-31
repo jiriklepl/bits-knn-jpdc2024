@@ -34,23 +34,9 @@ fi
 "$knn" --header
 for q in 64 256 512 1024 2048 4096 8192; do
     for k in 2 4 8 16 32 64 128 256 512 1024 2048; do
-        if [ "$q" -le "1" ]; then
-            deg_list="1 16 32 64"
-        elif [ "$q" -le "16" ]; then
-            deg_list="1 4 8 16"
-        else
-            deg_list="1"
-        fi
-
-        for deg in $deg_list; do
-            for batch_size in $(seq 16); do
-                # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg "$deg" --seed 17 -a bits-sq --block-size "$block_size"
-
-                if [ "$deg" -eq "1" ]; then
-                    "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg "$deg" --seed 17 -a bits --block-size "$block_size"
-                    "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg "$deg" --seed 17 -a bits-prefetch --block-size "$block_size"
-                fi
-            done
+        for batch_size in $(seq 16); do
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg 1 --seed 17 -a bits --block-size "$block_size"
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --items-per-thread "$batch_size" --deg 1 --seed 17 -a bits-prefetch --block-size "$block_size"
         done
     done
 done

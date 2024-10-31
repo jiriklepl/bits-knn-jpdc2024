@@ -31,7 +31,7 @@ for q_power in 10 11 12 13; do
     q=$((2 ** q_power))
 
     for dim in 4 8 16; do
-        for k in 2 4 8 16 32 64 128; do
+        for k in 8 16 32 64 128; do
             config=$(config_algorithm bits-prefetch $q $k)
             read -r -a configs <<<"$config"
             block_size=${configs[0]:-256}

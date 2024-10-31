@@ -9,6 +9,7 @@ import os
 files = glob.glob("data/opt-distances-*-*.csv")
 
 gpu_dict = {
+    "ampere01": "L40",
     "ampere02": "A100",
     "volta05": "V100",
     "hopper01": "H100",
