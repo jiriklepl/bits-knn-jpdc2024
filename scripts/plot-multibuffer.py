@@ -54,7 +54,7 @@ def plot(files, hostname):
 
     data.loc[data["algorithm"] != baseline_name, "algorithm"] += " (" + data.loc[data["algorithm"] != baseline_name, "dataset"] + " data)"
 
-    fig, ax = plt.subplots(1, data["query_count"].nunique())
+    fig, ax = plt.subplots(1, data["query_count"].nunique(), sharey=True)
 
     alg_shapes = dict(zip(data["algorithm"].unique(), zip(utils.SHAPES, utils.COLORS)))
 

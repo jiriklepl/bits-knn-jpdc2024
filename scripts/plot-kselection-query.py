@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os.path
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import glob
 import utils
 
@@ -42,6 +43,11 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
     else:
         ax.set_ylim(0, max_throughput * 1.1)
 
+    ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+
+    exp = np.floor(np.log10(ax.get_ylim()[1]))
+    ax.yaxis.get_offset_text().set_text(f"$\\times 10^{{{int(exp)}}}$")
+
     ax.grid(True, which="both", ls="--", alpha=0.4)
 
     handles,labels = ax.get_legend_handles_labels()
@@ -56,7 +62,11 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     if not doing_fused:
         data = data.replace({"algorithm": {
             "bits-prefetch": "bits",
-            "block-select-tunable": "block-select",
+            "block-select-tunable": "BlockSelect",
+            "warp-select-tunable": "WarpSelect",
+            "grid-select": "GridSelect",
+            "radik": "RadiK",
+            "air-topk": "AIR Top-$K$",
         }})
 
         data = data.loc[(data["phase"] == "selection")]
@@ -69,7 +79,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     else: # if doing_fused:
         data = data.replace({"algorithm": {
             "bits-prefetch": "bits + MAGMA",
-            "block-select-tunable": "block-select",
+            "block-select-tunable": "BlockSelect",
         }})
 
         data = data.loc[((data["phase"] == "selection") | (data["phase"] == "distances"))]
@@ -131,7 +141,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     assert len(dataset) == 1, "Multiple datasets in the same file"
     dataset = dataset[0]
 
-    fig, axes = plt.subplots(nrows=ROWS, ncols=COLS)
+    fig, axes = plt.subplots(nrows=ROWS, ncols=COLS, sharey=True)
 
     axes = fig.get_axes()
 
@@ -185,7 +195,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.05, right=0.995-font_height/4, hspace=0.3, wspace=0.3)
+            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.055, right=0.995-font_height/4, hspace=0.3, wspace=0.3)
         except ValueError:
             print(f"Legend does not fit, trying with {try_height}")
             try_height += .5

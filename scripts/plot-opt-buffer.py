@@ -15,7 +15,7 @@ def plot(file, hostname, jobid):
     data = pd.read_csv(file, sep=',')
     data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "selection")]
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(sharey=True)
     plt.subplots_adjust(top=0.95, bottom=0.21)
 
     # number of non-warmup iterations

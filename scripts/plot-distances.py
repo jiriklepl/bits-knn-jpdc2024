@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import utils
 import glob
 import os
@@ -81,6 +82,11 @@ def plot(file, hostname, jobid):
 
         ax.set_ylim(0, 1.1 * np.max(oracle_throughput))
 
+        ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+
+        exp = np.floor(np.log10(ax.get_ylim()[1]))
+        ax.yaxis.get_offset_text().set_text(f"$\\times 10^{{{int(exp)}}}$")
+
         log_point_count = np.round(np.log2(point_count)).astype(int)
         ax.set_xlabel("d (q=%d, n=$2^{%d}$)" % (query_count, log_point_count))
 
@@ -105,7 +111,7 @@ def plot(file, hostname, jobid):
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.03 + legend_height*1.1 + font_height, top=.96, left=0.02+font_height/2, right=0.98, hspace=0.3)
+            fig.subplots_adjust(bottom=0.03 + legend_height*1.1 + font_height, top=.95, left=0.02+font_height/2, right=0.98, hspace=0.3)
         except ValueError:
             print(f"Legend does not fit, trying with {try_height}")
             try_height += .5
