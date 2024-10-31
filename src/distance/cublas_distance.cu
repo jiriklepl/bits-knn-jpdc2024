@@ -7,10 +7,9 @@
 
 #include "bits/array_view.hpp"
 #include "bits/cuch.hpp"
+#include "bits/distance/cublas_distance.hpp"
 #include "bits/knn_args.hpp"
 #include "bits/layout.hpp"
-
-#include "bits/distance/cublas_distance.hpp"
 
 namespace
 {
@@ -162,11 +161,13 @@ void cublas_distance::compute()
     {
         squared_length_kernel<matrix_layout::row_major>
             <<<block_count, block_size>>>(points, lengths_.get());
+        CUCH(cudaGetLastError());
     }
     else
     {
         squared_length_kernel<matrix_layout::column_major>
             <<<block_count, block_size>>>(points, lengths_.get());
+        CUCH(cudaGetLastError());
     }
 
     if (postprocessing_)
@@ -180,5 +181,6 @@ void cublas_distance::compute()
                  (args_.query_count + QUERIES_PER_BLOCK - 1) / QUERIES_PER_BLOCK, 1);
         add_norm_kernel<BLOCK_SIZE, QUERIES_PER_BLOCK, POINTS_PER_BLOCK>
             <<<add_block_count, add_block_size>>>(lengths_.get(), dist);
+        CUCH(cudaGetLastError());
     }
 }

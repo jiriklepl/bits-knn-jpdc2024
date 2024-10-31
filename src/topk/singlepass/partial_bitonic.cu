@@ -6,11 +6,11 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/dynamic_switch.hpp"
-#include "bits/topk/singlepass/partial_bitonic.hpp"
-
 #include "bits/topk/singlepass/detail/definitions_common.hpp"
+#include "bits/topk/singlepass/partial_bitonic.hpp"
 
 #include "bits/topk/bitonic_sort.cuh"
 #include "bits/topk/bitonic_sort_regs.cuh"
@@ -304,6 +304,7 @@ void partial_bitonic_soa_run(array_view<float, 2> input, array_view<float, 2> ou
                         <<<input.size(0), BlockSize,
                            2 * K * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(
                             input, out_dist, out_label);
+                    CUCH(cudaGetLastError());
                 }))
             {
                 throw std::runtime_error("Unsupported k value: " + std::to_string(k));
@@ -325,6 +326,7 @@ void partial_bitonic_aos_run(array_view<float, 2> input, array_view<float, 2> ou
                         <<<input.size(0), BlockSize,
                            2 * K * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(
                             input, out_dist, out_label);
+                    CUCH(cudaGetLastError());
                 }))
             {
                 throw std::runtime_error("Unsupported k value: " + std::to_string(k));
@@ -343,6 +345,7 @@ void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> o
             if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(k, [=]<std::size_t K>() {
                     partial_bitonic_regs_kernel<K, BlockSize>
                         <<<input.size(0), BlockSize>>>(input, out_dist, out_label);
+                    CUCH(cudaGetLastError());
                 }))
             {
                 throw std::runtime_error("Unsupported k value: " + std::to_string(k));
@@ -365,6 +368,7 @@ void partial_bitonic::selection()
         <<<block_count, selection_block_size(),
            2 * k() * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(
             in_dist_gpu(), out_dist_gpu(), out_label_gpu(), k());
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default().sync();
 }
@@ -379,6 +383,7 @@ void partial_bitonic_warp::selection()
         <<<block_count, selection_block_size(),
            2 * k() * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(
             in_dist_gpu(), out_dist_gpu(), out_label_gpu(), k());
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default().sync();
 }

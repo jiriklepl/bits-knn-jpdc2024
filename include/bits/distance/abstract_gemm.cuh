@@ -7,6 +7,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_stream.hpp"
 
 /** Operators for dot products in matrix multiplication.
@@ -722,6 +723,7 @@ inline void run_abstract_gemm(const int K, const int M, const int N, int stride_
 
     abstract_gemm<Operators, BLOCK_DIM_M, BLOCK_DIM_N, OUT_REGS_M, OUT_REGS_N>
         <<<grid, block, 0, stream.get()>>>(K, M, N, stride_a, stride_b, A, B, C);
+    CUCH(cudaGetLastError());
 }
 
 template <class Operators>

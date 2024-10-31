@@ -2,12 +2,12 @@
 #include <vector>
 
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
+#include "bits/distance/baseline_distance.hpp"
 #include "bits/knn_args.hpp"
 #include "bits/layout.hpp"
-
-#include "bits/distance/baseline_distance.hpp"
 
 #include "bits/memory.cuh"
 
@@ -119,4 +119,5 @@ void baseline_distance::compute()
         swap_values(a, b);
     }
     distance_kernel<<<block_count, block_size>>>(a, b, dist_gpu_.view());
+    CUCH(cudaGetLastError());
 }

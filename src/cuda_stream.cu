@@ -1,5 +1,6 @@
 #include <cstddef>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_stream.hpp"
 
 namespace
@@ -34,6 +35,7 @@ cuda_stream& cuda_stream::fill_async<float>(float* gpu_ptr, std::size_t size, fl
 
     fill_kernel<float, VALUES_PER_THREAD>
         <<<block_count, BLOCK_SIZE, 0, get()>>>(gpu_ptr, size, value);
+    CUCH(cudaGetLastError());
 
     return *this;
 }

@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
 
@@ -34,6 +35,7 @@ TEST_CASE("Transpose register array in a warp", "[transpose]")
     std::vector<std::int32_t> output(output_gpu.view().size());
 
     test_transpose_kernel<ITEMS_PER_THREAD><<<1, THREAD_COUNT>>>(output_gpu.view().data());
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default()
         .copy_from_gpu_async(output.data(), output_gpu.view().data(), output_gpu.view().size())

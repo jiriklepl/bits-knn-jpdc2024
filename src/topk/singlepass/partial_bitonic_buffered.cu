@@ -7,11 +7,11 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/dynamic_switch.hpp"
-#include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
-
 #include "bits/topk/singlepass/detail/definitions_common.hpp"
+#include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
 
 #include "bits/ptx_utils.cuh"
 #include "bits/topk/bitonic_sort.cuh"
@@ -348,6 +348,7 @@ void buffered_partial_bitonic::selection()
         <<<block_count, selection_block_size(),
            2 * k() * (sizeof(float) + sizeof(std::int32_t)) + sizeof(std::int32_t)>>>(
             in_dist_gpu(), out_dist_gpu(), out_label_gpu(), k());
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default().sync();
 }
@@ -374,6 +375,7 @@ void static_buffered_partial_bitonic::selection()
                     buffered_partial_bitonic_aos<USE_WARP_SORT, PREFETCH_NEXT_BATCH, K, BlockSize,
                                                  BATCH_SIZE>
                         <<<block_count, BlockSize, shm_size>>>(dist, out_dist, out_label);
+                    CUCH(cudaGetLastError());
                 }))
             {
                 throw std::runtime_error("Unsupported block size: " + std::to_string(block_size));

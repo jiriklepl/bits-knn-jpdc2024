@@ -11,6 +11,7 @@
 #include <cuda_runtime.h>
 
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_kernel_runner.hpp"
 
@@ -459,6 +460,7 @@ void fused_kernel_runner::operator()()
     fused_kernel<REG_POINT_COUNT, REG_QUERY_COUNT, DIM_BLOCK, K, BLOCK_QUERY_DIM, BLOCK_POINT_DIM>
         <<<grid, block, shm_size>>>(queries, points, out_dist, out_label, dim, point_count,
                                     query_count);
+    CUCH(cudaGetLastError());
 }
 
 #endif // FUSED_KERNEL_CUH_

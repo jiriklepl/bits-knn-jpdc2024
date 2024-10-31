@@ -4,13 +4,13 @@
 #include <stdexcept>
 
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/bits_kernel.hpp"
 #include "bits/topk/singlepass/bits_knn.hpp"
-
 #include "bits/topk/singlepass/detail/definitions_common.hpp"
 
 #ifdef TOPK_SINGLEPASS_USE_MINIMAL
@@ -132,6 +132,7 @@ void single_query_bits::initialize(const knn_args& args)
 
         populate_label_offsets_kernel<<<(args_.deg + 255) / 256, 256>>>(
             label_offsets_.view().data(), 1, args_.deg, k());
+        CUCH(cudaGetLastError());
     }
 }
 
@@ -167,6 +168,7 @@ void single_query_bits::selection()
 
         populate_label_offsets_kernel<<<(row_count + 255) / 256, 256>>>(
             label_offsets_.view().data(), kernel.in_dist.size(0), args_.deg, column_count);
+        CUCH(cudaGetLastError());
     }
 
     kernel.in_dist =

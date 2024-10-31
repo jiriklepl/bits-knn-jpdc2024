@@ -6,10 +6,10 @@
 
 #include <cub/block/block_radix_sort.cuh>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/dynamic_switch.hpp"
 #include "bits/topk/singlepass/cub_knn.hpp"
-
 #include "bits/topk/singlepass/detail/definitions_common.hpp"
 
 #include "bits/topk/bitonic_sort_static.cuh"
@@ -468,6 +468,7 @@ void cub_knn::selection()
             constexpr std::size_t THREADS_PER_BLOCK = (K <= 256) ? 64 : 128;
             cub_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
                 <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
+            CUCH(cudaGetLastError());
         }))
     {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));
@@ -491,6 +492,7 @@ void cub_direct::selection()
             constexpr std::size_t THREADS_PER_BLOCK = (K <= 32) ? 32 : 128;
             cub_direct_kernel<K, THREADS_PER_BLOCK, BATCH_SIZE>
                 <<<block_count, THREADS_PER_BLOCK>>>(dist, out_dist, out_label);
+            CUCH(cudaGetLastError());
         }))
     {
         throw std::runtime_error("Unsupported k value: " + std::to_string(k()));

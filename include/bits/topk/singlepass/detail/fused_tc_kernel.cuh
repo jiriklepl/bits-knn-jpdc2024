@@ -16,6 +16,7 @@
 #include <cooperative_groups/memcpy_async.h>
 
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_tc_kernel_runner.hpp"
 #include "bits/topk/singlepass/fused_tc_policy.hpp"
@@ -474,13 +475,17 @@ void fused_tc_kernel_runner<Policy>::operator()()
     // prepare the input
     prepare_points<256, Policy, Policy::POINT_TILE_SIZE>
         <<<(aligned_point_count + 255) / 256, 256>>>(points, in_points, in_point_norms);
+    CUCH(cudaGetLastError());
+
     prepare_points<256, Policy, Policy::QUERY_TILE_SIZE>
         <<<(aligned_query_count + 255) / 256, 256>>>(queries, in_queries, in_query_norms);
+    CUCH(cudaGetLastError());
 
     // call the kernel
     fused_tc_kernel<K, QUERY_BATCH, POINT_BATCH, BLOCK_SIZE, Policy>
         <<<grid, block>>>(in_points, in_point_norms, in_queries, in_query_norms, out_dist,
                           out_label, dim, point_count, query_count);
+    CUCH(cudaGetLastError());
 }
 
 #endif // DETAIL_FUSED_TC_KERNEL_CUH_

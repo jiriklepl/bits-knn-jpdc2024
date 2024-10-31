@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cuda_runtime.h>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/data_generator.hpp"
@@ -59,6 +60,7 @@ void run_sort_regs_test()
 
     sort_regs_test<ITEMS_PER_THREAD, BLOCK_SIZE, order>
         <<<BLOCK_COUNT, BLOCK_SIZE>>>(input.view().data(), output.view().data());
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default().copy_from_gpu_async(output_cpu.data(), output.view()).sync();
 

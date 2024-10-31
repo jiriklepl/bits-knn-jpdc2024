@@ -1,10 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cuda_runtime.h>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/data_generator.hpp"
 #include "bits/knn.hpp"
+
 #include "bits/memory.cuh"
 
 template <std::size_t ITEMS_PER_THREAD, std::size_t BLOCK_SIZE, bool LOAD_STRIPED,
@@ -59,6 +61,7 @@ std::vector<std::int32_t> run_load_store_test()
 
     load_store_test<ITEMS_PER_THREAD, BLOCK_SIZE, LOAD_STRIPED, STORE_STRIPED>
         <<<BLOCK_COUNT, BLOCK_SIZE>>>(input.view().data(), output.view().data());
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default().copy_from_gpu_async(output_cpu.data(), output.view()).sync();
 

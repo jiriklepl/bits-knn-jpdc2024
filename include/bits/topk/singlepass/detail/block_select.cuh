@@ -6,6 +6,8 @@
 
 #include <faiss/gpu/utils/BlockSelectKernel.cuh>
 
+#include "bits/cuch.hpp"
+
 #include "bits/topk/singlepass/block_select_runner.cuh"
 
 template <int BLOCK_SIZE, int THREAD_QUEUE_SIZE, int K>
@@ -21,6 +23,7 @@ void block_select_runner::operator()()
     faiss::gpu::blockSelect<float, std::int32_t, false, K, THREAD_QUEUE_SIZE, BLOCK_SIZE>
         <<<block_count, BLOCK_SIZE>>>(dist_tensor, out_dist_tensor, out_label_tensor,
                                       std::numeric_limits<float>::infinity(), -1, k);
+    CUCH(cudaGetLastError());
 }
 
 #endif // DETAIL_BLOCK_SELECT_CUH_

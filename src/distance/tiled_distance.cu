@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/distance/tiled_distance.hpp"
 #include "bits/dynamic_switch.hpp"
 #include "bits/layout.hpp"
@@ -102,6 +103,7 @@ void run_tiled_dist(array_view<float, 2> A, array_view<float, 2> B, array_view<f
 
     if (!dynamic_switch<8, 16, 32>(tile_size, [&]<std::size_t TileSize>() {
             tile_dist_kernel<TileSize, TileSize><<<block_count, block_size>>>(A, B, dist);
+            CUCH(cudaGetLastError());
         }))
     {
         throw std::runtime_error("Unsupported tile size: " + std::to_string(tile_size));

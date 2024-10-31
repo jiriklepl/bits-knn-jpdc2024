@@ -12,6 +12,7 @@
 #include <cooperative_groups/scan.h>
 #include <cuda_runtime.h>
 
+#include "bits/cuch.hpp"
 #include "bits/array_view.hpp"
 #include "bits/topk/singlepass/bits_kernel.hpp"
 
@@ -497,6 +498,7 @@ void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> i
     bits_kernel<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, K>
         <<<in_dist.size(0), BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist, out_label, k,
                                                      label_offsets, norms);
+    CUCH(cudaGetLastError());
 }
 
 #endif // BITS_KERNEL_CUH_

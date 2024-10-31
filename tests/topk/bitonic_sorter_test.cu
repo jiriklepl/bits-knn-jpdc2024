@@ -9,10 +9,12 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/data_generator.hpp"
 #include "bits/knn.hpp"
+
 #include "bits/topk/bitonic_sort.cuh"
 #include "bits/topk/bitonic_sorter.cuh"
 
@@ -79,6 +81,7 @@ double run_bitonic_sorter_test(std::size_t value_count)
 
     bitonic_sorter_kernel<BLOCK_SIZE, ITEMS_PER_THREAD, USE_OLD><<<BLOCK_COUNT, BLOCK_SIZE>>>(
         keys_gpu.view().data(), values_gpu.view().data(), value_count);
+    CUCH(cudaGetLastError());
 
     cuda_stream::make_default().sync();
 
