@@ -31,7 +31,7 @@ for q_power in 10 11 12 13; do
     q=$((2 ** q_power))
 
     for dim in 4 8 16; do
-        for k in 8 16 32 64 128; do
+        for k in 8 16 32 64 128 256; do
             config=$(config_algorithm bits-prefetch $q $k)
             read -r -a configs <<<"$config"
             block_size=${configs[0]:-256}
@@ -43,12 +43,12 @@ for q_power in 10 11 12 13; do
                 "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a rapidsai-fused
             fi
 
-            # config=$(config_algorithm fused-regs-tunable $q $k)
-            # read -r -a configs <<<"$config"
-            # block_size=${configs[0]:-256}
-            # items_per_thread=${configs[2]:-1}
-            # items_per_thread2=${configs[3]:-1}
-            # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-regs-tunable --items-per-thread "$items_per_thread,$items_per_thread2" --block-size "$block_size"
+            config=$(config_algorithm fused-regs-tunable $q $k $dim)
+            read -r -a configs <<<"$config"
+            block_size=${configs[0]:-256}
+            items_per_thread=${configs[2]:-1}
+            items_per_thread2=${configs[3]:-1}
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-regs-tunable --items-per-thread "$items_per_thread,$items_per_thread2" --block-size "$block_size"
 
             # config=$(config_algorithm fused-tc-half $q $k $dim)
             # read -r -a configs <<<"$config"

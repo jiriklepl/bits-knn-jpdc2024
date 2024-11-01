@@ -1,9 +1,10 @@
-import pandas as pd
-import numpy as np
-import os.path
+import glob
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-import glob
+import numpy as np
+import os.path
+import pandas as pd
+import sys
 import utils
 
 # The file name is data/kselection-query-HOSTNAME-JOBID.csv
@@ -60,8 +61,10 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
 
 
     if not doing_fused:
+        proposed_algorithm = "bits"
+
         data = data.replace({"algorithm": {
-            "bits-prefetch": "bits",
+            "bits-prefetch": proposed_algorithm,
             "block-select-tunable": "BlockSelect",
             "warp-select-tunable": "WarpSelect",
             "grid-select": "GridSelect",
@@ -77,9 +80,13 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
         # Data have to be moved from the device to SMs
         MEMORY_FLOAT_THROUGHPUT = utils.MEMORY_FLOAT_THROUGHPUT(hostname)
     else: # if doing_fused:
+        proposed_algorithm = "bits-fused"
+
         data = data.replace({"algorithm": {
             "bits-prefetch": "bits + MAGMA",
             "block-select-tunable": "BlockSelect",
+            "fused-cache": proposed_algorithm,
+            "rapidsai-fused": "raftL2-fused",
         }})
 
         data = data.loc[((data["phase"] == "selection") | (data["phase"] == "distances"))]
@@ -152,6 +159,8 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
 
     max_throughput = data["throughput"].max()
 
+    MAX = MEMORY_FLOAT_THROUGHPUT if MEMORY_FLOAT_THROUGHPUT > 0 else max_throughput
+
     row = 0
     for dim in sorted(data["dim"].unique()):
         data_dim=data.loc[data["dim"] == dim]
@@ -164,17 +173,107 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
                 n_power=int(np.log2(N))
                 data_N=data_bs.loc[data_bs["point_count"] == N]
 
-                if data_N.size!=0:
-                    title = f"q={bs}" + (r' n=$2^{%s}$' %(str(n_power)))
-                    if data["dim"].nunique() > 1:
-                        title += f" dim={dim}"
+                if data_N.size == 0:
+                    continue
 
-                    if index==0:
-                        handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
-                    else:
-                        genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
+                title = f"q={bs}" + (r' n=$2^{%s}$' %(str(n_power)))
+                if data["dim"].nunique() > 1:
+                    title += f" dim={dim}"
+
+                if index==0:
+                    handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
+                else:
+                    genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
+
+                if doing_fused:
+                    continue
+
+                # SotA throughput
+                sota_throughput = data_N.loc[data_N["algorithm"] != proposed_algorithm].groupby("k").agg({"throughput": "max"}).reset_index()
+                proposed_throughput = data_N.loc[data_N["algorithm"] == proposed_algorithm, ["k", "throughput"]]
+
+                speedups = []
+                k_values = []
+                for k in sota_throughput["k"].unique():
+                    sota_throughput_k = sota_throughput.loc[sota_throughput["k"] == k, "throughput"]
+                    proposed_throughput_k = proposed_throughput.loc[proposed_throughput["k"] == k, "throughput"]
+
+                    if sota_throughput_k.size == 0 or proposed_throughput_k.size == 0:
+                        continue
+
+                    sota_throughput_k = sota_throughput_k.iloc[0]
+                    proposed_throughput_k = proposed_throughput_k.iloc[0]
+
+                    # speedup: sota_throughput_k < proposed_throughput_k (the proposed algorithm has higher throughput)
+                    speedup = proposed_throughput_k / sota_throughput_k
+
+                    speedups.append(speedup)
+                    k_values.append(k)
+
+                # print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
+
+                if len(speedups) == 0:
+                    continue
+
+                # max_speedup
+                max_speedup_index = np.argmax(speedups)
+                print(f"{file},{dataset},{dim},{bs},{N},max_speedup,{k_values[max_speedup_index]},{sota_throughput.loc[sota_throughput['k'] == k_values[max_speedup_index], 'throughput'].iloc[0]},{proposed_throughput.loc[proposed_throughput['k'] == k_values[max_speedup_index], 'throughput'].iloc[0]},{speedups[max_speedup_index]}")
+
+                # min_speedup
+                min_speedup_index = np.argmin(speedups)
+                print(f"{file},{dataset},{dim},{bs},{N},min_speedup,{k_values[min_speedup_index]},{sota_throughput.loc[sota_throughput['k'] == k_values[min_speedup_index], 'throughput'].iloc[0]},{proposed_throughput.loc[proposed_throughput['k'] == k_values[min_speedup_index], 'throughput'].iloc[0]},{speedups[min_speedup_index]}")
+
+                avg_speedup = np.mean(speedups)
+                print(f"{file},{dataset},{dim},{bs},{N},avg_speedup,0,0,0,{avg_speedup}")
             col += 1
         row += 1
+
+        if doing_fused:
+            continue
+
+        # SotA throughput
+        sota_throughput = data_dim.loc[data_dim["algorithm"] != proposed_algorithm].groupby(["k", "query_count", "point_count"]).agg({"throughput": "max"}).reset_index()
+        proposed_throughput = data_dim.loc[data_dim["algorithm"] == proposed_algorithm, ["k", "query_count", "point_count", "throughput"]]
+
+        speedups = []
+        parameters = []
+        for k in sota_throughput["k"].unique():
+            for bs in sota_throughput["query_count"].unique():
+                for N in sota_throughput["point_count"].unique():
+                    sota_throughput_k = sota_throughput.loc[(sota_throughput["k"] == k) & (sota_throughput["query_count"] == bs) & (sota_throughput["point_count"] == N), "throughput"]
+                    proposed_throughput_k = proposed_throughput.loc[(proposed_throughput["k"] == k) & (proposed_throughput["query_count"] == bs) & (proposed_throughput["point_count"] == N), "throughput"]
+
+                    if sota_throughput_k.size == 0 or proposed_throughput_k.size == 0:
+                        continue
+
+                    sota_throughput_k = sota_throughput_k.iloc[0]
+                    proposed_throughput_k = proposed_throughput_k.iloc[0]
+
+                    # speedup: sota_throughput_k < proposed_throughput_k (the proposed algorithm has higher throughput)
+                    speedup = proposed_throughput_k / sota_throughput_k
+
+                    speedups.append(speedup)
+                    parameters.append([k, bs, N])
+
+        # print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
+
+        if len(speedups) == 0:
+            continue
+
+        # global_max_speedup
+        max_speedup_index = np.argmax(speedups)
+        max_param = parameters[max_speedup_index]
+        print(f"{file},{dataset},{dim},{max_param[1]},{max_param[2]},global_max_speedup,{max_param[0]},{sota_throughput.loc[(sota_throughput['k'] == max_param[0]) & (sota_throughput['query_count'] == max_param[1]) & (sota_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{proposed_throughput.loc[(proposed_throughput['k'] == max_param[0]) & (proposed_throughput['query_count'] == max_param[1]) & (proposed_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{speedups[max_speedup_index]}")
+
+        # min_speedup
+        min_speedup_index = np.argmin(speedups)
+        min_param = parameters[min_speedup_index]
+        print(f"{file},{dataset},{dim},{min_param[1]},{min_param[2]},global_min_speedup,{min_param[0]},{sota_throughput.loc[(sota_throughput['k'] == min_param[0]) & (sota_throughput['query_count'] == min_param[1]) & (sota_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{proposed_throughput.loc[(proposed_throughput['k'] == min_param[0]) & (proposed_throughput['query_count'] == min_param[1]) & (proposed_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{speedups[min_speedup_index]}")
+
+        avg_speedup = np.mean(speedups)
+        print(f"{file},{dataset},{dim},0,0,global_avg_speedup,0,0,0,{avg_speedup}")
+
+
 
     fig.supylabel("Throughput [distances/s]", x=0.005, y=0.6)
     fig.set_size_inches(4.5, ROWS*3)
@@ -195,9 +294,9 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.055, right=0.995-font_height/4, hspace=0.3, wspace=0.3)
+            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.06, right=0.99-font_height/4, hspace=0.3, wspace=0.3)
         except ValueError:
-            print(f"Legend does not fit, trying with {try_height}")
+            print(f"Legend does not fit, trying with {try_height}", file=sys.stderr)
             try_height += .5
             continue
         break
@@ -209,12 +308,14 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     plt.close(fig)
 
 if __name__ == "__main__":
+    print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
+
     for file in kselection_files:
         hostname, jobid = file.split(".")[-2].split("-")[-2:]
         try:
             drawFig(file, hostname, jobid, doing_fused=False)
         except Exception as e:
-            print(f"Failed to plot {file}: {e}")
+            print(f"Failed to plot {file}: {e}", file=sys.stderr)
 
     for file in fused_files:
         if file.startswith("data/fused-params") or file.startswith("data/fused-cache"):
@@ -224,4 +325,4 @@ if __name__ == "__main__":
         try:
             drawFig(file, hostname, jobid, doing_fused=True)
         except Exception as e:
-            print(f"Failed to plot {file}: {e}")
+            print(f"Failed to plot {file}: {e}", file=sys.stderr)

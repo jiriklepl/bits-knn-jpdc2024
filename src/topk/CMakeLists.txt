@@ -1,13 +1,13 @@
 set(TOPK_SRC
     serial_knn.cpp
     parallel_knn.cpp
-    detail/fused_kernel2.cu
     detail/fused_kernel4.cu
     detail/fused_kernel8.cu
     detail/fused_kernel16.cu
     detail/fused_kernel32.cu
     detail/fused_kernel64.cu
     detail/fused_kernel128.cu
+    detail/fused_kernel256.cu
     detail/fused_tc_kernel_half_128.cu
     detail/fused_tc_kernel_half_256.cu
     detail/fused_tc_kernel_half_512.cu

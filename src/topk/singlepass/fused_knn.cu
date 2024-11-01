@@ -124,16 +124,7 @@ void fused_regs_knn::selection()
 
     constexpr int POINT_REGS = 4;
 
-    if (k() == 2)
-    {
-        constexpr int QUERY_REGS = 4;
-        constexpr int BLOCK_SIZE = 8;
-
-        run.block_size = BLOCK_SIZE;
-        run.items_per_thread[0] = QUERY_REGS;
-        run.template operator()<2, QUERY_REGS, POINT_REGS, BLOCK_SIZE>();
-    }
-    else if (k() == 4)
+    if (k() == 4)
     {
         constexpr int QUERY_REGS = 8;
         constexpr int BLOCK_SIZE = 4;

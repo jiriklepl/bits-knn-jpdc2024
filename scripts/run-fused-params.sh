@@ -4,6 +4,8 @@
 #SBATCH --gpus 1
 #SBATCH -p gpu-long
 #SBATCH --time=4:00:00
+#SBATCH --mem=0
+#SBATCH --exclusive
 
 root_dir="$SLURM_SUBMIT_DIR"
 if [ -z "$root_dir" ]; then
@@ -23,8 +25,8 @@ fi
 for q_power in 8 9 10 11 12 13; do
     q=$((2 ** q_power))
 
-    for dim in 4 8 16 32 64; do
-        for k in 4 8 16 32 64 128; do
+    for dim in 4 8 16; do
+        for k in 8 16 32 64 128 256; do
             # for bs in 128 256 512; do
             #     "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --block-size "$bs" --seed 24 -a fused-tc-half
 

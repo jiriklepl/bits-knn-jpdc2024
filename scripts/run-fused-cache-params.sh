@@ -39,7 +39,7 @@ for q_power in 8 9 10 11 12 13; do
     q=$((2 ** q_power))
 
     for dim in 4 8 16; do
-        for k in 4 8 16 32 64 128; do
+        for k in 8 16 32 64 128 256; do
             # for rq in 2 4 8 16; do
             for rq in 4 8; do # prune 2, 16
                 # for rn in 4 8 16; do
