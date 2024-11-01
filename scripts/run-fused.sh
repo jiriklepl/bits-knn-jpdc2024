@@ -2,8 +2,8 @@
 #SBATCH -o data/fused-%N-%j.csv
 #SBATCH -e data/fused-%N-%j.err
 #SBATCH --gpus 1
-#SBATCH -p gpu-long
-#SBATCH --time=4:00:00
+#SBATCH -p gpu-short
+#SBATCH --time=2:00:00
 #SBATCH --mem=0
 #SBATCH --exclusive
 
@@ -39,16 +39,14 @@ for q_power in 10 11 12 13; do
             items_per_thread=${configs[2]:-1}
             "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a bits-prefetch --items-per-thread "$items_per_thread" --block-size "$block_size" --deg "$deg"
 
-            if [ "$k" -le 64 ]; then
-                "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a rapidsai-fused
-            fi
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a rapidsai-fused
 
-            config=$(config_algorithm fused-regs-tunable $q $k $dim)
-            read -r -a configs <<<"$config"
-            block_size=${configs[0]:-256}
-            items_per_thread=${configs[2]:-1}
-            items_per_thread2=${configs[3]:-1}
-            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-regs-tunable --items-per-thread "$items_per_thread,$items_per_thread2" --block-size "$block_size"
+            # config=$(config_algorithm fused-regs-tunable $q $k $dim)
+            # read -r -a configs <<<"$config"
+            # block_size=${configs[0]:-256}
+            # items_per_thread=${configs[2]:-1}
+            # items_per_thread2=${configs[3]:-1}
+            # "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a fused-regs-tunable --items-per-thread "$items_per_thread,$items_per_thread2" --block-size "$block_size"
 
             # config=$(config_algorithm fused-tc-half $q $k $dim)
             # read -r -a configs <<<"$config"
