@@ -29,16 +29,13 @@ for q_power in 10 11 12 13; do
     for dim in 4 8 16 32 64 128 256; do
         for block_size in 64 128 256 512; do
             # baseline-dist always uses a column-major layout for input matrices
-            "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --block-size "$block_size" --seed 24 -a baseline-dist
-            "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --block-size "$block_size" --seed 24 --point-layout column -a cublas-dist
+            "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --block-size "$block_size" --seed 13 -a baseline-dist
+            "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --block-size "$block_size" --seed 13 --point-layout column -a cublas-dist
         done
 
         # baseline-dist always uses a column-major layout for input matrices
         for block_size in 8 16 32 64; do
-            "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --block-size "$block_size" --seed 24 -a tiled-dist
+            "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --block-size "$block_size" --seed 13 -a tiled-dist
         done
-
-        # magma-dist always uses a column-major layout for input matrices
-        "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --seed 24 -a magma-dist
     done
 done

@@ -26,7 +26,7 @@ for q in 64 256 512 1024 2048 4096 8192; do
     for block_size in 64 128 256; do
         for k in 32 64 128 256 512 1024 2048; do
             for thread_queue in 2 3 4 5 6 7 8 9 10; do
-                "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --seed 24 --block-size "$block_size" --items-per-thread "$thread_queue" -a warp-select-tunable
+                "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --seed 13 --block-size "$block_size" --items-per-thread "$thread_queue" -a warp-select-tunable
             done
         done
     done

@@ -19,7 +19,8 @@ def plot(file, hostname, jobid):
     # change labels to human readable strings
     data = data.replace({"algorithm": {
         "baseline-dist": "baseline",
-        "magma-dist": "Modified MAGMA kernel",
+        "magma-dist": "MAGMA-distance",
+        "magma-part-dist": "MAGMA-distance-partial",
         "cublas-dist": "cuBLAS GEMM + postprocessing",
         "tiled-dist": "Kuang et al.",
     }})

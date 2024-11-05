@@ -30,10 +30,10 @@ for q_power in 6 8 10 12; do
 
     for k in 32 64 128 256 512 1024 2048; do
         for block_size in 64 128 256 512; do
-            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 24 -a partial-bitonic
-            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 24 -a partial-bitonic-warp
-            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 24 -a partial-bitonic-warp-static
-            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 24 -a partial-bitonic-regs
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 17 -a partial-bitonic
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 17 -a partial-bitonic-warp
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 17 -a partial-bitonic-warp-static
+            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" --block-size "$block_size" --seed 17 -a partial-bitonic-regs
         done
     done
 done

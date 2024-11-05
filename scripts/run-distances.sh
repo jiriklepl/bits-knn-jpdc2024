@@ -2,8 +2,8 @@
 #SBATCH -o data/distances-%N-%j.csv
 #SBATCH -e data/distances-%N-%j.err
 #SBATCH --gpus 1
-#SBATCH -p gpu-long
-#SBATCH --time=4:00:00
+#SBATCH -p gpu-short
+#SBATCH --time=2:00:00
 #SBATCH --mem=0
 #SBATCH --exclusive
 
@@ -49,5 +49,7 @@ for q_power in 10 11 12 13; do
 
         # magma-dist always uses a column-major layout for input matrices
         "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --seed 24 -a magma-dist
+
+        "$knn" -r "$repeat_count" -d "$dim" -n "$n" -q "$q" --seed 24 -a magma-part-dist
     done
 done
