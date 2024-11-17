@@ -42,7 +42,7 @@ __global__ void distance_kernel(array_view<float, 2> A, array_view<float, 2> B,
     for (std::size_t i = 0; i < dim; ++i)
     {
         const auto diff = B(i, b_idx) - A(i, a_idx);
-        dist += diff * diff;
+        dist = fma(diff, diff, dist);
     }
 
     // write the result to the distance matrix

@@ -109,101 +109,6 @@ struct shared_buffer
         }
     }
 
-    /** The same as `alloc()`, but it uses a different alogirthm (warp-wide prefix sum).
-     *
-     * @tparam ITEMS_PER_THREAD number of items per thread
-     * @param[out] buffer_pos allocated position in the buffer (the same as in `alloc()`)
-     * @param[in] batch_dist distances of loaded values
-     * @param[in] radius the current kth smallest distance
-     */
-    template <std::size_t ITEMS_PER_THREAD>
-    __device__ __forceinline__ void alloc_aggr(std::int32_t (&buffer_pos)[ITEMS_PER_THREAD],
-                                               float (&batch_dist)[ITEMS_PER_THREAD], float radius)
-    {
-        constexpr std::size_t WARP_SIZE = 32;
-
-        namespace cg = cooperative_groups;
-
-        // count buffer slots needed by this thread
-        std::int32_t count = 0;
-#pragma unroll
-        for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
-        {
-            count += batch_dist[i] < radius ? 1 : 0;
-        }
-
-        // run an exclusive prefix sum of buffer slot counts in each warp
-        const auto block = cg::this_thread_block();
-        const auto warp = cg::tiled_partition<WARP_SIZE>(block);
-        std::int32_t offset = cg::exclusive_scan(warp, count);
-
-        // add the total count of each warp to buffer size
-        std::int32_t prefix = 0;
-        if (warp.thread_rank() + 1 >= warp.size())
-        {
-            count += offset;
-            prefix = atomicAdd(&size, count);
-        }
-
-        // shared offset of this warp with all threads in the warp
-        offset += warp.shfl(prefix, warp.size() - 1);
-
-// set buffer positions
-#pragma unroll
-        for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
-        {
-            buffer_pos[i] = batch_dist[i] < radius ? offset++ : -1;
-        }
-    }
-
-    /*
-    template <std::size_t ITEMS_PER_THREAD, std::enable_if_t<(ITEMS_PER_THREAD > 0 &&
-ENABLE_ALLOC_SCAN)>>
-    __device__ __forceinline__ void
-    alloc_scan(std::int32_t (&buffer_pos)[ITEMS_PER_THREAD], float (&batch_dist)[ITEMS_PER_THREAD],
-            float radius)
-    {
-        // count how many buffer slots will this thread need
-#pragma unroll
-        for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
-        {
-            buffer_pos[i] = batch_dist[i] < radius ? 1 : 0;
-        }
-
-        // compute offset using an exclusive sum
-        std::int32_t prefix = size;
-        scan_t{scan}.ExclusiveSum(buffer_pos, buffer_pos);
-
-        __syncthreads();
-
-        std::int32_t total_count = buffer_pos[ITEMS_PER_THREAD - 1] + 1;
-
-        // set buffer positions
-#pragma unroll
-        for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
-        {
-            buffer_pos[i] = batch_dist[i] < radius ? prefix + buffer_pos[i] : -1;
-        }
-
-        // one thread updates the buffer size
-        if (threadIdx.x + 1 == BLOCK_SIZE)
-        {
-            size += total_count;
-        }
-    }
-    */
-
-    __device__ __forceinline__ void reset()
-    {
-#pragma unroll
-        for (std::size_t i = threadIdx.x; i < BUFFER_SIZE; i += BLOCK_SIZE)
-        {
-            dist[i] = std::numeric_limits<float>::infinity();
-        }
-
-        __syncthreads();
-    }
-
     /** Merge buffer in shared memory with the top k list (a sorted, block-wide register array
      * @p block_dist , @p topk_label )
      *
@@ -272,16 +177,26 @@ ENABLE_ALLOC_SCAN)>>
 
         if (threadIdx.x == 0)
         {
-            size = std::max<std::int32_t>(size - static_cast<std::int32_t>(BUFFER_SIZE), 0);
+            size -= static_cast<std::int32_t>(BUFFER_SIZE);
         }
 
         __syncthreads();
     }
 };
 
-/**
- * @brief
- *
+/** Load a batch of values from the input distance matrix and labels.
+
+ * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions to prefetch the next batch.
+ * @tparam ADD_NORMS if true, the kernel will add @p norms of the database vectors to @p in_dist distance matrix elements.
+ * @tparam BLOCK_SIZE number of threads in a thread block.
+ * @tparam BATCH_SIZE number of @p in_dist elements to load for each thread.
+ * @param[out] batch_dist the loaded distances from the @p in_dist matrix for each thread.
+ * @param[out] batch_label the associated labels for the loaded distances. If @p in_label.data() is not nullptr, the kernel loads the labels from the @p in_label matrix.
+ * @param[in] in_dist the input distance matrix of dimensionality @p in_dist.size(0) == gridDim.x (number of queries) and @p in_dist.size(1) equal to the number of database vectors.
+ * @param[in] in_label the input label matrix. If @p in_label.data() is nullptr, the kernel uses implicit indices as labels. Otherwise, the @p in_label matrix of the same size as @p in_dist is used.
+ * @param i the starting index of the batch to load.
+ * @param label_offsets the offsets to add to the labels. This is useful for single-query problems. If @p label_offsets is nullptr, the kernel does not add any offset to the labels. Otherwise, size of @p label_offsets must be equal to @p in_dist.size(0).
+ * @param norms the norms of the database vectors. If @p norms is nullptr, the kernel does not add any norms to the distances. Otherwise, the size of @p norms must be equal to @p in_dist.size(1).
  */
 template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE>
 __device__ __forceinline__ void
@@ -305,8 +220,7 @@ bits_kernel_load_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_lab
                 batch_dist[j] += norms[point_idx];
             }
 
-            batch_label[j] =
-                in_label.data() == nullptr ? point_idx : in_label(blockIdx.x, point_idx);
+            batch_label[j] = !in_label.data() ? point_idx : in_label(blockIdx.x, point_idx);
 
             if (label_offsets != nullptr)
             {
@@ -330,14 +244,24 @@ bits_kernel_load_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_lab
     }
 }
 
-/**
- * @brief
+/** Insert a batch of values into the shared buffer.
  *
+ * Attempts to insert the loaded values into allocated buffer positions.
+ * If any thread attempts to insert a value into a buffer position that is larger than the buffer size, the function returns the overflow status.
+ *
+ * @tparam BLOCK_SIZE number of threads in a thread block.
+ * @tparam BATCH_SIZE number of values to insert for each thread.
+ * @tparam BUFFER_SIZE number of value-label pairs that fit into the buffer.
+ * @param batch_dist the loaded values to insert into the buffer.
+ * @param batch_label the labels of the values to insert into the buffer.
+ * @param shm_buffer the shared buffer to insert the values into.
+ * @param buffer_pos the allocated buffer positions for the values; negative values indicate that the loaded value should not be inserted.
+ * @return the status of the buffer after all insertion attempts.
  */
-template <std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, std::size_t K>
-__device__ __forceinline__ shared_buffer<K, BLOCK_SIZE>::status_t
-bits_kernel_process_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_label)[BATCH_SIZE],
-                          shared_buffer<K, BLOCK_SIZE>& shm_buffer,
+template <std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, std::size_t BUFFER_SIZE>
+__device__ __forceinline__ shared_buffer<BUFFER_SIZE, BLOCK_SIZE>::status_t
+bits_kernel_insert_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_label)[BATCH_SIZE],
+                          shared_buffer<BUFFER_SIZE, BLOCK_SIZE>& shm_buffer,
                           std::int32_t (&buffer_pos)[BATCH_SIZE])
 {
     bool overflown = false;
@@ -346,36 +270,32 @@ bits_kernel_process_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_
     for (std::size_t j = 0; j < BATCH_SIZE; ++j)
     {
         // try to add the loaded value to the buffer (negative position indicates no value)
-        if (0 <= buffer_pos[j] && buffer_pos[j] < static_cast<std::int32_t>(K))
+        if (0 <= buffer_pos[j] && buffer_pos[j] < static_cast<std::int32_t>(BUFFER_SIZE))
         {
             shm_buffer.dist[buffer_pos[j]] = batch_dist[j];
             shm_buffer.label[buffer_pos[j]] = batch_label[j];
         }
 
         // check for buffer overflow
-        overflown |= buffer_pos[j] >= static_cast<std::int32_t>(K);
-        buffer_pos[j] -= K;
+        overflown |= buffer_pos[j] >= static_cast<std::int32_t>(BUFFER_SIZE);
+        buffer_pos[j] -= BUFFER_SIZE;
     }
 
     return __syncthreads_or(overflown) ? shm_buffer.OVERFLOW : shm_buffer.NO_OVERFLOW;
 }
 
-// TODO: the documentation is not accurate
 /** Bitonic select (bits) kernel (small k, multi-query -- one query per thread block)
  *
  * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions.
- * @tparam ADD_NORMS if true, the kernel will add @p norms to @p in_dist to finish distance
- * computation using cuBLAS.
+ * @tparam ADD_NORMS if true, the kernel will add @p norms to @p in_dist elements.
  * @tparam BLOCK_SIZE number of threads in a thread block.
- * @tparam BATCH_SIZE number of reads per thread (we have to allocate an additional register for
- * each read).
+ * @tparam BATCH_SIZE number of elements to load for each thread in a single iteration.
  * @tparam K the number of values to find for each query.
  * @param[in] in_dist distance matrix.
  * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
  * @param[out] out_dist top k distances for each query.
  * @param[out] out_label top k indices for each query.
- * @param[in] label_offsets this value will be multiplied by the block index and added to each label
- *                         (for the single-query adaptation of this kernel).
+ * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr if not needed.
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */
@@ -417,8 +337,7 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
                 topk_dist[i] += norms[topk_label[i]];
             }
 
-            topk_label[i] =
-                in_label.data() == nullptr ? topk_label[i] : in_label(blockIdx.x, topk_label[i]);
+            topk_label[i] = !in_label.data() ? topk_label[i] : in_label(blockIdx.x, topk_label[i]);
 
             // add an optional offset to make the label unique across all "queries" in single query
             // problems
@@ -452,10 +371,10 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
         shm_buffer.alloc(buffer_pos, batch_dist, radius);
 
         // fill the shared buffer with the loaded values and merge into the top-k list if needed
-        while (bits_kernel_process_batch<BLOCK_SIZE, BATCH_SIZE, BUFFER_SIZE>(
+        while (bits_kernel_insert_batch<BLOCK_SIZE, BATCH_SIZE, BUFFER_SIZE>(
                    batch_dist, batch_label, shm_buffer, buffer_pos) == shm_buffer.OVERFLOW)
         {
-            // merge the buffer
+            // merge the buffer with the top k list
             shm_buffer.merge(topk_dist, topk_label);
 
             // update the radius (the kth smallest value)

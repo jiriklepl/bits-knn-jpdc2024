@@ -33,7 +33,7 @@ struct dot_product_ops
      * @param[in,out] acc result matrix accumulator.
      */
     __device__ __forceinline__ void run(float (&lhs)[REGS_M], float (&rhs)[REGS_N],
-                                        float (&acc)[REGS_M][REGS_N])
+                                        float (&acc)[REGS_M][REGS_N]) const
     {
         // compute the distances
 #pragma unroll
@@ -51,7 +51,7 @@ struct dot_product_ops
      *
      * @param acc computed distance
      */
-    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) {}
+    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) const {}
 };
 
 /** Operators for squared L2 distances in matrix multiplication.
@@ -77,7 +77,7 @@ struct l2_ops
      * @param[in,out] acc result matrix accumulator.
      */
     __device__ __forceinline__ void run(float (&lhs)[REGS_M], float (&rhs)[REGS_N],
-                                        float (&acc)[REGS_M][REGS_N])
+                                        float (&acc)[REGS_M][REGS_N]) const
     {
         // compute the distances
 #pragma unroll
@@ -87,7 +87,7 @@ struct l2_ops
             for (int j = 0; j < REGS_N; ++j)
             {
                 const float diff = lhs[i] - rhs[j];
-                acc[i][j] += diff * diff;
+                acc[i][j] = fmaf(diff, diff, acc[i][j]);
             }
         }
     }
@@ -96,7 +96,7 @@ struct l2_ops
      *
      * @param acc computed distance
      */
-    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) {}
+    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) const {}
 };
 
 /** Operators for partial squared L2 distances in matrix multiplication.
@@ -155,7 +155,7 @@ struct partial_l2_ops
      *
      * @param acc computed distance
      */
-    __device__ __forceinline__ void finish(float (&acc)[REGS_M][REGS_N])
+    __device__ __forceinline__ void finish(float (&acc)[REGS_M][REGS_N]) const
     {
 #pragma unroll
         for (int i = 0; i < REGS_M; ++i)
@@ -195,7 +195,7 @@ struct kl_divergence_ops
      * @param[in,out] acc result matrix accumulator.
      */
     __device__ __forceinline__ void run(float (&lhs)[REGS_M], float (&rhs)[REGS_N],
-                                        float (&acc)[REGS_M][REGS_N])
+                                        float (&acc)[REGS_M][REGS_N]) const
     {
         // compute log(rhs)
         float log_rhs[REGS_N];
@@ -227,7 +227,7 @@ struct kl_divergence_ops
      *
      * @param acc computed distance
      */
-    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) {}
+    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) const {}
 };
 
 /** Operators for computing LP distance.
@@ -254,7 +254,7 @@ struct lp_ops
      * @param[in,out] acc result matrix accumulator.
      */
     __device__ __forceinline__ void run(float (&lhs)[REGS_M], float (&rhs)[REGS_N],
-                                        float (&acc)[REGS_M][REGS_N])
+                                        float (&acc)[REGS_M][REGS_N]) const
     {
 // compute the distances
 #pragma unroll
@@ -279,7 +279,7 @@ struct lp_ops
      *
      * @param acc computed distance
      */
-    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) {}
+    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) const {}
 };
 
 /** Operators for lower bound calculations in pivot-based methods.
@@ -305,7 +305,7 @@ struct lower_bound_ops
      * @param[in,out] acc result matrix accumulator.
      */
     __device__ __forceinline__ void run(float (&lhs)[REGS_M], float (&rhs)[REGS_N],
-                                        float (&acc)[REGS_M][REGS_N])
+                                        float (&acc)[REGS_M][REGS_N]) const
     {
         // compute the distances
 #pragma unroll
@@ -323,7 +323,7 @@ struct lower_bound_ops
      *
      * @param acc computed distance
      */
-    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) {}
+    __device__ __forceinline__ void finish(float (&)[REGS_M][REGS_N]) const {}
 };
 
 /** Matrix pointer wrapper which checks if there are out-of-bounds accesses.
@@ -421,7 +421,7 @@ struct unguarded_ptr
 
     __device__ __forceinline__ T& operator[](int col_offset) { return ptr[col_offset]; }
 
-    __device__ __forceinline__ unguarded_ptr& operator+=(std::int64_t offset) { ptr += offset; }
+    __device__ __forceinline__ unguarded_ptr& operator+=(std::int64_t offset) { ptr += offset; return *this; }
 };
 
 /** A modification of the kernel due to Li et al. from https://github.com/geomlab-ucd/bf-knn

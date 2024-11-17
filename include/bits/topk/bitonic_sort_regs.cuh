@@ -32,6 +32,19 @@ __device__ __forceinline__ void reverse_regs(T (&data)[SIZE])
 #pragma pop
 }
 
+/** Compare and swap two distance-label pairs.
+ *
+ * Update the input pairs so that `lhs` is less than or equal to `rhs`.
+ *
+ * @tparam ORDER ascending or descending order
+ * @tparam Dist type of the distance values
+ * @tparam Label type of the label values
+ *
+ * @param lhs left-hand side distance
+ * @param lhs_label left-hand side label
+ * @param rhs right-hand side distance
+ * @param rhs_label right-hand side label
+ */
 template <order_t ORDER = order_t::ascending, typename Dist, typename Label>
 __device__ __forceinline__ void compare_and_swap(Dist& lhs, Label& lhs_label, Dist& rhs,
                                                  Label& rhs_label)

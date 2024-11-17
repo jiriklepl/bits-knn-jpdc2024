@@ -15,12 +15,13 @@ files = glob.glob("data/distances-*-*.csv")
 def plot(file, hostname, jobid):
 
     data = pd.read_csv(file, sep=',')
-    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "distances")]
+    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "distances") &
+                    (data["algorithm"] != "magma-dist") & (data["algorithm"] != "tiled-dist")]
+
     # change labels to human readable strings
     data = data.replace({"algorithm": {
         "baseline-dist": "baseline",
-        "magma-dist": "MAGMA-distance",
-        "magma-part-dist": "MAGMA-distance-partial",
+        "magma-part-dist": "MAGMA-distance",
         "cublas-dist": "cuBLAS GEMM + postprocessing",
         "tiled-dist": "Kuang et al.",
     }})

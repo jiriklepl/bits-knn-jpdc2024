@@ -77,31 +77,7 @@ public:
         return total_size;
     }
 
-    /** Get element at given position
-     *
-     * @param indices Array of indices
-     *
-     * @returns reference to the element
-     */
-    __host__ __device__ T& operator()(const std::size_t (&indices)[DIM])
-    {
-        std::size_t index = 0;
-
-#pragma push
-#pragma nv_diag_suppress = unsigned_compare_with_zero
-
-#pragma unroll
-        for (std::size_t i = 0; i < DIM - 1; ++i)
-        {
-            index = (index + indices[i]) * stride_[i];
-        }
-
-#pragma pop
-
-        return data_[index + indices[DIM - 1]];
-    }
-
-    __host__ __device__ const T& operator()(const std::size_t (&indices)[DIM]) const
+    __host__ __device__ T& operator()(const std::size_t (&indices)[DIM]) const
     {
         std::size_t index = 0;
 
