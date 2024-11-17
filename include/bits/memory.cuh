@@ -7,8 +7,8 @@
 #include <cooperative_groups.h>
 #include <cuda_runtime.h>
 
-/** this performs a swap of two values of trivially copyable types (may be faster than std::swap in unobvious
- * cases)
+/** this performs a swap of two values of trivially copyable types (may be faster than std::swap in
+ * unobvious cases)
  *
  * @tparam T the type of the first parameter
  * @tparam U the type of the second parameter

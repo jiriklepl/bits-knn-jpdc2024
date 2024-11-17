@@ -64,28 +64,28 @@ struct scatter_kernel
     static_assert(BIN_BITS <= 16);
 
     // number of threads in each thread block
-    inline static constexpr std::size_t BLOCK_SIZE = BLOCK_SIZE_;
+    static constexpr std::size_t BLOCK_SIZE = BLOCK_SIZE_;
     // number of items per thread block
-    inline static constexpr std::size_t ITEMS_PER_BLOCK =
+    static constexpr std::size_t ITEMS_PER_BLOCK =
         BLOCK_SIZE * ITEMS_PER_THREAD * TILES_PER_BLOCK;
     // log of the warp size
-    inline static constexpr std::size_t LOG_WARP_SIZE = 5;
+    static constexpr std::size_t LOG_WARP_SIZE = 5;
     // number of histogram bins per thread
-    inline static constexpr std::size_t NUM_WARPS =
+    static constexpr std::size_t NUM_WARPS =
         BLOCK_SIZE >> LOG_WARP_SIZE; // block size / warp size
-    inline static constexpr std::size_t PADDED_NUM_WARPS = NUM_WARPS + 3;
+    static constexpr std::size_t PADDED_NUM_WARPS = NUM_WARPS + 3;
     // number of bins in a histogram
-    inline static constexpr std::size_t HIST_SIZE = 1 << BIN_BITS;
+    static constexpr std::size_t HIST_SIZE = 1 << BIN_BITS;
     // bitmask representing the whole warp
-    inline static constexpr std::uint32_t WHOLE_WARP = 0xFFFFFFFF;
+    static constexpr std::uint32_t WHOLE_WARP = 0xFFFFFFFF;
     // number of privatized histogram table values per thread (when stored in registers of a thread
     // block)
-    inline static constexpr std::size_t COUNTERS_PER_THREAD =
+    static constexpr std::size_t COUNTERS_PER_THREAD =
         (HIST_SIZE * NUM_WARPS + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    inline static constexpr std::size_t PADDED_COUNTERS_PER_THREAD =
+    static constexpr std::size_t PADDED_COUNTERS_PER_THREAD =
         (HIST_SIZE * PADDED_NUM_WARPS + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // number of histogram bins per thread (when stored in registers of a thread block)
-    inline static constexpr std::size_t BINS_PER_THREAD = (HIST_SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    static constexpr std::size_t BINS_PER_THREAD = (HIST_SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     using scan_t = cub::BlockScan<std::int32_t, BLOCK_SIZE>;
     using splitter_t = Splitter;

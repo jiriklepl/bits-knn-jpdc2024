@@ -15,13 +15,13 @@
 struct dot_product_ops
 {
     // dimension of thread blocks along the M dimension
-    inline static constexpr int BLOCK_DIM_M = 16;
+    static constexpr int BLOCK_DIM_M = 16;
     // dimension of thread blocks along the N dimension
-    inline static constexpr int BLOCK_DIM_N = 16;
+    static constexpr int BLOCK_DIM_N = 16;
     // number of registers per thread along the M dimension
-    inline static constexpr int REGS_M = 6;
+    static constexpr int REGS_M = 6;
     // number of registers per thread along the N dimension
-    inline static constexpr int REGS_N = 6;
+    static constexpr int REGS_N = 6;
 
     /** Compute dot product and add it to the matrix @p acc
      *
@@ -59,13 +59,13 @@ struct dot_product_ops
 struct l2_ops
 {
     // dimension of thread blocks along the M dimension
-    inline static constexpr int BLOCK_DIM_M = 16;
+    static constexpr int BLOCK_DIM_M = 16;
     // dimension of thread blocks along the N dimension
-    inline static constexpr int BLOCK_DIM_N = 16;
+    static constexpr int BLOCK_DIM_N = 16;
     // number of registers per thread along the M dimension
-    inline static constexpr int REGS_M = 6;
+    static constexpr int REGS_M = 6;
     // number of registers per thread along the N dimension
-    inline static constexpr int REGS_N = 6;
+    static constexpr int REGS_N = 6;
 
     /** Compute squared L2 distances and add them to the matrix @p acc
      *
@@ -108,13 +108,13 @@ struct l2_ops
 struct partial_l2_ops
 {
     // dimension of thread blocks along the M dimension
-    inline static constexpr int BLOCK_DIM_M = 16;
+    static constexpr int BLOCK_DIM_M = 16;
     // dimension of thread blocks along the N dimension
-    inline static constexpr int BLOCK_DIM_N = 16;
+    static constexpr int BLOCK_DIM_N = 16;
     // number of registers per thread along the M dimension
-    inline static constexpr int REGS_M = 6;
+    static constexpr int REGS_M = 6;
     // number of registers per thread along the N dimension
-    inline static constexpr int REGS_N = 6;
+    static constexpr int REGS_N = 6;
 
     float db_norm[REGS_N];
 
@@ -177,13 +177,13 @@ struct partial_l2_ops
 struct kl_divergence_ops
 {
     // dimension of thread blocks along the M dimension
-    inline static constexpr int BLOCK_DIM_M = 16;
+    static constexpr int BLOCK_DIM_M = 16;
     // dimension of thread blocks along the N dimension
-    inline static constexpr int BLOCK_DIM_N = 16;
+    static constexpr int BLOCK_DIM_N = 16;
     // number of registers per thread along the M dimension
-    inline static constexpr int REGS_M = 4;
+    static constexpr int REGS_M = 4;
     // number of registers per thread along the N dimension
-    inline static constexpr int REGS_N = 4;
+    static constexpr int REGS_N = 4;
 
     /** Compute KL divergence and add it to the matrix @p acc
      *
@@ -236,13 +236,13 @@ template <int POW>
 struct lp_ops
 {
     // dimension of thread blocks along the M dimension
-    inline static constexpr int BLOCK_DIM_M = 16;
+    static constexpr int BLOCK_DIM_M = 16;
     // dimension of thread blocks along the N dimension
-    inline static constexpr int BLOCK_DIM_N = 16;
+    static constexpr int BLOCK_DIM_N = 16;
     // number of registers per thread along the M dimension
-    inline static constexpr int REGS_M = 6;
+    static constexpr int REGS_M = 6;
     // number of registers per thread along the N dimension
-    inline static constexpr int REGS_N = 6;
+    static constexpr int REGS_N = 6;
 
     /** Compute squared L2 distances and add them to the matrix @p acc
      *
@@ -287,13 +287,13 @@ struct lp_ops
 struct lower_bound_ops
 {
     // dimension of thread blocks along the M dimension
-    inline static constexpr int BLOCK_DIM_M = 16;
+    static constexpr int BLOCK_DIM_M = 16;
     // dimension of thread blocks along the N dimension
-    inline static constexpr int BLOCK_DIM_N = 16;
+    static constexpr int BLOCK_DIM_N = 16;
     // number of registers per thread along the M dimension
-    inline static constexpr int REGS_M = 6;
+    static constexpr int REGS_M = 6;
     // number of registers per thread along the N dimension
-    inline static constexpr int REGS_N = 6;
+    static constexpr int REGS_N = 6;
 
     /** Compute dot product and add it to the matrix @p acc
      *
@@ -421,7 +421,11 @@ struct unguarded_ptr
 
     __device__ __forceinline__ T& operator[](int col_offset) { return ptr[col_offset]; }
 
-    __device__ __forceinline__ unguarded_ptr& operator+=(std::int64_t offset) { ptr += offset; return *this; }
+    __device__ __forceinline__ unguarded_ptr& operator+=(std::int64_t offset)
+    {
+        ptr += offset;
+        return *this;
+    }
 };
 
 /** A modification of the kernel due to Li et al. from https://github.com/geomlab-ucd/bf-knn
@@ -513,13 +517,13 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 
     static_assert(BLOCK_SIZE % WARP_SIZE == 0);
 
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
-    int bx = blockIdx.x;
-    int by = blockIdx.y;
-    int tid = ty * BLOCK_DIM_N + tx;
-    int tx2 = tid % WARP_SIZE;
-    int ty2 = tid / WARP_SIZE;
+    const int tx = threadIdx.x;
+    const int ty = threadIdx.y;
+    const int bx = blockIdx.x;
+    const int by = blockIdx.y;
+    const int tid = ty * BLOCK_DIM_N + tx;
+    const int tx2 = tid % WARP_SIZE;
+    const int ty2 = tid / WARP_SIZE;
 
     volatile __shared__ float as[TILE_K][TILE_M];
     volatile __shared__ float bs[TILE_K][TILE_N];

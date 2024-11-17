@@ -10,9 +10,9 @@ template <std::size_t BLOCK_SIZE_, std::size_t ITEMS_PER_THREAD, std::size_t TIL
 struct copy_kernel
 {
     // number of threads in each thread block
-    inline static constexpr std::size_t BLOCK_SIZE = BLOCK_SIZE_;
+    static constexpr std::size_t BLOCK_SIZE = BLOCK_SIZE_;
     // number of items that fit into registers of one block
-    inline static constexpr std::size_t TILE_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
+    static constexpr std::size_t TILE_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
 
     struct tmp_storage_t
     {

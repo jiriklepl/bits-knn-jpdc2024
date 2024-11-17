@@ -384,7 +384,7 @@ __device__ void block_sort_bitonic(float (&dist)[ITEMS_PER_THREAD],
  */
 template <std::size_t ITERATION, std::size_t END_STRIDE, std::size_t BLOCK_SIZE,
           std::size_t VALUE_COUNT, std::size_t ITEMS_PER_THREAD, order_t ORDER = order_t::ascending>
-__device__ void block_sort_aux(float (&dist)[ITEMS_PER_THREAD],
+__device__ inline void block_sort_aux(float (&dist)[ITEMS_PER_THREAD],
                                std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
                                std::int32_t* shm_label)
 {
@@ -423,7 +423,7 @@ __device__ void block_sort_aux(float (&dist)[ITEMS_PER_THREAD],
  */
 template <std::size_t STRIDE, std::size_t BLOCK_SIZE, std::size_t VALUE_COUNT,
           std::size_t ITEMS_PER_THREAD, order_t ORDER = order_t::ascending>
-__device__ void block_sort(float (&dist)[ITEMS_PER_THREAD], std::int32_t (&label)[ITEMS_PER_THREAD],
+__device__ inline void block_sort(float (&dist)[ITEMS_PER_THREAD], std::int32_t (&label)[ITEMS_PER_THREAD],
                            float* shm_dist, std::int32_t* shm_label)
 {
     block_sort_aux<VALUE_COUNT / STRIDE, VALUE_COUNT, BLOCK_SIZE, VALUE_COUNT, ITEMS_PER_THREAD,
@@ -449,7 +449,7 @@ __device__ void block_sort(float (&dist)[ITEMS_PER_THREAD], std::int32_t (&label
  */
 template <std::size_t STRIDE, std::size_t END_STRIDE, std::size_t BLOCK_SIZE,
           std::size_t VALUE_COUNT, std::size_t ITEMS_PER_THREAD, order_t ORDER = order_t::ascending>
-__device__ void block_sort_partial(float (&dist)[ITEMS_PER_THREAD],
+__device__ inline void block_sort_partial(float (&dist)[ITEMS_PER_THREAD],
                                    std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
                                    std::int32_t* shm_label)
 {

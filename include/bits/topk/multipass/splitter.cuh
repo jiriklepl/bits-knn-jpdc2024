@@ -32,13 +32,13 @@ struct splitter
     using bucket_t = std::conditional_t<BUCKET_BITS <= 8, std::uint8_t, std::uint16_t>;
 
     // total number of buckets
-    inline static constexpr std::size_t BUCKET_COUNT = 1 << BUCKET_BITS;
+    static constexpr std::size_t BUCKET_COUNT = 1 << BUCKET_BITS;
     // number of samples
-    inline static constexpr std::size_t SAMPLE_SIZE = BLOCK_SIZE * SAMPLES_PER_THREAD;
+    static constexpr std::size_t SAMPLE_SIZE = BLOCK_SIZE * SAMPLES_PER_THREAD;
     // number of splitters
-    inline static constexpr std::size_t SPLITTER_COUNT = 2 * BUCKET_COUNT - 1;
+    static constexpr std::size_t SPLITTER_COUNT = 2 * BUCKET_COUNT - 1;
     // number of splitters per thread
-    inline static constexpr std::size_t SPLITTERS_PER_THREAD =
+    static constexpr std::size_t SPLITTERS_PER_THREAD =
         (SPLITTER_COUNT + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     /** Shared memory used by the splitter.

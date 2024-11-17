@@ -15,12 +15,12 @@ template <std::size_t BLOCK_SIZE_, std::size_t ITEMS_PER_THREAD, std::size_t BIN
 struct histogram_kernel
 {
     // number of threads in each thread block
-    inline static constexpr std::size_t BLOCK_SIZE = BLOCK_SIZE_;
+    static constexpr std::size_t BLOCK_SIZE = BLOCK_SIZE_;
     // number of items per thread block
-    inline static constexpr std::size_t ITEMS_PER_BLOCK =
+    static constexpr std::size_t ITEMS_PER_BLOCK =
         BLOCK_SIZE * ITEMS_PER_THREAD * TILES_PER_BLOCK;
     // size of the histogram
-    inline static constexpr std::size_t HIST_SIZE = 1 << BIN_BITS;
+    static constexpr std::size_t HIST_SIZE = 1 << BIN_BITS;
 
     using splitter_t = Splitter;
     using histogram_t = histogram<BLOCK_SIZE, ITEMS_PER_THREAD, BIN_BITS>;

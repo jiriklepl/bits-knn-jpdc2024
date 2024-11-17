@@ -29,7 +29,7 @@ struct bitonic_sorter
     value_t* shm_value;
 
     // number of elements that can be stored in registers/shared memory of a thread block
-    inline static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
+    static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
 
     __device__ bitonic_sorter(key_t* shm_key, value_t* shm_value)
         : shm_key(shm_key), shm_value(shm_value)

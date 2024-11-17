@@ -21,11 +21,11 @@ struct histogram
     using bucket_t = std::conditional_t<BUCKET_BITS <= 8, std::uint8_t, std::uint16_t>;
 
     // total number of buckets
-    inline static constexpr std::size_t BUCKET_COUNT = 1 << BUCKET_BITS;
+    static constexpr std::size_t BUCKET_COUNT = 1 << BUCKET_BITS;
     // total size of a tile
-    inline static constexpr std::size_t TILE_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
+    static constexpr std::size_t TILE_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
     // number of buckets per thread
-    inline static constexpr std::size_t BUCKETS_PER_THREAD =
+    static constexpr std::size_t BUCKETS_PER_THREAD =
         (BUCKET_COUNT + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     using scan_t = cub::BlockScan<std::int32_t, BLOCK_SIZE>;

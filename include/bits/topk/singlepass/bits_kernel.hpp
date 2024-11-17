@@ -20,7 +20,8 @@
  * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
  * @param[out] out_dist top k distances for each query.
  * @param[out] out_label top k indices for each query.
- * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr if not needed.
+ * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
+ * if not needed.
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */

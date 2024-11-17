@@ -2,6 +2,7 @@
 #define BITONIC_SORT_WARP_CUH_
 
 #include <cassert>
+#include <cstddef>
 
 #include <cooperative_groups.h>
 #include <cuda_runtime.h>

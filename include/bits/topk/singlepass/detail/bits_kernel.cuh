@@ -7,19 +7,14 @@
 #include <limits>
 #include <type_traits>
 
-#include <cuda/atomic>
-
-#include <cooperative_groups.h>
-#include <cooperative_groups/scan.h>
 #include <cuda_runtime.h>
 
-#include "bits/cuch.hpp"
 #include "bits/array_view.hpp"
+#include "bits/cuch.hpp"
 #include "bits/topk/singlepass/bits_kernel.hpp"
 
 #include "bits/ptx_utils.cuh"
 #include "bits/topk/bitonic_sort_regs.cuh"
-#include "bits/transpose.cuh"
 
 namespace
 {
@@ -187,17 +182,26 @@ struct shared_buffer
 
 /** Load a batch of values from the input distance matrix and labels.
 
- * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions to prefetch the next batch.
- * @tparam ADD_NORMS if true, the kernel will add @p norms of the database vectors to @p in_dist distance matrix elements.
+ * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions to prefetch
+ the next batch.
+ * @tparam ADD_NORMS if true, the kernel will add @p norms of the database vectors to @p in_dist
+ distance matrix elements.
  * @tparam BLOCK_SIZE number of threads in a thread block.
  * @tparam BATCH_SIZE number of @p in_dist elements to load for each thread.
  * @param[out] batch_dist the loaded distances from the @p in_dist matrix for each thread.
- * @param[out] batch_label the associated labels for the loaded distances. If @p in_label.data() is not nullptr, the kernel loads the labels from the @p in_label matrix.
- * @param[in] in_dist the input distance matrix of dimensionality @p in_dist.size(0) == gridDim.x (number of queries) and @p in_dist.size(1) equal to the number of database vectors.
- * @param[in] in_label the input label matrix. If @p in_label.data() is nullptr, the kernel uses implicit indices as labels. Otherwise, the @p in_label matrix of the same size as @p in_dist is used.
+ * @param[out] batch_label the associated labels for the loaded distances. If @p in_label.data() is
+ not nullptr, the kernel loads the labels from the @p in_label matrix.
+ * @param[in] in_dist the input distance matrix of dimensionality @p in_dist.size(0) == gridDim.x
+ (number of queries) and @p in_dist.size(1) equal to the number of database vectors.
+ * @param[in] in_label the input label matrix. If @p in_label.data() is nullptr, the kernel uses
+ implicit indices as labels. Otherwise, the @p in_label matrix of the same size as @p in_dist is
+ used.
  * @param i the starting index of the batch to load.
- * @param label_offsets the offsets to add to the labels. This is useful for single-query problems. If @p label_offsets is nullptr, the kernel does not add any offset to the labels. Otherwise, size of @p label_offsets must be equal to @p in_dist.size(0).
- * @param norms the norms of the database vectors. If @p norms is nullptr, the kernel does not add any norms to the distances. Otherwise, the size of @p norms must be equal to @p in_dist.size(1).
+ * @param label_offsets the offsets to add to the labels. This is useful for single-query problems.
+ If @p label_offsets is nullptr, the kernel does not add any offset to the labels. Otherwise, size
+ of @p label_offsets must be equal to @p in_dist.size(0).
+ * @param norms the norms of the database vectors. If @p norms is nullptr, the kernel does not add
+ any norms to the distances. Otherwise, the size of @p norms must be equal to @p in_dist.size(1).
  */
 template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE>
 __device__ __forceinline__ void
@@ -248,7 +252,8 @@ bits_kernel_load_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_lab
 /** Insert a batch of values into the shared buffer.
  *
  * Attempts to insert the loaded values into allocated buffer positions.
- * If any thread attempts to insert a value into a buffer position that is larger than the buffer size, the function returns the overflow status.
+ * If any thread attempts to insert a value into a buffer position that is larger than the buffer
+ * size, the function returns the overflow status.
  *
  * @tparam BLOCK_SIZE number of threads in a thread block.
  * @tparam BATCH_SIZE number of values to insert for each thread.
@@ -256,7 +261,8 @@ bits_kernel_load_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_lab
  * @param batch_dist the loaded values to insert into the buffer.
  * @param batch_label the labels of the values to insert into the buffer.
  * @param shm_buffer the shared buffer to insert the values into.
- * @param buffer_pos the allocated buffer positions for the values; negative values indicate that the loaded value should not be inserted.
+ * @param buffer_pos the allocated buffer positions for the values; negative values indicate that
+ * the loaded value should not be inserted.
  * @return the status of the buffer after all insertion attempts.
  */
 template <std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, std::size_t BUFFER_SIZE>
@@ -296,7 +302,8 @@ bits_kernel_insert_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_l
  * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
  * @param[out] out_dist top k distances for each query.
  * @param[out] out_label top k indices for each query.
- * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr if not needed.
+ * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
+ * if not needed.
  * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
  *                  a postprocessing.
  */

@@ -8,11 +8,6 @@
 
 #include <cuda_runtime.h>
 
-#include "bits/array_view.hpp"
-#include "bits/knn.hpp"
-#include "bits/topk/singlepass/fused_cache_kernel.hpp"
-
-#include "bits/ptx_utils.cuh"
 #include "bits/topk/bitonic_sort_regs.cuh"
 
 /** Distance/label buffers in shared memory.
@@ -32,9 +27,9 @@ template <std::int32_t K, std::int32_t BLOCK_QUERY_DIM, std::int32_t BLOCK_DB_DI
 struct multi_buffer
 {
     // total number of threads in a thread block
-    inline static constexpr std::int32_t BLOCK_SIZE = BLOCK_QUERY_DIM * BLOCK_DB_DIM;
+    static constexpr std::int32_t BLOCK_SIZE = BLOCK_QUERY_DIM * BLOCK_DB_DIM;
     // combined size of all buffers
-    inline static constexpr std::int32_t TOTAL_CAPACITY = ARRAY_COUNT * K;
+    static constexpr std::int32_t TOTAL_CAPACITY = ARRAY_COUNT * K;
 
     struct multi_buffer_t
     {
@@ -161,10 +156,10 @@ struct multi_buffer
                     }
 
                     // check for overflow
-                    overflown |= buffer_pos[q][i] >= static_cast<std::int32_t>(K);
+                    overflown |= buffer_pos[q][i] >= K;
 
                     // decrement buffer position for the next iteration.
-                    buffer_pos[q][i] -= static_cast<std::int32_t>(K);
+                    buffer_pos[q][i] -= K;
                 }
             }
 
@@ -322,18 +317,18 @@ template <std::int32_t QUERY_REG, std::int32_t DB_REG, std::int32_t DIM_REG,
 struct distance_computation
 {
     // number of queries processed by each thread block
-    inline static constexpr std::int32_t QUERY_TILE = BLOCK_QUERY_DIM * QUERY_REG;
+    static constexpr std::int32_t QUERY_TILE = BLOCK_QUERY_DIM * QUERY_REG;
     // size of the database vector window (number of database vectors)
-    inline static constexpr std::int32_t DB_TILE = BLOCK_POINT_DIM * DB_REG;
+    static constexpr std::int32_t DB_TILE = BLOCK_POINT_DIM * DB_REG;
     // size of each tile along the common dimension
-    inline static constexpr std::int32_t DIM_TILE = DIM_MULT * DIM_REG;
+    static constexpr std::int32_t DIM_TILE = DIM_MULT * DIM_REG;
     // number of threads in a thread block
-    inline static constexpr std::int32_t BLOCK_SIZE = BLOCK_QUERY_DIM * BLOCK_POINT_DIM;
+    static constexpr std::int32_t BLOCK_SIZE = BLOCK_QUERY_DIM * BLOCK_POINT_DIM;
     // number of vector components loaded per thread for each query tile
-    inline static constexpr std::int32_t QUERY_ITEMS_PER_THREAD =
+    static constexpr std::int32_t QUERY_ITEMS_PER_THREAD =
         (QUERY_TILE * DIM_TILE + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // number of vector components loaded per thread fore each DB tile per dimension
-    inline static constexpr std::int32_t DB_LOADS_PER_THREAD =
+    static constexpr std::int32_t DB_LOADS_PER_THREAD =
         (DB_TILE + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     /** Shared memory used by this component.
@@ -673,15 +668,15 @@ struct fused_cache_kernel
 {
     // minimal number of thread blocks per SM to limit register usage (to achieve a higher
     // occupancy)
-    inline static constexpr std::int32_t MIN_BLOCKS_PER_SM = 2;
+    static constexpr std::int32_t MIN_BLOCKS_PER_SM = 2;
     // total number of threads in a thread block
-    inline static constexpr std::int32_t BLOCK_SIZE = BLOCK_QUERY_DIM * BLOCK_DB_DIM;
+    static constexpr std::int32_t BLOCK_SIZE = BLOCK_QUERY_DIM * BLOCK_DB_DIM;
     // number of queries processed in a thread block
-    inline static constexpr std::int32_t QUERY_TILE = BLOCK_QUERY_DIM * QUERY_REG;
+    static constexpr std::int32_t QUERY_TILE = BLOCK_QUERY_DIM * QUERY_REG;
     // number of database vectors in a window
-    inline static constexpr std::int32_t DB_TILE = BLOCK_DB_DIM * DB_REG;
+    static constexpr std::int32_t DB_TILE = BLOCK_DB_DIM * DB_REG;
     // number of items per thread for top k arrays and buffers
-    inline static constexpr std::int32_t ITEMS_PER_THREAD =
+    static constexpr std::int32_t ITEMS_PER_THREAD =
         (QUERY_TILE * K + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     using dist_t =

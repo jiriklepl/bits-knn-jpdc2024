@@ -29,7 +29,7 @@ struct radix_splitter
 
     using bucket_t = std::conditional_t<RADIX_BITS <= 8, std::uint8_t, std::uint16_t>;
 
-    inline static constexpr std::uint32_t DIGIT_MASK = (1 << RADIX_BITS) - 1;
+    static constexpr std::uint32_t DIGIT_MASK = (1 << RADIX_BITS) - 1;
 
     std::uint32_t begin_bit;
 
