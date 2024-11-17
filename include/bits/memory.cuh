@@ -7,8 +7,15 @@
 #include <cooperative_groups.h>
 #include <cuda_runtime.h>
 
-// this performs a swap of two trivially copyable types (may be faster than std::swap in unobvious
-// cases)
+/** this performs a swap of two values of trivially copyable types (may be faster than std::swap in unobvious
+ * cases)
+ *
+ * @tparam T the type of the first parameter
+ * @tparam U the type of the second parameter
+ &
+ * @param a the first value being swapped
+ * @param b the second value being swapped
+ */
 template <typename T, typename U>
 constexpr __forceinline__
     __host__ __device__ std::enable_if_t<std::is_trivially_copy_assignable_v<T> &&
@@ -80,7 +87,7 @@ inline __device__ void load_striped(T (&values)[ITEMS_PER_THREAD], const T* mem_
  *
  * For values in memory: `m_0, m_1, m_2, m_3, ...` it sets
  * `m_{tid}, m_{tid + BLOCK_SIZE}, m_{tid + BLOCK_SIZE * 2}, ..., m_{tid + BLOCK_SIZE *
- * (ITEMS_PER_THREAD - 1)}` to consequtive values from @p values
+ * (ITEMS_PER_THREAD - 1)}` to consecutive values from @p values
  *
  * @tparam BLOCK_SIZE thread block size (number of threads)
  * @tparam ITEMS_PER_THREAD number of registers per thread used to hold data
@@ -105,7 +112,7 @@ inline __device__ void store_striped(T (&values)[ITEMS_PER_THREAD], T* mem_value
  *
  * For values in memory: `m_0, m_1, m_2, m_3, ...` it sets
  * `m_{tid}, m_{tid + BLOCK_SIZE}, m_{tid + BLOCK_SIZE * 2}, ..., m_{tid + BLOCK_SIZE *
- * (ITEMS_PER_THREAD - 1)}` to consequtive values from @p values
+ * (ITEMS_PER_THREAD - 1)}` to consecutive values from @p values
  *
  * @tparam BLOCK_SIZE thread block size (number of threads)
  * @tparam ITEMS_PER_THREAD number of registers per thread used to hold data

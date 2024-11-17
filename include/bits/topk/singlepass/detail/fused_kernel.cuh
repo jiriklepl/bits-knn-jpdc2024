@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 
 #include <cuda_runtime.h>
 
@@ -437,7 +438,7 @@ void fused_kernel_runner::operator()()
     if (k != K || block_size != BLOCK_QUERY_DIM || items_per_thread[0] != REG_QUERY_COUNT ||
         items_per_thread[1] != REG_POINT_COUNT)
     {
-        return; // TODO: throw an exception
+        throw std::runtime_error("Invalid configuration for the fused kernel");
     }
 
     const auto dim = points.size(0);
