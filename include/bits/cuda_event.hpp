@@ -49,11 +49,11 @@ public:
 
     /** Wait for the event.
      */
-    inline void sync() { CUCH(cudaEventSynchronize(event_)); }
+    void sync() { CUCH(cudaEventSynchronize(event_)); }
 
     /** Record the event in the default stream.
      */
-    inline void record() { CUCH(cudaEventRecord(event_)); }
+    void record() { CUCH(cudaEventRecord(event_)); }
 
     /** Find the elapsed time in seconds between this event and @p other
      *

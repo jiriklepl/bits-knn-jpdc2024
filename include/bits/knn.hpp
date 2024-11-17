@@ -79,47 +79,47 @@ public:
      *
      * @returns dimension of all objects
      */
-    inline std::size_t dim() const { return args_.dim; }
+    std::size_t dim() const { return args_.dim; }
 
     /** Number of nearest neighbors
      *
      * @returns number of nearest neighbors
      */
-    inline std::size_t k() const { return args_.k; }
+    std::size_t k() const { return args_.k; }
 
     /** Number of train objects
      *
      * @returns number of train objects
      */
-    inline std::size_t point_count() const { return args_.point_count; }
+    std::size_t point_count() const { return args_.point_count; }
 
     /** Number of test objects
      *
      * @returns number of test objects
      */
-    inline std::size_t query_count() const { return args_.query_count; }
+    std::size_t query_count() const { return args_.query_count; }
 
     /** Number of threads in a block
      *
      * @returns size of a CUDA block
      */
-    inline std::size_t selection_block_size() const { return args_.selection_block_size; }
+    std::size_t selection_block_size() const { return args_.selection_block_size; }
 
     /** Get pointer to points in CPU memory space
      *
      * @returns pointer to the points matrix
      */
-    inline const float* points() const { return args_.points; }
+    const float* points() const { return args_.points; }
 
     /** Get pointer to queries in CPU memory space
      *
      * @returns pointer to the query matrix
      */
-    inline const float* queries() const { return args_.queries; }
+    const float* queries() const { return args_.queries; }
 
     /** Do not copy the kNN result back to CPU
      */
-    inline void no_output() { no_output_ = true; }
+    void no_output() { no_output_ = true; }
 
 protected:
     bool no_output_ = false;

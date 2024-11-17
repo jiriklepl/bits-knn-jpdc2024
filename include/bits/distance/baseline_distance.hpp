@@ -13,7 +13,7 @@ public:
     void prepare(const knn_args& args) override;
     void compute() override;
 
-    inline std::string name() const override { return "baseline-dist"; }
+    std::string name() const override { return "baseline-dist"; }
 };
 
 #endif // BASELINE_DISTANCE_HPP_

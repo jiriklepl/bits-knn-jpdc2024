@@ -100,7 +100,7 @@ public:
      * @return cuda array with the same shape as @p view
      */
     template <typename U>
-    inline static cuda_array with_shape(array_view<U, DIM> view)
+    static cuda_array with_shape(array_view<U, DIM> view)
     {
         std::size_t size[DIM];
         std::size_t stride[DIM];

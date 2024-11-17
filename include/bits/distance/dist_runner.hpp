@@ -11,7 +11,7 @@ class dist_runner : public cuda_knn
 public:
     dist_runner() { set_dist_impl(std::make_unique<Distance>()); }
 
-    inline std::string id() const override { return dist_impl_->name(); }
+    std::string id() const override { return dist_impl_->name(); }
 };
 
 #endif // DIST_RUNNER_HPP_

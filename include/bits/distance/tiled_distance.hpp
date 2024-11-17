@@ -14,7 +14,7 @@ class tiled_distance : public cuda_distance
 public:
     void compute() override;
 
-    inline std::string name() const override { return "tiled-dist"; }
+    std::string name() const override { return "tiled-dist"; }
 };
 
 #endif // TILED_DISTANCE_HPP_

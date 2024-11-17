@@ -8,7 +8,7 @@
 class serial_knn : public knn
 {
 public:
-    inline std::string id() const override { return "serial"; }
+    std::string id() const override { return "serial"; }
 
     void prepare() override;
     void distances() override;

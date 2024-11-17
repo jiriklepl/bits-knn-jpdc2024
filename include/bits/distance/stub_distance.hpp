@@ -46,7 +46,7 @@ public:
      *
      * @returns name of this distance algorithm
      */
-    inline std::string name() const override { return "stub-dist"; }
+    std::string name() const override { return "stub-dist"; }
 
 private:
     std::size_t seed_;

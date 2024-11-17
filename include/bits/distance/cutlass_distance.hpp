@@ -15,7 +15,7 @@ public:
     void prepare(const knn_args& args) override;
     void compute() override;
 
-    inline std::string name() const override { return "cutlass-dist"; }
+    std::string name() const override { return "cutlass-dist"; }
 };
 
 #endif // CUTLASS_DISTANCE_HPP_

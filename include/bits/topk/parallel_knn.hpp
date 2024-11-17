@@ -9,7 +9,7 @@
 class parallel_knn : public knn
 {
 public:
-    inline std::string id() const override { return "parallel"; }
+    std::string id() const override { return "parallel"; }
 
     void initialize(const knn_args& args) override;
     void prepare() override;

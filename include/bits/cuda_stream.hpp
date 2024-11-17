@@ -15,20 +15,20 @@
 class cuda_stream
 {
 public:
-    inline cuda_stream() : stream_(0) { CUCH(cudaStreamCreate(&stream_)); }
+    cuda_stream() : stream_(0) { CUCH(cudaStreamCreate(&stream_)); }
 
-    inline explicit cuda_stream(cudaStream_t stream) : stream_(stream) {}
+    explicit cuda_stream(cudaStream_t stream) : stream_(stream) {}
 
-    inline ~cuda_stream() { release(); }
+    ~cuda_stream() { release(); }
 
     // Noncopyable
     cuda_stream(const cuda_stream&) = delete;
     cuda_stream& operator=(const cuda_stream&) = delete;
 
     // Movable
-    inline cuda_stream(cuda_stream&& other) noexcept : stream_(other.stream_) { other.stream_ = 0; }
+    cuda_stream(cuda_stream&& other) noexcept : stream_(other.stream_) { other.stream_ = 0; }
 
-    inline cuda_stream& operator=(cuda_stream&& other) noexcept
+    cuda_stream& operator=(cuda_stream&& other) noexcept
     {
         release();
         stream_ = other.stream_;
@@ -38,7 +38,7 @@ public:
 
     /** Wait for all previous commands in the stream to finish.
      */
-    inline void sync() const
+    void sync() const
     {
         CUCH(cudaPeekAtLastError());
         CUCH(cudaStreamSynchronize(stream_));
@@ -48,7 +48,7 @@ public:
      *
      * @return this
      */
-    inline cuda_stream& device_sync()
+    cuda_stream& device_sync()
     {
         CUCH(cudaDeviceSynchronize());
         return *this;
@@ -56,7 +56,7 @@ public:
 
     /** Destroy this stream.
      */
-    inline void release()
+    void release()
     {
         if (stream_ != 0)
         {
@@ -178,7 +178,7 @@ public:
      *
      * @returns stream handle
      */
-    inline cudaStream_t get() const { return stream_; }
+    cudaStream_t get() const { return stream_; }
 
     /** Fill @p gpu_ptr with copies of @p value
      *
@@ -195,7 +195,7 @@ public:
      *
      * @return object representing the default stream.
      */
-    inline static cuda_stream make_default() { return cuda_stream{0}; }
+    static cuda_stream make_default() { return cuda_stream{0}; }
 
 private:
     cudaStream_t stream_;

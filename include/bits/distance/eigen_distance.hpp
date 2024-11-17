@@ -18,7 +18,7 @@ public:
 
     array_view<float, 2> matrix_gpu() const override { return array_view<float, 2>{}; }
 
-    inline array_view<float, 2> matrix_cpu() override
+    array_view<float, 2> matrix_cpu() override
     {
         return {dist_.data(), {args_.query_count, args_.point_count}, {args_.point_count, 1}};
     }
