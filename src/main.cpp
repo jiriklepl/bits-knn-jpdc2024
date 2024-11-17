@@ -21,14 +21,13 @@
 #include "bits/utils.hpp"
 #include "bits/verify.hpp"
 
-#include "bits/data_generator.hpp"
-#include "bits/normal_generator.hpp"
-#include "bits/radix_adversarial_generator.hpp"
-#include "bits/uniform_generator.hpp"
+#include "bits/generator/data_generator.hpp"
+#include "bits/generator/normal_generator.hpp"
+#include "bits/generator/uniform_generator.hpp"
 
-#include "bits/data_preprocessor.hpp"
-#include "bits/identity_preprocessor.hpp"
-#include "bits/ordering_preprocessor.hpp"
+#include "bits/preprocessor/data_preprocessor.hpp"
+#include "bits/preprocessor/identity_preprocessor.hpp"
+#include "bits/preprocessor/ordering_preprocessor.hpp"
 
 #include "bits/distance/baseline_distance.hpp"
 #include "bits/distance/cublas_distance.hpp"
@@ -161,7 +160,6 @@ try
 
     generators.push_back(std::make_unique<uniform_generator>());
     generators.push_back(std::make_unique<normal_generator>());
-    generators.push_back(std::make_unique<radix_adversarial_generator>());
 
     std::vector<std::unique_ptr<data_preprocessor>> preprocessors;
 

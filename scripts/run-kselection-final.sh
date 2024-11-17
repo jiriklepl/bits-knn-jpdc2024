@@ -41,10 +41,6 @@ normal:* | normal)
     generator=${variant}
     preprocessor=identity
     ;;
-radix-adversarial:* | radix-adversarial)
-    generator=${variant}
-    preprocessor=identity
-    ;;
 *)
     print_error "Unknown variant: $variant"
     ;;

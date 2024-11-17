@@ -1,37 +1,36 @@
-#ifndef NORMAL_GENERATOR_HPP_
-#define NORMAL_GENERATOR_HPP_
+#ifndef UNIFORM_GENERATOR_HPP_
+#define UNIFORM_GENERATOR_HPP_
 
-#include <cstdlib>
+#include <cstddef>
 #include <random>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <vector>
 
-#include "bits/data_generator.hpp"
+#include "bits/generator/data_generator.hpp"
 
 /** Generate a random dataset.
  */
-class normal_generator : public data_generator
+class uniform_generator : public data_generator
 {
 public:
     /** Initialize the RNG.
      *
      * @param seed seed for the RNG.
      */
-    explicit normal_generator(std::size_t seed, float mean, float std_dev)
-        : data_generator{seed}, mean_{mean}, std_dev_{std_dev}
+    uniform_generator(std::size_t seed, float min, float max)
+        : data_generator{seed}, min_{min}, max_{max}
     {
-        set_seed(seed);
+        uniform_generator::set_seed(seed);
     }
 
-    normal_generator(std::size_t seed, float std_dev) : normal_generator{seed, 0, std_dev} {}
+    uniform_generator(std::size_t seed, float max) : uniform_generator{seed, 0, max} {}
 
-    normal_generator(std::size_t seed) : normal_generator{seed, 0, 1} {}
+    uniform_generator(std::size_t seed) : uniform_generator{seed, 0, 1} {}
 
-    normal_generator() : normal_generator{0} {}
+    uniform_generator() : uniform_generator{0} {}
 
-    std::string id() const override { return "normal"; }
+    std::string id() const override { return "uniform"; }
 
     /** Generate @p count random vectors with dimension @p dim
      *
@@ -41,7 +40,7 @@ public:
      */
     std::vector<float> generate(std::size_t count, std::size_t dim) override
     {
-        std::normal_distribution<float> data_dist{mean_, std_dev_};
+        std::uniform_real_distribution<float> data_dist{min_, max_};
 
         std::vector<float> data(dim * count);
         for (auto& element : data)
@@ -58,15 +57,15 @@ public:
         engine_.discard(1 << 12);
     }
 
-    void set_params(float mean, float std_dev)
+    void set_params(float min, float max)
     {
-        if (std_dev <= 0)
+        if (min >= max)
         {
-            throw std::invalid_argument("Invalid standard deviation");
+            throw std::invalid_argument("Invalid parameter values");
         }
 
-        mean_ = mean;
-        std_dev_ = std_dev;
+        min_ = min;
+        max_ = max;
     }
 
     void set_params(std::string_view params) override
@@ -91,8 +90,8 @@ public:
     }
 
 private:
-    float mean_, std_dev_;
+    float min_, max_;
     std::default_random_engine engine_;
 };
 
-#endif // NORMAL_GENERATOR_HPP_
+#endif // UNIFORM_GENERATOR_HPP_

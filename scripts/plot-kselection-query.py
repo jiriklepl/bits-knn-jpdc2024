@@ -129,7 +129,6 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
             "uniform-ascending": "Ascending",
             "uniform-descending": "Descending",
             "normal-identity": "Normal",
-            "radix-adversarial-identity": "Radix adversarial",
         }}, inplace=True)
     else:
         data["dataset"] = "Uniform"

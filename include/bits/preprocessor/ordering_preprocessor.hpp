@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "bits/data_preprocessor.hpp"
+#include "bits/preprocessor/data_preprocessor.hpp"
 
 template <typename Ordering = std::less<>>
 class ordering_preprocessor : public data_preprocessor
@@ -35,7 +35,7 @@ public:
     void preprocess(std::vector<float>& data, std::vector<float>& query,
                     [[maybe_unused]] std::size_t dim) override
     {
-        // FIXME: cheat: set all query vectors to 0 and sort the data
+        // cheat: set all query vectors to 0 and sort the data
         std::fill(query.begin(), query.end(), 0);
         std::sort(data.begin(), data.end(), Ordering{});
     }

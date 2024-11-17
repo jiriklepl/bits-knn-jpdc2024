@@ -7,7 +7,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "bits/uniform_generator.hpp"
+#include "bits/generator/uniform_generator.hpp"
 
 #include "bits/distance/magma_distance.hpp"
 #include "bits/topk/serial_knn.hpp"

@@ -4,7 +4,7 @@
 #include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
-#include "bits/data_generator.hpp"
+#include "bits/generator/data_generator.hpp"
 #include "bits/knn.hpp"
 
 #include "bits/memory.cuh"
