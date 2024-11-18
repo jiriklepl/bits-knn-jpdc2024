@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "bits/distance/eigen_distance.hpp"
 #include "bits/topk/parallel_knn.hpp"
 
 #include "knn_test.hpp"
