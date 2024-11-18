@@ -90,7 +90,8 @@ for q_power in 6 8 10 12; do
 
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a air-topk -g "$generator" -p "$preprocessor"
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a grid-select -g "$generator" -p "$preprocessor"
-        # "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a radik -g "$generator" -p "$preprocessor"
+        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a warpsort -g "$generator" -p "$preprocessor"
+        "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a radik -g "$generator" -p "$preprocessor"
 
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a warp-select -g "$generator" -p "$preprocessor"
         "$knn" -r "$repeat_count" -n "$N" -q "$q" -k "$k" --seed 24 -a block-select -g "$generator" -p "$preprocessor"
