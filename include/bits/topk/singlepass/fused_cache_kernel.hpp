@@ -12,8 +12,8 @@
  *
  * The memory management is inspired by the MAGMA GEMM kernel. In each iteration, we load the next
  * tile to registers and then we run the distance computation on data previously loaded to shared
- * memory. Smaller subtiles are loaded from shared memory to registers. The core computation works
- * with these register subtiles.
+ * memory. Smaller sub-tiles are loaded from shared memory to registers. The core computation works
+ * with these register sub-tiles.
  *
  * The final computation computes the dot product between all query and DB vectors. It also
  * computes the norms of the DB vectors. When we have the dot products and norms computed, the

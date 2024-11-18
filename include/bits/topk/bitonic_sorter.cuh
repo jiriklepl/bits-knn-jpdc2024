@@ -238,7 +238,7 @@ struct bitonic_sorter
         // linearized thread ID within the thread block
         const auto thread_idx = threadIdx.x + blockDim.x * threadIdx.y;
 
-        // every stride greater then or equal to this threashold will be done in global memory
+        // every stride greater then or equal to this threshold will be done in global memory
         constexpr std::size_t BLOCK_STRIDE_THRESHOLD = BLOCK_SIZE * ITEMS_PER_THREAD;
         // number of registers to cache values from global memory for a bitonic step
         constexpr std::size_t REG_COUNT = 1U << COMBINED;

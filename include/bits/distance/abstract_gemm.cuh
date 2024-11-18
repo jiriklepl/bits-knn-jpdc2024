@@ -171,8 +171,8 @@ struct partial_l2_ops
 
 /** Operators for computing KL divergence.
  *
- * It assumes that the first input matrix contrains sample distributions and the second input
- * matrix contrains baseline distributions.
+ * It assumes that the first input matrix contains sample distributions and the second input
+ * matrix contains baseline distributions.
  */
 struct kl_divergence_ops
 {
@@ -593,7 +593,7 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 
     for (int kk = 0; kk < K - TILE_K; kk += TILE_K)
     {
-// Load A gmen->reg
+// Load A gmem->reg
 #pragma unroll
         for (int i = 0; i < REGS_K; ++i)
         {
@@ -623,13 +623,13 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 #pragma unroll
         for (int k = 0; k < TILE_K; ++k)
         {
-// Load B smen->reg
+// Load B smem->reg
 #pragma unroll
             for (int j = 0; j < OUT_REGS_N; ++j)
             {
                 br[j] = bs[k][j * BLOCK_DIM_N + tx];
             }
-// Load A smen->reg
+// Load A smem->reg
 #pragma unroll
             for (int i = 0; i < OUT_REGS_M; ++i)
             {
@@ -677,13 +677,13 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 #pragma unroll
     for (int k = 0; k < TILE_K; ++k)
     {
-// Load B smen->reg
+// Load B smem->reg
 #pragma unroll
         for (int j = 0; j < OUT_REGS_N; ++j)
         {
             br[j] = bs[k][j * BLOCK_DIM_N + tx];
         }
-// Load A smen->reg
+// Load A smem->reg
 #pragma unroll
         for (int i = 0; i < OUT_REGS_M; ++i)
         {

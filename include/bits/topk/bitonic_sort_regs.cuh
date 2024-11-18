@@ -91,7 +91,7 @@ __device__ void reversed_bitonic_stage(float (&dist)[ITEMS_PER_THREAD],
 {
     // number of threads per warp
     constexpr std::size_t WARP_SIZE = 32;
-    // every stride greater than or equal to this threashold will be done in shared memory
+    // every stride greater than or equal to this threshold will be done in shared memory
     constexpr std::size_t WARP_CAPACITY = WARP_SIZE * ITEMS_PER_THREAD;
 
 #pragma push
@@ -255,7 +255,7 @@ __device__ void block_sort_bitonic(float (&dist)[ITEMS_PER_THREAD],
 
     // number of threads per warp
     constexpr std::size_t WARP_SIZE = 32;
-    // every stride greater than or equal to this threashold will be done in shared memory
+    // every stride greater than or equal to this threshold will be done in shared memory
     constexpr std::size_t WARP_CAPACITY = WARP_SIZE * ITEMS_PER_THREAD;
 
     if constexpr (STRIDE <= 0)

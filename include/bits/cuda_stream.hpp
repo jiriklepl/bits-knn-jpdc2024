@@ -21,7 +21,7 @@ public:
 
     ~cuda_stream() { release(); }
 
-    // Noncopyable
+    // Non-copyable
     cuda_stream(const cuda_stream&) = delete;
     cuda_stream& operator=(const cuda_stream&) = delete;
 

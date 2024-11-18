@@ -113,7 +113,7 @@ struct multi_buffer
         }
     }
 
-    /** Biven buffer positions allocated by `alloc()`, insert distance/label pairs into the buffer.
+    /** Given buffer positions allocated by `alloc()`, insert distance/label pairs into the buffer.
      *
      * If a buffer overflows, all buffers are sorted and merged with the top k lists stored in one
      * block-wide register array @p topk_dist and @p topk_label
@@ -336,7 +336,7 @@ struct distance_computation
     {
         // shared memory for a tile of queries assigned to this thread block
         float queries[DIM_TILE][QUERY_TILE];
-        // shared memory for a tile of the current window of the database vecotrs
+        // shared memory for a tile of the current window of the database vectors
         float db[DIM_TILE][DB_TILE];
     };
 
@@ -640,8 +640,8 @@ struct distance_computation
  *
  * The memory management is inspired by the MAGMA GEMM kernel. In each iteration, we load the next
  * tile to registers and then we run the distance computation on data previously loaded to shared
- * memory. Smaller subtiles are loaded from shared memory to registers. The core computation works
- * with these register subtiles.
+ * memory. Smaller sub-tiles are loaded from shared memory to registers. The core computation works
+ * with these register sub-tiles.
  *
  * The final computation computes the dot product between all query and DB vectors. It also
  * computes the norms of the DB vectors. When we have the dot products and norms computed, the
@@ -715,7 +715,7 @@ struct fused_cache_kernel
      */
     __device__ __forceinline__ void run()
     {
-        // distance submatrix computed by this thread
+        // distance sub-matrix computed by this thread
         float dist[QUERY_REG][DB_REG];
         // kth smallest distance found so far
         float radius[QUERY_REG];
