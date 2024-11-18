@@ -14,7 +14,7 @@ void grid_select::selection()
     auto out_dist = out_dist_gpu();
     auto out_label = out_label_gpu();
 
-    // COPIED FROM external/gpu_topK_benchmark/benchmark/benchmark.cu:80
+    // COPIED FROM https://github.com/ZhangJingrong/gpu_topK_benchmark/benchmark/benchmark.cu:80
     if (buf_size_ == 0)
     {
         nv::grid_select(nullptr, buf_size_, in_dist.data(), in_dist.size(0), in_dist.size(1), k(),

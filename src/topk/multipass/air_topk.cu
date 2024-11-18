@@ -11,7 +11,7 @@
 namespace
 {
 
-// copied from external/gpu_topK_benchmark/include/raft_topk.cuh
+// copied from https://github.com/ZhangJingrong/gpu_topK_benchmark/blob/master/include/raft_topk.cuh
 // https://github.com/rapidsai/raft/blob/branch-22.06/cpp/bench/common/benchmark.hpp
 struct using_pool_memory_res
 {
@@ -55,7 +55,8 @@ void air_topk::selection()
 
     raft::device_resources resources{};
 
-    // copied from external/gpu_topK_benchmark/include/raft_topk.cuh (updated)
+    // copied from https://github.com/ZhangJingrong/gpu_topK_benchmark/include/raft_topk.cuh
+    // (updated)
     raft::matrix::detail::select::radix::select_k<float, std::int32_t, 11, 512>(
         resources, in_dist.data(), static_cast<std::int32_t*>(nullptr), in_dist.size(0),
         in_dist.size(1), k(), out_dist.data(), out_label.data(),

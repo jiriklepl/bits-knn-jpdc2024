@@ -50,6 +50,7 @@
 #include "bits/topk/singlepass/grid_select.hpp"
 #include "bits/topk/singlepass/partial_bitonic.hpp"
 #include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
+#include "bits/topk/singlepass/raft_warpsort.hpp"
 #include "bits/topk/singlepass/rapidsai_fused.hpp"
 #include "bits/topk/singlepass/warp_select.hpp"
 
@@ -131,6 +132,7 @@ try
 
     algorithms.push_back(std::make_unique<air_topk>());
     algorithms.push_back(std::make_unique<grid_select>());
+    algorithms.push_back(std::make_unique<raft_warpsort>());
 
     algorithms.push_back(std::make_unique<fused_regs_knn>());
     algorithms.push_back(std::make_unique<fused_regs_knn_tunable>());
