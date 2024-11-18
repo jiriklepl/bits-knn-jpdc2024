@@ -1,10 +1,11 @@
-#ifndef FUSED_KNN_
-#define FUSED_KNN_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_KNN_HPP_
+#define BITS_TOPK_SINGLEPASS_FUSED_KNN_HPP_
 
 #include <string>
 
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
+#include "bits/knn_args.hpp"
 
 class fused_regs_knn : public cuda_knn
 {
@@ -29,4 +30,4 @@ public:
     std::string id() const override { return "fused-regs-tunable"; }
 };
 
-#endif // FUSED_KNN_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_KNN_HPP_

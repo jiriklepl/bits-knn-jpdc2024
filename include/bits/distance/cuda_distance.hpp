@@ -1,5 +1,5 @@
-#ifndef CUDA_DISTANCE_HPP_
-#define CUDA_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_CUDA_DISTANCE_HPP_
+#define BITS_DISTANCE_CUDA_DISTANCE_HPP_
 
 #include <string>
 #include <vector>
@@ -69,4 +69,4 @@ protected:
     cuda_event transfer_end_;
 };
 
-#endif // CUDA_DISTANCE_HPP_
+#endif // BITS_DISTANCE_CUDA_DISTANCE_HPP_

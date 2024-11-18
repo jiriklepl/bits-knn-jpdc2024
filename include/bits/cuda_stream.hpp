@@ -1,5 +1,5 @@
-#ifndef CUDA_STREAM_HPP_
-#define CUDA_STREAM_HPP_
+#ifndef BITS_CUDA_STREAM_HPP_
+#define BITS_CUDA_STREAM_HPP_
 
 #include <cassert>
 #include <cstddef>
@@ -15,7 +15,7 @@
 class cuda_stream
 {
 public:
-    cuda_stream() : stream_(0) { CUCH(cudaStreamCreate(&stream_)); }
+    cuda_stream() : stream_(nullptr) { CUCH(cudaStreamCreate(&stream_)); }
 
     explicit cuda_stream(cudaStream_t stream) : stream_(stream) {}
 
@@ -26,13 +26,13 @@ public:
     cuda_stream& operator=(const cuda_stream&) = delete;
 
     // Movable
-    cuda_stream(cuda_stream&& other) noexcept : stream_(other.stream_) { other.stream_ = 0; }
+    cuda_stream(cuda_stream&& other) noexcept : stream_(other.stream_) { other.stream_ = nullptr; }
 
     cuda_stream& operator=(cuda_stream&& other) noexcept
     {
         release();
         stream_ = other.stream_;
-        other.stream_ = 0;
+        other.stream_ = nullptr;
         return *this;
     }
 
@@ -58,10 +58,10 @@ public:
      */
     void release()
     {
-        if (stream_ != 0)
+        if (stream_ != nullptr)
         {
             CUCH(cudaStreamDestroy(stream_));
-            stream_ = 0;
+            stream_ = nullptr;
         }
     }
 
@@ -195,10 +195,10 @@ public:
      *
      * @return object representing the default stream.
      */
-    static cuda_stream make_default() { return cuda_stream{0}; }
+    static cuda_stream make_default() { return cuda_stream{nullptr}; }
 
 private:
     cudaStream_t stream_;
 };
 
-#endif // CUDA_STREAM_HPP_
+#endif // BITS_CUDA_STREAM_HPP_

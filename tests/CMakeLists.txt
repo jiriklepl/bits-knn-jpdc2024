@@ -23,7 +23,6 @@ set(TESTS
     topk/parallel_knn_test.cpp
     array_view_test.cpp
     bitonic_sort_regs_test.cu
-    transpose_test.cu
 )
 
 target_sources(test PRIVATE ${TESTS})

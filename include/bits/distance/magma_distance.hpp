@@ -1,9 +1,10 @@
-#ifndef MAGMA_DISTANCE_HPP_
-#define MAGMA_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_MAGMA_DISTANCE_HPP_
+#define BITS_DISTANCE_MAGMA_DISTANCE_HPP_
 
 #include <string>
 
 #include "bits/distance/cuda_distance.hpp"
+#include "bits/knn_args.hpp"
 
 /** Compute L2 distances using the modified matrix multiplication kernel from the MAGMA library.
  */
@@ -51,4 +52,4 @@ public:
     std::string name() const override { return "magma-kl-dist"; }
 };
 
-#endif // MAGMA_DISTANCE_HPP_
+#endif // BITS_DISTANCE_MAGMA_DISTANCE_HPP_

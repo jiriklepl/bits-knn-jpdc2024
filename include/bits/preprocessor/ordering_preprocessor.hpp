@@ -1,8 +1,9 @@
-#ifndef ORDERING_PREPROCESSOR_HPP_
-#define ORDERING_PREPROCESSOR_HPP_
+#ifndef BITS_PREPROCESSOR_ORDERING_PREPROCESSOR_HPP_
+#define BITS_PREPROCESSOR_ORDERING_PREPROCESSOR_HPP_
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -53,4 +54,4 @@ inline std::string ordering_preprocessor<std::greater<>>::id() const
     return "descending";
 }
 
-#endif // ORDERING_PREPROCESSOR_HPP_
+#endif // BITS_PREPROCESSOR_ORDERING_PREPROCESSOR_HPP_

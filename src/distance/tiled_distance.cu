@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <stdexcept>
+#include <string>
 
 #include "bits/array_view.hpp"
 #include "bits/cuch.hpp"

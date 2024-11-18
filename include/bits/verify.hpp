@@ -1,5 +1,5 @@
-#ifndef VERIFY_HPP_
-#define VERIFY_HPP_
+#ifndef BITS_VERIFY_HPP_
+#define BITS_VERIFY_HPP_
 
 #include <cstddef>
 #include <vector>
@@ -18,4 +18,4 @@
 bool verify(const std::vector<knn::pair_t>& expected_result,
             const std::vector<knn::pair_t>& actual_result, std::size_t k);
 
-#endif // VERIFY_HPP_
+#endif // BITS_VERIFY_HPP_

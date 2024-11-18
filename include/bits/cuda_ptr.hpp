@@ -1,9 +1,8 @@
-#ifndef CUDA_PTR_HPP_
-#define CUDA_PTR_HPP_
+#ifndef BITS_CUDA_PTR_HPP_
+#define BITS_CUDA_PTR_HPP_
 
-#include <iostream>
+#include <cstddef>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 
 #include <cuda_runtime.h>
@@ -53,4 +52,4 @@ inline std::pair<cuda_ptr<T>, std::size_t> make_cuda_ptr(std::size_t width, std:
     return std::make_pair(cuda_ptr<T>{ptr}, pitch / sizeof(T));
 }
 
-#endif // CUDA_PTR_HPP_
+#endif // BITS_CUDA_PTR_HPP_

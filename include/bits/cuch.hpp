@@ -1,5 +1,5 @@
-#ifndef CUCH_HPP_
-#define CUCH_HPP_
+#ifndef BITS_CUCH_HPP_
+#define BITS_CUCH_HPP_
 
 #include <iostream>
 #include <stdexcept>
@@ -18,4 +18,4 @@ inline void handle_cuda_error(cudaError_t error, const char* path, int line, con
     }
 }
 
-#endif // CUCH_HPP_
+#endif // BITS_CUCH_HPP_

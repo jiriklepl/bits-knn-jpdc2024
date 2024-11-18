@@ -1,8 +1,9 @@
-#ifndef BITONIC_SORT_REGS_CUH_
-#define BITONIC_SORT_REGS_CUH_
+#ifndef BITS_TOPK_BITONIC_SORT_REGS_CUH_
+#define BITS_TOPK_BITONIC_SORT_REGS_CUH_
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 
 #include <cooperative_groups.h>
@@ -385,8 +386,8 @@ __device__ void block_sort_bitonic(float (&dist)[ITEMS_PER_THREAD],
 template <std::size_t ITERATION, std::size_t END_STRIDE, std::size_t BLOCK_SIZE,
           std::size_t VALUE_COUNT, std::size_t ITEMS_PER_THREAD, order_t ORDER = order_t::ascending>
 __device__ inline void block_sort_aux(float (&dist)[ITEMS_PER_THREAD],
-                               std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
-                               std::int32_t* shm_label)
+                                      std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
+                                      std::int32_t* shm_label)
 {
     constexpr std::size_t STRIDE = ITERATION > 0 ? VALUE_COUNT / ITERATION : VALUE_COUNT;
 
@@ -423,8 +424,9 @@ __device__ inline void block_sort_aux(float (&dist)[ITEMS_PER_THREAD],
  */
 template <std::size_t STRIDE, std::size_t BLOCK_SIZE, std::size_t VALUE_COUNT,
           std::size_t ITEMS_PER_THREAD, order_t ORDER = order_t::ascending>
-__device__ inline void block_sort(float (&dist)[ITEMS_PER_THREAD], std::int32_t (&label)[ITEMS_PER_THREAD],
-                           float* shm_dist, std::int32_t* shm_label)
+__device__ inline void block_sort(float (&dist)[ITEMS_PER_THREAD],
+                                  std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
+                                  std::int32_t* shm_label)
 {
     block_sort_aux<VALUE_COUNT / STRIDE, VALUE_COUNT, BLOCK_SIZE, VALUE_COUNT, ITEMS_PER_THREAD,
                    ORDER>(dist, label, shm_dist, shm_label);
@@ -450,11 +452,11 @@ __device__ inline void block_sort(float (&dist)[ITEMS_PER_THREAD], std::int32_t 
 template <std::size_t STRIDE, std::size_t END_STRIDE, std::size_t BLOCK_SIZE,
           std::size_t VALUE_COUNT, std::size_t ITEMS_PER_THREAD, order_t ORDER = order_t::ascending>
 __device__ inline void block_sort_partial(float (&dist)[ITEMS_PER_THREAD],
-                                   std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
-                                   std::int32_t* shm_label)
+                                          std::int32_t (&label)[ITEMS_PER_THREAD], float* shm_dist,
+                                          std::int32_t* shm_label)
 {
     block_sort_aux<VALUE_COUNT / STRIDE, END_STRIDE, BLOCK_SIZE, VALUE_COUNT, ITEMS_PER_THREAD,
                    ORDER>(dist, label, shm_dist, shm_label);
 }
 
-#endif // BITONIC_SORT_REGS_CUH_
+#endif // BITS_TOPK_BITONIC_SORT_REGS_CUH_

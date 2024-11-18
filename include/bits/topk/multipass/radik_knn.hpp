@@ -1,5 +1,5 @@
-#ifndef RADIK_KNN_HPP_
-#define RADIK_KNN_HPP_
+#ifndef BITS_TOPK_MULTIPASS_RADIK_KNN_HPP_
+#define BITS_TOPK_MULTIPASS_RADIK_KNN_HPP_
 
 #include <cstddef>
 #include <string>
@@ -10,11 +10,11 @@
 
 class radik_knn : public cuda_knn
 {
-    static constexpr bool LARGEST = 0;
-    static constexpr bool ASCEND = 1;
-    static constexpr bool WITHSCALE = 0;
-    static constexpr bool WITHIDXIN = 0;
-    static constexpr bool PADDING = 0;
+    static constexpr bool LARGEST = false;
+    static constexpr bool ASCEND = true;
+    static constexpr bool WITHSCALE = false;
+    static constexpr bool WITHIDXIN = false;
+    static constexpr bool PADDING = false;
 
 public:
     std::string id() const override { return "radik"; }
@@ -25,7 +25,7 @@ public:
 private:
     void* workspace_ = nullptr;
     std::size_t workspace_size_ = 0;
-    std::vector<int> task_len_ = {};
+    std::vector<int> task_len_;
 };
 
-#endif // RADIK_KNN_HPP_
+#endif // BITS_TOPK_MULTIPASS_RADIK_KNN_HPP_

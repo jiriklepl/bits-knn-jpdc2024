@@ -1,10 +1,10 @@
-#ifndef ABSTRACT_GEMM_CUH_
-#define ABSTRACT_GEMM_CUH_
+#ifndef BITS_DISTANCE_ABSTRACT_GEMM_CUH_
+#define BITS_DISTANCE_ABSTRACT_GEMM_CUH_
 
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-#include <cuda.h>
+
 #include <cuda_runtime.h>
 
 #include "bits/cuch.hpp"
@@ -547,9 +547,13 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 // Zero C reg
 #pragma unroll
     for (int i = 0; i < OUT_REGS_M; ++i)
+    {
 #pragma unroll
         for (int j = 0; j < OUT_REGS_N; ++j)
-            cr[i][j] = 0.0f;
+        {
+            cr[i][j] = 0.0F;
+        }
+    }
 
 // Load A gmem->smem
 #pragma unroll
@@ -595,7 +599,9 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
         {
 #pragma unroll
             for (int j = 0; j < REGS_M; ++j)
+            {
                 asr[i][j] = global_a[j * WARP_SIZE]; // A[j * 32];
+            }
             // A += M * 8;
             global_a.next_row(static_cast<std::int64_t>(NUM_WARPS));
         }
@@ -606,7 +612,9 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
         {
 #pragma unroll
             for (int j = 0; j < REGS_N; ++j)
+            {
                 bsr[i][j] = global_b[j * WARP_SIZE]; // B[j * 32];
+            }
             // B += N * 8;
             global_b.next_row(static_cast<std::int64_t>(NUM_WARPS));
         }
@@ -618,11 +626,15 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 // Load B smen->reg
 #pragma unroll
             for (int j = 0; j < OUT_REGS_N; ++j)
+            {
                 br[j] = bs[k][j * BLOCK_DIM_N + tx];
+            }
 // Load A smen->reg
 #pragma unroll
             for (int i = 0; i < OUT_REGS_M; ++i)
+            {
                 ar[i] = as[k][i * BLOCK_DIM_M + ty];
+            }
 
             // compute
             ops.run(ar, br, cr);
@@ -668,11 +680,15 @@ __global__ void __launch_bounds__(BLOCK_DIM_M* BLOCK_DIM_N, 2)
 // Load B smen->reg
 #pragma unroll
         for (int j = 0; j < OUT_REGS_N; ++j)
+        {
             br[j] = bs[k][j * BLOCK_DIM_N + tx];
+        }
 // Load A smen->reg
 #pragma unroll
         for (int i = 0; i < OUT_REGS_M; ++i)
+        {
             ar[i] = as[k][i * BLOCK_DIM_M + ty];
+        }
 
         // compute
         ops.run(ar, br, cr);
@@ -738,4 +754,4 @@ inline void run_abstract_gemm(const int K, const int M, const int N, const float
     run_abstract_gemm<Operators>(K, M, N, /*stride_a=*/M, /*stride_b=*/N, A, B, C, stream);
 }
 
-#endif // ABSTRACT_GEMM_CUH_
+#endif // BITS_DISTANCE_ABSTRACT_GEMM_CUH_

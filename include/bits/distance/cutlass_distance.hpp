@@ -1,9 +1,10 @@
-#ifndef CUTLASS_DISTANCE_HPP_
-#define CUTLASS_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_CUTLASS_DISTANCE_HPP_
+#define BITS_DISTANCE_CUTLASS_DISTANCE_HPP_
 
 #include <string>
 
 #include "bits/distance/cuda_distance.hpp"
+#include "bits/knn_args.hpp"
 
 /** This class uses GEMM routines from cuBLAS to compute the distance
  */
@@ -18,4 +19,4 @@ public:
     std::string name() const override { return "cutlass-dist"; }
 };
 
-#endif // CUTLASS_DISTANCE_HPP_
+#endif // BITS_DISTANCE_CUTLASS_DISTANCE_HPP_

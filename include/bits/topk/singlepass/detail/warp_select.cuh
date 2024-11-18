@@ -1,8 +1,10 @@
-#ifndef DETAIL_WARP_SELECT_CUH_
-#define DETAIL_WARP_SELECT_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_DETAIL_WARP_SELECT_CUH_
+#define BITS_TOPK_SINGLEPASS_DETAIL_WARP_SELECT_CUH_
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 
 #include <faiss/gpu/utils/WarpSelectKernel.cuh>
 
@@ -28,4 +30,4 @@ void warp_select_runner::operator()()
     CUCH(cudaGetLastError());
 }
 
-#endif // DETAIL_WARP_SELECT_CUH_
+#endif // BITS_TOPK_SINGLEPASS_DETAIL_WARP_SELECT_CUH_

@@ -1,12 +1,12 @@
-#ifndef BITS_KNN_HPP_
-#define BITS_KNN_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_BITS_KNN_HPP_
+#define BITS_TOPK_SINGLEPASS_BITS_KNN_HPP_
 
 #include <cstdint>
 #include <string>
 
-#include "bits/array_view.hpp"
+#include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
-#include "bits/distance/baseline_distance.hpp"
+#include "bits/knn_args.hpp"
 
 /** Multi-query, single-pass kernel based on Bitonic sort.
  */
@@ -46,4 +46,4 @@ private:
     cuda_array<std::int32_t, 1> label_offsets_;
 };
 
-#endif // BITS_KNN_HPP_
+#endif // BITS_TOPK_SINGLEPASS_BITS_KNN_HPP_

@@ -1,5 +1,5 @@
-#ifndef FUSED_KERNEL_CACHE_KERNEL_STRUCTS_CUH_
-#define FUSED_KERNEL_CACHE_KERNEL_STRUCTS_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_KERNEL_CACHE_KERNEL_STRUCTS_CUH_
+#define BITS_TOPK_SINGLEPASS_FUSED_KERNEL_CACHE_KERNEL_STRUCTS_CUH_
 
 #include <algorithm>
 #include <cassert>
@@ -328,8 +328,7 @@ struct distance_computation
     static constexpr std::int32_t QUERY_ITEMS_PER_THREAD =
         (QUERY_TILE * DIM_TILE + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // number of vector components loaded per thread fore each DB tile per dimension
-    static constexpr std::int32_t DB_LOADS_PER_THREAD =
-        (DB_TILE + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    static constexpr std::int32_t DB_LOADS_PER_THREAD = (DB_TILE + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     /** Shared memory used by this component.
      */
@@ -676,8 +675,7 @@ struct fused_cache_kernel
     // number of database vectors in a window
     static constexpr std::int32_t DB_TILE = BLOCK_DB_DIM * DB_REG;
     // number of items per thread for top k arrays and buffers
-    static constexpr std::int32_t ITEMS_PER_THREAD =
-        (QUERY_TILE * K + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    static constexpr std::int32_t ITEMS_PER_THREAD = (QUERY_TILE * K + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     using dist_t =
         distance_computation<QUERY_REG, DB_REG, DIM_REG, BLOCK_QUERY_DIM, BLOCK_DB_DIM, DIM_MULT>;
@@ -801,4 +799,4 @@ struct fused_cache_kernel
     }
 };
 
-#endif // FUSED_KERNEL_CACHE_KERNEL_STRUCTS_CUH_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_KERNEL_CACHE_KERNEL_STRUCTS_CUH_

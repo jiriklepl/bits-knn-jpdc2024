@@ -1,5 +1,5 @@
-#ifndef PARTIAL_BITONIC_BUFFERED_HPP_
-#define PARTIAL_BITONIC_BUFFERED_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_PARTIAL_BITONIC_BUFFERED_HPP_
+#define BITS_TOPK_SINGLEPASS_PARTIAL_BITONIC_BUFFERED_HPP_
 
 #include <string>
 
@@ -21,4 +21,4 @@ public:
     std::string id() const override { return "partial-bitonic-buffered-static"; }
 };
 
-#endif // PARTIAL_BITONIC_BUFFERED_HPP_
+#endif // BITS_TOPK_SINGLEPASS_PARTIAL_BITONIC_BUFFERED_HPP_

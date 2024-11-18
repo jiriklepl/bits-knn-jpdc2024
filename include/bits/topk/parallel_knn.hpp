@@ -1,8 +1,11 @@
-#ifndef PARALLEL_KNN_HPP_
-#define PARALLEL_KNN_HPP_
+#ifndef BITS_TOPK_PARALLEL_KNN_HPP_
+#define BITS_TOPK_PARALLEL_KNN_HPP_
 
-#include "bits/distance/eigen_distance.hpp"
+#include <string>
+#include <vector>
+
 #include "bits/knn.hpp"
+#include "bits/knn_args.hpp"
 
 /** Parallel CPU baseline kNN implementation.
  */
@@ -20,4 +23,4 @@ private:
     std::vector<distance_pair> dist_;
 };
 
-#endif // PARALLEL_KNN_HPP_
+#endif // BITS_TOPK_PARALLEL_KNN_HPP_

@@ -1,5 +1,5 @@
-#ifndef AIR_TOPK_HPP_
-#define AIR_TOPK_HPP_
+#ifndef BITS_TOPK_MULTIPASS_AIR_TOPK_HPP_
+#define BITS_TOPK_MULTIPASS_AIR_TOPK_HPP_
 
 #include <string>
 
@@ -13,4 +13,4 @@ public:
     void selection() override;
 };
 
-#endif // AIR_TOPK_HPP_
+#endif // BITS_TOPK_MULTIPASS_AIR_TOPK_HPP_

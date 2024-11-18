@@ -1,5 +1,5 @@
-#ifndef GRID_SELECT_HPP_
-#define GRID_SELECT_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_GRID_SELECT_HPP_
+#define BITS_TOPK_SINGLEPASS_GRID_SELECT_HPP_
 
 #include <cstddef>
 #include <string>
@@ -14,7 +14,7 @@ class grid_select : public cuda_knn
 public:
     ~grid_select() override
     {
-        if (buf_)
+        if (buf_ != nullptr)
         {
             CUCH(cudaFree(buf_));
             buf_ = nullptr;
@@ -30,4 +30,4 @@ private:
     void* buf_ = nullptr;
 };
 
-#endif // GRID_SELECT_HPP_
+#endif // BITS_TOPK_SINGLEPASS_GRID_SELECT_HPP_

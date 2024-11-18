@@ -1,6 +1,7 @@
-#ifndef BITONIC_SORT_LAYOUT_HPP_
-#define BITONIC_SORT_LAYOUT_HPP_
+#ifndef BITS_TOPK_BITONIC_SORT_LAYOUT_HPP_
+#define BITS_TOPK_BITONIC_SORT_LAYOUT_HPP_
 
+#include <cstddef>
 #include <cstdint>
 
 #include "bits/knn.hpp"
@@ -57,4 +58,4 @@ struct soa_layout
     }
 };
 
-#endif // BITONIC_SORT_LAYOUT_HPP_
+#endif // BITS_TOPK_BITONIC_SORT_LAYOUT_HPP_

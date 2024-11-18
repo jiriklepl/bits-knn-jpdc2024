@@ -1,10 +1,7 @@
-#ifndef BITS_KERNEL_HPP
-#define BITS_KERNEL_HPP
+#ifndef BITS_TOPK_SINGLEPASS_BITS_KERNEL_HPP
+#define BITS_TOPK_SINGLEPASS_BITS_KERNEL_HPP
 
 #include <cstddef>
-#include <cstdint>
-
-#include <cuda_runtime.h>
 
 #include "bits/array_view.hpp"
 #include "bits/cuda_stream.hpp"
@@ -33,4 +30,4 @@ extern void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_
                             const float* norms = nullptr,
                             cudaStream_t stream = cuda_stream::make_default().get());
 
-#endif // BITS_KERNEL_HPP
+#endif // BITS_TOPK_SINGLEPASS_BITS_KERNEL_HPP

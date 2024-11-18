@@ -1,5 +1,5 @@
-#ifndef FUSED_KERNEL_CUH_
-#define FUSED_KERNEL_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_DETAIL_FUSED_KERNEL_CUH_
+#define BITS_TOPK_SINGLEPASS_DETAIL_FUSED_KERNEL_CUH_
 
 #include <algorithm>
 #include <array>
@@ -13,7 +13,6 @@
 
 #include "bits/array_view.hpp"
 #include "bits/cuch.hpp"
-#include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_kernel_runner.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
@@ -95,7 +94,7 @@ __device__ void merge_buffers(float (&dist)[ITEMS_PER_THREAD],
                                                                          shm_label);
 
     // reset buffer size
-    for (std::int32_t i = thread_idx; i < ARRAY_COUNT; i += BLOCK_SIZE)
+    for (std::uint32_t i = thread_idx; i < ARRAY_COUNT; i += BLOCK_SIZE)
     {
         buffer_size[i] = std::max<std::int32_t>(buffer_size[i] - K, 0);
     }
@@ -242,7 +241,7 @@ __global__ void fused_kernel(array_view<float, 2> queries, array_view<float, 2> 
 #pragma unroll
             for (std::int32_t rn = 0; rn < REG_POINT_COUNT; ++rn)
             {
-                sum[rq][rn] = 0.0f;
+                sum[rq][rn] = 0.0F;
             }
         }
 
@@ -464,4 +463,4 @@ void fused_kernel_runner::operator()()
     CUCH(cudaGetLastError());
 }
 
-#endif // FUSED_KERNEL_CUH_
+#endif // BITS_TOPK_SINGLEPASS_DETAIL_FUSED_KERNEL_CUH_

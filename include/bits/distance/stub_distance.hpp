@@ -1,22 +1,25 @@
-#ifndef STUB_DISTANCE_HPP_
-#define STUB_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_STUB_DISTANCE_HPP_
+#define BITS_DISTANCE_STUB_DISTANCE_HPP_
 
 #include <cstddef>
 #include <string>
 
 #include "bits/array_view.hpp"
 #include "bits/distance/cuda_distance.hpp"
+#include "bits/knn_args.hpp"
 
 /** Generate random distances instead of computing the real distances for testing purposes.
  */
 class stub_distance : public cuda_distance
 {
+    static constexpr std::size_t DEFAULT_SEED = 17;
+
 public:
     /** Create random distance function with distinct value using @p seed for shuffling
      *
      * @param seed Seed used for generating distances
      */
-    explicit stub_distance(std::size_t seed = 17);
+    explicit stub_distance(std::size_t seed = DEFAULT_SEED);
 
     /** Create a random distance function using @p seed
      *
@@ -52,4 +55,4 @@ private:
     std::size_t seed_;
     std::size_t num_unique_;
 };
-#endif // STUB_DISTANCE_HPP_
+#endif // BITS_DISTANCE_STUB_DISTANCE_HPP_

@@ -26,11 +26,11 @@ void stub_distance::prepare(const knn_args& args)
     dist_cpu_.resize(dist_gpu_.view().size());
     for (std::size_t i = 0; i < args_.query_count; ++i)
     {
-        const float step = 1.0f / 32.0f;
+        const float step = 1.0F / 32.0F;
         const auto stride =
             num_unique_ == 0 ? 1 : (args_.point_count + num_unique_ - 1) / num_unique_;
 
-        float value = 0.0f;
+        float value = 0.0F;
         for (std::size_t j = 0; j < args_.point_count; j += stride)
         {
             const auto end = std::min<std::size_t>(j + stride, args_.point_count);

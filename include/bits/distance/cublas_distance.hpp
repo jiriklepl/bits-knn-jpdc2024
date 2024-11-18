@@ -1,5 +1,5 @@
-#ifndef CUBLAS_DISTANCE_HPP_
-#define CUBLAS_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_CUBLAS_DISTANCE_HPP_
+#define BITS_DISTANCE_CUBLAS_DISTANCE_HPP_
 
 #include <string>
 
@@ -7,6 +7,7 @@
 
 #include "bits/cuda_ptr.hpp"
 #include "bits/distance/cuda_distance.hpp"
+#include "bits/knn_args.hpp"
 
 /** This class uses GEMM routines from cuBLAS to compute the distance
  */
@@ -40,4 +41,4 @@ private:
     cuda_ptr<float> lengths_;
 };
 
-#endif // CUBLAS_DISTANCE_HPP_
+#endif // BITS_DISTANCE_CUBLAS_DISTANCE_HPP_

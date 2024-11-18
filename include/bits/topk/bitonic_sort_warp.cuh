@@ -1,5 +1,5 @@
-#ifndef BITONIC_SORT_WARP_CUH_
-#define BITONIC_SORT_WARP_CUH_
+#ifndef BITS_TOPK_BITONIC_SORT_WARP_CUH_
+#define BITS_TOPK_BITONIC_SORT_WARP_CUH_
 
 #include <cassert>
 #include <cstddef>
@@ -118,4 +118,4 @@ __device__ __forceinline__ void warp_sort(Key& key, Value& value)
     }
 }
 
-#endif // BITONIC_SORT_WARP_CUH_
+#endif // BITS_TOPK_BITONIC_SORT_WARP_CUH_

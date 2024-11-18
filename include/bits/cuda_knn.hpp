@@ -1,11 +1,14 @@
-#ifndef CUDA_KNN_HPP_
-#define CUDA_KNN_HPP_
+#ifndef BITS_CUDA_KNN_HPP_
+#define BITS_CUDA_KNN_HPP_
 
+#include <cstdint>
 #include <vector>
 
 #include "bits/array_view.hpp"
+#include "bits/cuda_array.hpp"
 #include "bits/cuda_event.hpp"
 #include "bits/knn.hpp"
+#include "bits/knn_args.hpp"
 
 /** Base class for brute force cuda solutions with Euclidean distance
  */
@@ -52,4 +55,4 @@ protected:
     cuda_event transfer_end_;
 };
 
-#endif // CUDA_KNN_HPP_
+#endif // BITS_CUDA_KNN_HPP_

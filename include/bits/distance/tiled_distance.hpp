@@ -1,5 +1,5 @@
-#ifndef TILED_DISTANCE_HPP_
-#define TILED_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_TILED_DISTANCE_HPP_
+#define BITS_DISTANCE_TILED_DISTANCE_HPP_
 
 #include <string>
 
@@ -17,4 +17,4 @@ public:
     std::string name() const override { return "tiled-dist"; }
 };
 
-#endif // TILED_DISTANCE_HPP_
+#endif // BITS_DISTANCE_TILED_DISTANCE_HPP_

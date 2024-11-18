@@ -1,5 +1,5 @@
-#ifndef FUSED_TC_KERNEL_RUNNER_CUH_
-#define FUSED_TC_KERNEL_RUNNER_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_TC_KERNEL_RUNNER_HPP_
+#define BITS_TOPK_SINGLEPASS_FUSED_TC_KERNEL_RUNNER_HPP_
 
 #include <cstddef>
 #include <cstdint>
@@ -50,4 +50,4 @@ struct fused_tc_kernel_runner
     void operator()();
 };
 
-#endif // FUSED_TC_KERNEL_RUNNER_CUH_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_TC_KERNEL_RUNNER_HPP_

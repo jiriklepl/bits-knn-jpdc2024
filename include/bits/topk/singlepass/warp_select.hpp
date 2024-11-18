@@ -1,5 +1,5 @@
-#ifndef WARP_SELECT_HPP_
-#define WARP_SELECT_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_WARP_SELECT_HPP_
+#define BITS_TOPK_SINGLEPASS_WARP_SELECT_HPP_
 
 #include <string>
 
@@ -37,4 +37,4 @@ public:
     void selection() override;
 };
 
-#endif // WARP_SELECT_HPP_
+#endif // BITS_TOPK_SINGLEPASS_WARP_SELECT_HPP_

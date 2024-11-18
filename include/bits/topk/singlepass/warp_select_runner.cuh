@@ -1,8 +1,7 @@
-#ifndef WARP_SELECT_RUNNER_CUH_
-#define WARP_SELECT_RUNNER_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_WARP_SELECT_RUNNER_CUH_
+#define BITS_TOPK_SINGLEPASS_WARP_SELECT_RUNNER_CUH_
 
 #include <cstdint>
-#include <limits>
 
 #include <faiss/gpu/utils/Tensor.cuh>
 
@@ -19,4 +18,4 @@ struct warp_select_runner
     void operator()();
 };
 
-#endif // WARP_SELECT_RUNNER_CUH_
+#endif // BITS_TOPK_SINGLEPASS_WARP_SELECT_RUNNER_CUH_

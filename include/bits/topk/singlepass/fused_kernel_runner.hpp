@@ -1,5 +1,5 @@
-#ifndef FUSED_KERNEL_RUNNER_CUH_
-#define FUSED_KERNEL_RUNNER_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_KERNEL_RUNNER_HPP_
+#define BITS_TOPK_SINGLEPASS_FUSED_KERNEL_RUNNER_HPP_
 
 #include <array>
 #include <cstddef>
@@ -55,4 +55,4 @@ struct fused_kernel_runner
     void operator()();
 };
 
-#endif // FUSED_KERNEL_RUNNER_CUH_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_KERNEL_RUNNER_HPP_

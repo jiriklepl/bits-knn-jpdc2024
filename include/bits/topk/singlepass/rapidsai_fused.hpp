@@ -1,9 +1,11 @@
-#ifndef RAPIDSAI_FUSED_HPP_
-#define RAPIDSAI_FUSED_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_RAPIDSAI_FUSED_HPP_
+#define BITS_TOPK_SINGLEPASS_RAPIDSAI_FUSED_HPP_
 
 #include <string>
 
+#include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
+#include "bits/knn_args.hpp"
 
 class rapidsai_fused : public cuda_knn
 {
@@ -22,4 +24,4 @@ protected:
     bool row_major_query_ = true;
 };
 
-#endif // RAPIDSAI_FUSED_HPP_
+#endif // BITS_TOPK_SINGLEPASS_RAPIDSAI_FUSED_HPP_

@@ -1,5 +1,5 @@
-#ifndef PARTIAL_BITONIC_HPP_
-#define PARTIAL_BITONIC_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_PARTIAL_BITONIC_HPP_
+#define BITS_TOPK_SINGLEPASS_PARTIAL_BITONIC_HPP_
 
 #include <string>
 
@@ -45,4 +45,4 @@ public:
     std::string id() const override { return "partial-bitonic-regs"; }
 };
 
-#endif // PARTIAL_BITONIC_HPP_
+#endif // BITS_TOPK_SINGLEPASS_PARTIAL_BITONIC_HPP_

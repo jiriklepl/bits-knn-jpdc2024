@@ -1,8 +1,9 @@
-#ifndef DETAIL_BLOCK_SELECT_CUH_
-#define DETAIL_BLOCK_SELECT_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_DETAIL_BLOCK_SELECT_CUH_
+#define BITS_TOPK_SINGLEPASS_DETAIL_BLOCK_SELECT_CUH_
 
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 
 #include <faiss/gpu/utils/BlockSelectKernel.cuh>
 
@@ -26,4 +27,4 @@ void block_select_runner::operator()()
     CUCH(cudaGetLastError());
 }
 
-#endif // DETAIL_BLOCK_SELECT_CUH_
+#endif // BITS_TOPK_SINGLEPASS_DETAIL_BLOCK_SELECT_CUH_

@@ -1,5 +1,5 @@
-#ifndef EIGEN_DISTANCE_HPP_
-#define EIGEN_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_EIGEN_DISTANCE_HPP_
+#define BITS_DISTANCE_EIGEN_DISTANCE_HPP_
 
 #include <string>
 
@@ -7,6 +7,7 @@
 
 #include "bits/array_view.hpp"
 #include "bits/distance/cuda_distance.hpp"
+#include "bits/knn_args.hpp"
 
 class eigen_distance : public cuda_distance
 {
@@ -29,4 +30,4 @@ private:
     Eigen::MatrixXf dist_;
 };
 
-#endif // EIGEN_DISTANCE_HPP_
+#endif // BITS_DISTANCE_EIGEN_DISTANCE_HPP_

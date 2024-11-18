@@ -1,5 +1,5 @@
-#ifndef FUSED_TC_POLICY_HPP_
-#define FUSED_TC_POLICY_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_TC_POLICY_HPP_
+#define BITS_TOPK_SINGLEPASS_FUSED_TC_POLICY_HPP_
 
 #include <cstdint>
 
@@ -28,9 +28,9 @@ struct fused_tc_half_policy
         return __float2half(value);
     }
 
-    static __forceinline__ __host__ __device__ output_t zero_output() { return 0.0f; }
+    static __forceinline__ __host__ __device__ output_t zero_output() { return 0.0F; }
 
-    static __forceinline__ __host__ __device__ input_t zero_input() { return __float2half(0.0f); }
+    static __forceinline__ __host__ __device__ input_t zero_input() { return __float2half(0.0F); }
 };
 
 struct fused_tc_bfloat16_policy
@@ -54,11 +54,11 @@ struct fused_tc_bfloat16_policy
         return __float2bfloat16(value);
     }
 
-    static __forceinline__ __host__ __device__ output_t zero_output() { return 0.0f; }
+    static __forceinline__ __host__ __device__ output_t zero_output() { return 0.0F; }
 
     static __forceinline__ __host__ __device__ input_t zero_input()
     {
-        return __float2bfloat16(0.0f);
+        return __float2bfloat16(0.0F);
     }
 };
 
@@ -83,4 +83,4 @@ struct fused_tc_double_policy
     static __forceinline__ __host__ __device__ input_t zero_input() { return 0.0; }
 };
 
-#endif // FUSED_TC_POLICY_HPP_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_TC_POLICY_HPP_

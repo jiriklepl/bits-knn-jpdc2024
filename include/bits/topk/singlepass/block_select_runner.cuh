@@ -1,8 +1,7 @@
-#ifndef BLOCK_SELECT_RUNNER_CUH_
-#define BLOCK_SELECT_RUNNER_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_BLOCK_SELECT_RUNNER_CUH_
+#define BITS_TOPK_SINGLEPASS_BLOCK_SELECT_RUNNER_CUH_
 
 #include <cstdint>
-#include <limits>
 
 #include <faiss/gpu/utils/Tensor.cuh>
 
@@ -38,4 +37,4 @@ struct block_select_runner
     void operator()();
 };
 
-#endif // BLOCK_SELECT_RUNNER_CUH_
+#endif // BITS_TOPK_SINGLEPASS_BLOCK_SELECT_RUNNER_CUH_

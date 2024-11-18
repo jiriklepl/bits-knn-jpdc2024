@@ -1,5 +1,5 @@
-#ifndef NORMAL_GENERATOR_HPP_
-#define NORMAL_GENERATOR_HPP_
+#ifndef BITS_GENERATOR_NORMAL_GENERATOR_HPP_
+#define BITS_GENERATOR_NORMAL_GENERATOR_HPP_
 
 #include <cstdlib>
 #include <random>
@@ -22,12 +22,12 @@ public:
     explicit normal_generator(std::size_t seed, float mean, float std_dev)
         : data_generator{seed}, mean_{mean}, std_dev_{std_dev}
     {
-        set_seed(seed);
+        normal_generator::set_seed(seed);
     }
 
     normal_generator(std::size_t seed, float std_dev) : normal_generator{seed, 0, std_dev} {}
 
-    normal_generator(std::size_t seed) : normal_generator{seed, 0, 1} {}
+    explicit normal_generator(std::size_t seed) : normal_generator{seed, 0, 1} {}
 
     normal_generator() : normal_generator{0} {}
 
@@ -55,7 +55,7 @@ public:
     {
         std::random_device dev;
         engine_ = std::default_random_engine{seed == 0 ? dev() : seed};
-        engine_.discard(1 << 12);
+        engine_.discard(1U << 12U);
     }
 
     void set_params(float mean, float std_dev)
@@ -95,4 +95,4 @@ private:
     std::default_random_engine engine_;
 };
 
-#endif // NORMAL_GENERATOR_HPP_
+#endif // BITS_GENERATOR_NORMAL_GENERATOR_HPP_

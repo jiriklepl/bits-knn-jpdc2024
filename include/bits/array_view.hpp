@@ -1,5 +1,5 @@
-#ifndef ARRAY_VIEW_HPP_
-#define ARRAY_VIEW_HPP_
+#ifndef BITS_ARRAY_VIEW_HPP_
+#define BITS_ARRAY_VIEW_HPP_
 
 #include <array>
 #include <cstddef>
@@ -137,4 +137,4 @@ static_assert(std::is_trivially_copyable_v<array_view<std::int32_t, 2>>);
 static_assert(std::is_trivially_copyable_v<array_view<float, 1>>);
 static_assert(std::is_trivially_copyable_v<array_view<float, 2>>);
 
-#endif // ARRAY_VIEW_HPP_
+#endif // BITS_ARRAY_VIEW_HPP_

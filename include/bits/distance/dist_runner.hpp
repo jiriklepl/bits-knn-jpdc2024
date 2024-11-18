@@ -1,5 +1,5 @@
-#ifndef DIST_RUNNER_HPP_
-#define DIST_RUNNER_HPP_
+#ifndef BITS_DISTANCE_DIST_RUNNER_HPP_
+#define BITS_DISTANCE_DIST_RUNNER_HPP_
 
 #include <string>
 
@@ -14,4 +14,4 @@ public:
     std::string id() const override { return dist_impl_->name(); }
 };
 
-#endif // DIST_RUNNER_HPP_
+#endif // BITS_DISTANCE_DIST_RUNNER_HPP_

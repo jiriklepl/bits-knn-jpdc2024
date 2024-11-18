@@ -1,7 +1,8 @@
-#ifndef IDENTITY_PREPROCESSOR_HPP_
-#define IDENTITY_PREPROCESSOR_HPP_
+#ifndef BITS_PREPROCESSOR_IDENTITY_PREPROCESSOR_HPP_
+#define BITS_PREPROCESSOR_IDENTITY_PREPROCESSOR_HPP_
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "bits/preprocessor/data_preprocessor.hpp"
@@ -31,4 +32,4 @@ public:
     }
 };
 
-#endif // IDENTITY_PREPROCESSOR_HPP_
+#endif // BITS_PREPROCESSOR_IDENTITY_PREPROCESSOR_HPP_

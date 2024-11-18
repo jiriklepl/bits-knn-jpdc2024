@@ -1,18 +1,13 @@
-#ifndef FUSED_KERNEL_CACHE_CUH_
-#define FUSED_KERNEL_CACHE_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_DETAIL_FUSED_KERNEL_CACHE_CUH_
+#define BITS_TOPK_SINGLEPASS_DETAIL_FUSED_KERNEL_CACHE_CUH_
 
 #include <cassert>
 #include <cstdint>
 
 #include <cuda_runtime.h>
 
-#include "bits/array_view.hpp"
 #include "bits/cuch.hpp"
-#include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_cache_kernel.hpp"
-
-#include "bits/ptx_utils.cuh"
-#include "bits/topk/bitonic_sort_regs.cuh"
 #include "bits/topk/singlepass/fused_cache_kernel_structs.cuh"
 
 /** Fused cache kernel function declaration.
@@ -31,7 +26,7 @@ template <class Kernel>
 __global__ void __launch_bounds__(Kernel::BLOCK_SIZE, Kernel::MIN_BLOCKS_PER_SM)
     launch_fused_cache(Kernel kernel)
 {
-    extern __shared__ std::uint8_t shm[];
+    extern __shared__ char shm[];
 
     kernel.set_tmp_storage(reinterpret_cast<typename Kernel::tmp_storage_t*>(shm));
     kernel.run();
@@ -46,4 +41,4 @@ void launch_fused_cache(Kernel kernel, dim3 grid, dim3 block)
     CUCH(cudaGetLastError());
 }
 
-#endif // FUSED_KERNEL_CACHE_CUH_
+#endif // BITS_TOPK_SINGLEPASS_DETAIL_FUSED_KERNEL_CACHE_CUH_

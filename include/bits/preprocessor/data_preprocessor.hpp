@@ -1,5 +1,5 @@
-#ifndef DATA_PREPROCESSOR_HPP_
-#define DATA_PREPROCESSOR_HPP_
+#ifndef BITS_PREPROCESSOR_DATA_PREPROCESSOR_HPP_
+#define BITS_PREPROCESSOR_DATA_PREPROCESSOR_HPP_
 
 #include <cstddef>
 #include <string>
@@ -27,4 +27,4 @@ public:
                             std::size_t dim) = 0;
 };
 
-#endif // DATA_PREPROCESSOR_HPP_
+#endif // BITS_PREPROCESSOR_DATA_PREPROCESSOR_HPP_

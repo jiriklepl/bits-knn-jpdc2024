@@ -1,5 +1,5 @@
-#ifndef CUDA_ARRAY_HPP_
-#define CUDA_ARRAY_HPP_
+#ifndef BITS_CUDA_ARRAY_HPP_
+#define BITS_CUDA_ARRAY_HPP_
 
 #include <cassert>
 #include <cstddef>
@@ -131,4 +131,4 @@ private:
     view_t view_;
 };
 
-#endif // CUDA_ARRAY_HPP_
+#endif // BITS_CUDA_ARRAY_HPP_

@@ -1,5 +1,5 @@
-#ifndef DETAIL_FUSED_TC_KERNEL_CUH_
-#define DETAIL_FUSED_TC_KERNEL_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_DETAIL_FUSED_TC_KERNEL_CUH_
+#define BITS_TOPK_SINGLEPASS_DETAIL_FUSED_TC_KERNEL_CUH_
 
 #include <algorithm>
 #include <cassert>
@@ -13,11 +13,9 @@
 #include <mma.h>
 
 #include <cooperative_groups.h>
-#include <cooperative_groups/memcpy_async.h>
 
 #include "bits/array_view.hpp"
 #include "bits/cuch.hpp"
-#include "bits/knn.hpp"
 #include "bits/topk/singlepass/fused_tc_kernel_runner.hpp"
 #include "bits/topk/singlepass/fused_tc_policy.hpp"
 
@@ -100,7 +98,7 @@ __device__ void merge_tc_buffers(float (&dist)[ITEMS_PER_THREAD],
                                                                          shm_label);
 
     // reset buffer size
-    for (std::int32_t i = block.thread_rank(); i < ARRAY_COUNT; i += BLOCK_SIZE)
+    for (std::uint32_t i = block.thread_rank(); i < ARRAY_COUNT; i += BLOCK_SIZE)
     {
         buffer_size[i] = std::max<std::int32_t>(buffer_size[i] - K, 0);
     }
@@ -150,7 +148,7 @@ __global__ void prepare_points(array_view<float, 2> points,
         const auto tile_idx = idx / LAYOUT * dim_tiles + i / Policy::DIM_TILE_SIZE;
         const auto tile_offset = idx % LAYOUT * Policy::DIM_TILE_SIZE + i % Policy::DIM_TILE_SIZE;
 
-        const auto value = i < dim ? points(idx, i) : 0.0f;
+        const auto value = i < dim ? points(idx, i) : 0.0F;
         sum = fma(value, value, sum);
 
         out_points(tile_idx, tile_offset) = Policy::from_float(value);
@@ -257,13 +255,13 @@ fused_tc_kernel(array_view<typename Policy::input_t, 2> points, array_view<float
         const std::int32_t ptensor = warp.meta_group_rank() / QUERY_BATCH_TILES * POINT_TILE_SIZE;
 
         // initialize buffer size
-        for (std::int32_t i = block.thread_rank(); i < QUERY_BATCH; i += BLOCK_SIZE)
+        for (std::uint32_t i = block.thread_rank(); i < QUERY_BATCH; i += BLOCK_SIZE)
         {
             buffer.size[i] = 0;
         }
 
         // reset buffer
-        for (std::int32_t i = block.thread_rank(); i < BUFFER_SIZE; i += BLOCK_SIZE)
+        for (std::uint32_t i = block.thread_rank(); i < BUFFER_SIZE; i += BLOCK_SIZE)
         {
             buffer.dist[i] = std::numeric_limits<float>::infinity();
         }
@@ -306,7 +304,7 @@ fused_tc_kernel(array_view<typename Policy::input_t, 2> points, array_view<float
                 b_frag;
 
             // ensure all warps are busy
-            static_assert(BLOCK_SIZE / 32 == QUERY_BATCH_TILES * POINT_BATCH_TILES);
+            static_assert(BLOCK_SIZE / WARP_SIZE == QUERY_BATCH_TILES * POINT_BATCH_TILES);
 
             // compute a fragment sized QUERY_TILE_SIZE x POINT_TILE_SIZE
             wmma::fill_fragment(acc_frag, Policy::zero_output());
@@ -344,8 +342,8 @@ fused_tc_kernel(array_view<typename Policy::input_t, 2> points, array_view<float
                 const float result =
                     Policy::to_float(shm_results[query_idx + point_idx * QUERY_BATCH]);
 
-                // const float distance = point_norms(points_offset + point_idx) - 2.f * result;
-                dist[i] = fmaf(-2.f, result, point_norms(points_offset + point_idx));
+                // const float distance = point_norms(points_offset + point_idx) - 2.F * result;
+                dist[i] = fmaf(-2.F, result, point_norms(points_offset + point_idx));
                 buffer_pos[i] =
                     dist[i] < radius[query_idx] ? atomicAdd(&buffer.size[query_idx], 1) : -1;
             }
@@ -472,13 +470,17 @@ void fused_tc_kernel_runner<Policy>::operator()()
     constexpr dim3 block(QUERY_BATCH, BLOCK_SIZE / QUERY_BATCH);
     const dim3 grid((query_count + QUERY_BATCH - 1) / QUERY_BATCH, 1);
 
+    constexpr std::size_t PREPARE_BLOCK_SIZE = 256;
+
     // prepare the input
-    prepare_points<256, Policy, Policy::POINT_TILE_SIZE>
-        <<<(aligned_point_count + 255) / 256, 256>>>(points, in_points, in_point_norms);
+    prepare_points<PREPARE_BLOCK_SIZE, Policy, Policy::POINT_TILE_SIZE>
+        <<<(aligned_point_count + PREPARE_BLOCK_SIZE - 1) / PREPARE_BLOCK_SIZE,
+           PREPARE_BLOCK_SIZE>>>(points, in_points, in_point_norms);
     CUCH(cudaGetLastError());
 
-    prepare_points<256, Policy, Policy::QUERY_TILE_SIZE>
-        <<<(aligned_query_count + 255) / 256, 256>>>(queries, in_queries, in_query_norms);
+    prepare_points<PREPARE_BLOCK_SIZE, Policy, Policy::QUERY_TILE_SIZE>
+        <<<(aligned_query_count + PREPARE_BLOCK_SIZE - 1) / PREPARE_BLOCK_SIZE,
+           PREPARE_BLOCK_SIZE>>>(queries, in_queries, in_query_norms);
     CUCH(cudaGetLastError());
 
     // call the kernel
@@ -488,4 +490,4 @@ void fused_tc_kernel_runner<Policy>::operator()()
     CUCH(cudaGetLastError());
 }
 
-#endif // DETAIL_FUSED_TC_KERNEL_CUH_
+#endif // BITS_TOPK_SINGLEPASS_DETAIL_FUSED_TC_KERNEL_CUH_

@@ -51,8 +51,8 @@ def define(name : str, values : list, file):
 with open(
     "../include/bits/topk/singlepass/detail/definitions_common.hpp", "w"
 ) as definitions:
-    print("#ifndef TOPK_SINGLEPASS_DEFINITIONS_COMMON_HPP_", file=definitions)
-    print("#define TOPK_SINGLEPASS_DEFINITIONS_COMMON_HPP_", file=definitions)
+    print("#ifndef TOPK_SINGLEPASS_DETAIL_DEFINITIONS_COMMON_HPP_", file=definitions)
+    print("#define TOPK_SINGLEPASS_DETAIL_DEFINITIONS_COMMON_HPP_", file=definitions)
     print("", file=definitions)
 
     define("TOPK_SINGLEPASS_K_VALUES", K_VALUES, definitions)
@@ -73,13 +73,13 @@ with open(
     define("TOPK_SINGLEPASS_FUSED_TC_BLOCK_SIZES", FUSED_TC_BLOCK_SIZES, definitions)
     print("", file=definitions)
 
-    print("#endif // TOPK_SINGLEPASS_DEFINITIONS_COMMON_HPP_", file=definitions)
+    print("#endif // TOPK_SINGLEPASS_DETAIL_DEFINITIONS_COMMON_HPP_", file=definitions)
 
 with open(
     "../include/bits/topk/singlepass/detail/definitions_all.hpp", "w"
 ) as definitions:
-    print("#ifndef TOPK_SINGLEPASS_DEFINITIONS_ALL_HPP_", file=definitions)
-    print("#define TOPK_SINGLEPASS_DEFINITIONS_ALL_HPP_", file=definitions)
+    print("#ifndef TOPK_SINGLEPASS_DETAIL_DEFINITIONS_ALL_HPP_", file=definitions)
+    print("#define TOPK_SINGLEPASS_DETAIL_DEFINITIONS_ALL_HPP_", file=definitions)
     print("", file=definitions)
 
     define("TOPK_SINGLEPASS_BITS_BATCH_SIZES", BITS_BATCH_SIZES_ALL, definitions)
@@ -93,13 +93,13 @@ with open(
     define("TOPK_SINGLEPASS_FC_BLOCK_QUERY_DIMS", FC_BLOCK_QUERY_DIMS_ALL, definitions)
     print("", file=definitions)
 
-    print(f"#endif // TOPK_SINGLEPASS_DEFINITIONS_ALL_HPP_", file=definitions)
+    print(f"#endif // TOPK_SINGLEPASS_DETAIL_DEFINITIONS_ALL_HPP_", file=definitions)
 
 with open(
     "../include/bits/topk/singlepass/detail/definitions_minimal.hpp", "w"
 ) as definitions:
-    print("#ifndef TOPK_SINGLEPASS_DEFINITIONS_MINIMAL_HPP_", file=definitions)
-    print("#define TOPK_SINGLEPASS_DEFINITIONS_MINIMAL_HPP_", file=definitions)
+    print("#ifndef TOPK_SINGLEPASS_DETAIL_DEFINITIONS_MINIMAL_HPP_", file=definitions)
+    print("#define TOPK_SINGLEPASS_DETAIL_DEFINITIONS_MINIMAL_HPP_", file=definitions)
     print("", file=definitions)
 
     define("TOPK_SINGLEPASS_BITS_BATCH_SIZES", BITS_BATCH_SIZES_MINIMAL, definitions)
@@ -113,7 +113,7 @@ with open(
     define("TOPK_SINGLEPASS_FC_BLOCK_QUERY_DIMS", FC_BLOCK_QUERY_DIMS_MINIMAL, definitions)
     print("", file=definitions)
 
-    print(f"#endif // TOPK_SINGLEPASS_DEFINITIONS_MINIMAL_HPP_", file=definitions)
+    print(f"#endif // TOPK_SINGLEPASS_DETAIL_DEFINITIONS_MINIMAL_HPP_", file=definitions)
 
 with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
     print("set(TOPK_SINGLEPASS_ALL_SRC", file=cmake)

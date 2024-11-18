@@ -1,5 +1,8 @@
-#ifndef SERIAL_KNN_HPP_
-#define SERIAL_KNN_HPP_
+#ifndef BITS_TOPK_SERIAL_KNN_HPP_
+#define BITS_TOPK_SERIAL_KNN_HPP_
+
+#include <string>
+#include <vector>
 
 #include "bits/knn.hpp"
 
@@ -19,4 +22,4 @@ private:
     std::vector<distance_pair> dist_;
 };
 
-#endif // SERIAL_KNN_HPP_
+#endif // BITS_TOPK_SERIAL_KNN_HPP_

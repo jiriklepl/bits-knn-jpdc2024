@@ -1,6 +1,7 @@
-#ifndef MEMORY_CUH_
-#define MEMORY_CUH_
+#ifndef BITS_MEMORY_CUH_
+#define BITS_MEMORY_CUH_
 
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 
@@ -305,4 +306,4 @@ __forceinline__ __device__ void copy(const T* in_begin, const T* in_end, T* out_
     }
 }
 
-#endif // MEMORY_CUH_
+#endif // BITS_MEMORY_CUH_

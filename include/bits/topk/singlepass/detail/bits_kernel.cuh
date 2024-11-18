@@ -1,5 +1,5 @@
-#ifndef BITS_KERNEL_CUH_
-#define BITS_KERNEL_CUH_
+#ifndef BITS_TOPK_SINGLEPASS_DETAIL_BITS_KERNEL_CUH_
+#define BITS_TOPK_SINGLEPASS_DETAIL_BITS_KERNEL_CUH_
 
 #include <cassert>
 #include <cstddef>
@@ -428,4 +428,4 @@ void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> i
     CUCH(cudaGetLastError());
 }
 
-#endif // BITS_KERNEL_CUH_
+#endif // BITS_TOPK_SINGLEPASS_DETAIL_BITS_KERNEL_CUH_

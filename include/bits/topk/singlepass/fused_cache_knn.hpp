@@ -1,10 +1,11 @@
-#ifndef FUSED_CACHE_KNN_
-#define FUSED_CACHE_KNN_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_CACHE_KNN_
+#define BITS_TOPK_SINGLEPASS_FUSED_CACHE_KNN_
 
 #include <string>
 
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
+#include "bits/knn_args.hpp"
 
 class fused_cache_knn : public cuda_knn
 {
@@ -20,4 +21,4 @@ protected:
     cuda_array<float, 2> queries_gpu_;
 };
 
-#endif // FUSED_CACHE_KNN_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_CACHE_KNN_

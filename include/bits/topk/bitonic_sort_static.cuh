@@ -1,5 +1,5 @@
-#ifndef BITONIC_SORT_STATIC_CUH_
-#define BITONIC_SORT_STATIC_CUH_
+#ifndef BITS_TOPK_BITONIC_SORT_STATIC_CUH_
+#define BITS_TOPK_BITONIC_SORT_STATIC_CUH_
 
 #include <algorithm>
 #include <cassert>
@@ -12,8 +12,10 @@ template <bool USE_WARP_SORT, std::size_t STRIDE, std::size_t VALUE_COUNT, std::
           typename Layout>
 __device__ __forceinline__ void block_sort_bitonic(Layout values)
 {
-    // minimal stride handeled using shared memory
-    constexpr std::size_t MIN_BLOCK_STRIDE = USE_WARP_SORT ? 16 : 0;
+    constexpr std::size_t WARP_SIZE = 32;
+
+    // minimal stride handled using shared memory
+    constexpr std::size_t MIN_BLOCK_STRIDE = USE_WARP_SORT ? WARP_SIZE / 2 : 0;
 
     const auto thread_idx = threadIdx.x + threadIdx.y * blockDim.x;
 
@@ -59,7 +61,8 @@ __device__ __forceinline__ void block_sort_bitonic(Layout values)
                 auto local_dist = values.dist(value_idx);
                 auto local_label = values.label(value_idx);
 
-                warp_sort_bitonic(local_dist, local_label, std::min<std::size_t>(STRIDE, 16));
+                warp_sort_bitonic(local_dist, local_label,
+                                  std::min<std::size_t>(STRIDE, WARP_SIZE / 2));
 
                 // store the sorted distances to shared memory
                 values.dist(value_idx) = local_dist;
@@ -76,12 +79,14 @@ template <bool USE_WARP_SORT, std::size_t STRIDE, std::size_t VALUE_COUNT, std::
           typename Layout>
 __device__ __forceinline__ void block_merge(Layout values)
 {
+    constexpr std::size_t WARP_SIZE = 32;
+
     const auto thread_idx = threadIdx.x + threadIdx.y * blockDim.x;
 
-    if (!USE_WARP_SORT || STRIDE >= 32)
+    if (!USE_WARP_SORT || STRIDE >= WARP_SIZE)
     {
         const auto mask = STRIDE * 2 - 1;
-        const auto half_mask = mask >> 1;
+        const auto half_mask = mask >> 1U;
 
         if (VALUE_COUNT / 2 >= BLOCK_SIZE || thread_idx < VALUE_COUNT / 2)
         {
@@ -138,4 +143,4 @@ __device__ void block_sort(Layout values)
     block_sort<USE_WARP_SORT, STRIDE * 2, VALUE_COUNT, BLOCK_SIZE, Layout>(values);
 }
 
-#endif // BITONIC_SORT_STATIC_CUH_
+#endif // BITS_TOPK_BITONIC_SORT_STATIC_CUH_

@@ -1,5 +1,5 @@
-#ifndef LAYOUT_HPP_
-#define LAYOUT_HPP_
+#ifndef BITS_LAYOUT_HPP_
+#define BITS_LAYOUT_HPP_
 
 enum class matrix_layout
 {
@@ -7,4 +7,4 @@ enum class matrix_layout
     column_major
 };
 
-#endif // LAYOUT_HPP_
+#endif // BITS_LAYOUT_HPP_

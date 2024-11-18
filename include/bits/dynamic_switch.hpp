@@ -1,5 +1,5 @@
-#ifndef DYNAMIC_SWITCH_HPP_
-#define DYNAMIC_SWITCH_HPP_
+#ifndef BITS_DYNAMIC_SWITCH_HPP_
+#define BITS_DYNAMIC_SWITCH_HPP_
 
 #include <cstddef>
 #include <utility>
@@ -22,4 +22,4 @@ inline bool dynamic_switch_le(Option option, F&& f, Args&&... args)
         ...);
 }
 
-#endif // DYNAMIC_SWITCH_HPP_
+#endif // BITS_DYNAMIC_SWITCH_HPP_

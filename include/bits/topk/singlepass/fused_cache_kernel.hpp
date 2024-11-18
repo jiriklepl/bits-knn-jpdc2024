@@ -1,5 +1,5 @@
-#ifndef FUSED_KERNEL_CACHE_HPP
-#define FUSED_KERNEL_CACHE_HPP
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_KERNEL_CACHE_HPP
+#define BITS_TOPK_SINGLEPASS_FUSED_KERNEL_CACHE_HPP
 
 #include <cuda_runtime.h>
 
@@ -35,4 +35,4 @@
 template <class Kernel>
 extern void launch_fused_cache(Kernel kernel, dim3 grid, dim3 block);
 
-#endif // FUSED_KERNEL_CACHE_HPP
+#endif // BITS_TOPK_SINGLEPASS_FUSED_KERNEL_CACHE_HPP

@@ -1,9 +1,9 @@
-#ifndef BITONIC_SORT_GLOBAL_CUH_
-#define BITONIC_SORT_GLOBAL_CUH_
+#ifndef BITS_TOPK_BITONIC_SORTER_CUH_
+#define BITS_TOPK_BITONIC_SORTER_CUH_
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
-#include <utility>
 
 #include <cuda_runtime.h>
 
@@ -241,7 +241,7 @@ struct bitonic_sorter
         // every stride greater then or equal to this threashold will be done in global memory
         constexpr std::size_t BLOCK_STRIDE_THRESHOLD = BLOCK_SIZE * ITEMS_PER_THREAD;
         // number of registers to cache values from global memory for a bitonic step
-        constexpr std::size_t REG_COUNT = 1 << COMBINED;
+        constexpr std::size_t REG_COUNT = 1U << COMBINED;
 
         // execute bitonic steps with large stride in global memory
         for (; stride >= BLOCK_STRIDE_THRESHOLD; stride /= REG_COUNT)
@@ -352,4 +352,4 @@ struct bitonic_sorter
     }
 };
 
-#endif // BITONIC_SORT_GLOBAL_CUH_
+#endif // BITS_TOPK_BITONIC_SORTER_CUH_

@@ -1,7 +1,8 @@
-#ifndef DATA_GENERATOR_HPP_
-#define DATA_GENERATOR_HPP_
+#ifndef BITS_GENERATOR_DATA_GENERATOR_HPP_
+#define BITS_GENERATOR_DATA_GENERATOR_HPP_
 
 #include <cstddef>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -97,4 +98,4 @@ protected:
     }
 };
 
-#endif // DATA_GENERATOR_HPP_
+#endif // BITS_GENERATOR_DATA_GENERATOR_HPP_

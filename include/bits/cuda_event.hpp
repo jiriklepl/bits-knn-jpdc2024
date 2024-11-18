@@ -1,5 +1,5 @@
-#ifndef CUDA_EVENT_HPP_
-#define CUDA_EVENT_HPP_
+#ifndef BITS_CUDA_EVENT_HPP_
+#define BITS_CUDA_EVENT_HPP_
 
 #include <cuda_runtime.h>
 
@@ -10,7 +10,7 @@
 class cuda_event
 {
 public:
-    cuda_event() : event_(nullptr), is_initialized_(true) { CUCH(cudaEventCreate(&event_)); }
+    cuda_event() { CUCH(cudaEventCreate(&event_)); }
 
     ~cuda_event() { destroy(); }
 
@@ -64,12 +64,12 @@ public:
     {
         float ms = 0;
         CUCH(cudaEventElapsedTime(&ms, other.event_, event_));
-        return ms / 1e3f;
+        return ms / 1e3F;
     }
 
 private:
-    cudaEvent_t event_;
-    bool is_initialized_;
+    cudaEvent_t event_{nullptr};
+    bool is_initialized_{true};
 };
 
-#endif // CUDA_EVENT_HPP_
+#endif // BITS_CUDA_EVENT_HPP_

@@ -1,9 +1,10 @@
-#ifndef BITONIC_SORT_CUH_
-#define BITONIC_SORT_CUH_
+#ifndef BITS_TOPK_BITONIC_SORT_CUH_
+#define BITS_TOPK_BITONIC_SORT_CUH_
 
+#include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 #include <cooperative_groups.h>
 #include <cuda_runtime.h>
@@ -60,7 +61,9 @@ template <bool USE_WARP_SORT, order_t ORDER, typename Layout>
 __device__ __forceinline__ void block_sort_bitonic(Layout values, std::uint32_t stride,
                                                    std::uint32_t values_count)
 {
-    constexpr std::uint32_t MIN_BLOCK_STRIDE = USE_WARP_SORT ? 16 : 0;
+    constexpr std::size_t WARP_SIZE = 32;
+
+    constexpr std::uint32_t MIN_BLOCK_STRIDE = USE_WARP_SORT ? WARP_SIZE / 2 : 0;
 
     for (; stride > MIN_BLOCK_STRIDE; stride /= 2)
     {
@@ -77,8 +80,8 @@ __device__ __forceinline__ void block_sort_bitonic(Layout values, std::uint32_t 
             auto local_dist = values.dist(i);
             auto local_label = values.label(i);
 
-            warp_sort_bitonic<float, std::int32_t, ORDER>(local_dist, local_label,
-                                                          std::min<std::uint32_t>(stride, 16));
+            warp_sort_bitonic<float, std::int32_t, ORDER>(
+                local_dist, local_label, std::min<std::uint32_t>(stride, WARP_SIZE / 2));
 
             // store the sorted distances to shared memory
             values.dist(i) = local_dist;
@@ -102,12 +105,14 @@ template <bool USE_WARP_SORT, order_t ORDER, typename Layout>
 __device__ __forceinline__ void block_merge(Layout values, std::uint32_t stride,
                                             std::uint32_t values_count)
 {
+    constexpr std::size_t WARP_SIZE = 32;
+
     const auto block = cooperative_groups::this_thread_block();
 
-    if (!USE_WARP_SORT || stride >= 32)
+    if (!USE_WARP_SORT || stride >= WARP_SIZE)
     {
         const auto mask = stride * 2 - 1;
-        const auto half_mask = mask >> 1;
+        const auto half_mask = mask >> 1U;
 
         for (std::uint32_t j = block.thread_rank(); j < values_count / 2; j += block.size())
         {
@@ -163,4 +168,4 @@ __device__ void block_sort(Layout values, std::uint32_t values_count)
     }
 }
 
-#endif // BITONIC_SORT_CUH_
+#endif // BITS_TOPK_BITONIC_SORT_CUH_

@@ -1,10 +1,11 @@
-#ifndef KNN_HPP_
-#define KNN_HPP_
+#ifndef BITS_KNN_HPP_
+#define BITS_KNN_HPP_
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-
-#include <cxxopts.hpp>
 
 #include "bits/distance/cuda_distance.hpp"
 #include "bits/knn_args.hpp"
@@ -127,4 +128,4 @@ protected:
     std::unique_ptr<cuda_distance> dist_impl_;
 };
 
-#endif // KNN_HPP_
+#endif // BITS_KNN_HPP_

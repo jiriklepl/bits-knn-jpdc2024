@@ -10,6 +10,7 @@ void eigen_distance::prepare(const knn_args& args)
     points_ = Eigen::MatrixXf{args_.point_count, args_.dim};
     queries_ = Eigen::MatrixXf{args_.query_count, args_.dim};
     dist_ = Eigen::MatrixXf{args_.point_count, args_.query_count};
+
     for (std::size_t i = 0; i < args_.point_count; ++i)
     {
         for (std::size_t j = 0; j < args_.dim; ++j)

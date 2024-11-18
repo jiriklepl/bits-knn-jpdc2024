@@ -1,5 +1,5 @@
-#ifndef CUB_KNN_HPP_
-#define CUB_KNN_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_CUB_KNN_HPP_
+#define BITS_TOPK_SINGLEPASS_CUB_KNN_HPP_
 
 #include <string>
 
@@ -21,4 +21,4 @@ public:
     std::string id() const override { return "buffered-cub-direct"; }
 };
 
-#endif // CUB_KNN_HPP_
+#endif // BITS_TOPK_SINGLEPASS_CUB_KNN_HPP_

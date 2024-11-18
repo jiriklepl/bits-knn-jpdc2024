@@ -1,5 +1,5 @@
-#ifndef BLOCK_ARRAY_UTILS_HPP_
-#define BLOCK_ARRAY_UTILS_HPP_
+#ifndef BITS_BLOCK_ARRAY_UTILS_CUH_
+#define BITS_BLOCK_ARRAY_UTILS_CUH_
 
 #include <cstddef>
 #include <cstdint>
@@ -88,4 +88,4 @@ __device__ __forceinline__ T value_at(T (&values)[ITEMS_PER_THREAD], std::int32_
     return value;
 }
 
-#endif // BLOCK_ARRAY_UTILS_HPP_
+#endif // BITS_BLOCK_ARRAY_UTILS_CUH_

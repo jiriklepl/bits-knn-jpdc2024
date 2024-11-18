@@ -1,5 +1,5 @@
-#ifndef KNN_ARGS_HPP_
-#define KNN_ARGS_HPP_
+#ifndef BITS_KNN_ARGS_HPP_
+#define BITS_KNN_ARGS_HPP_
 
 #include <array>
 #include <cstddef>
@@ -36,4 +36,4 @@ struct knn_args
     std::size_t deg;
 };
 
-#endif // KNN_ARGS_HPP_
+#endif // BITS_KNN_ARGS_HPP_

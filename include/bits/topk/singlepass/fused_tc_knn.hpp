@@ -1,10 +1,11 @@
-#ifndef FUSED_TC_KNN_HPP_
-#define FUSED_TC_KNN_HPP_
+#ifndef BITS_TOPK_SINGLEPASS_FUSED_TC_KNN_HPP_
+#define BITS_TOPK_SINGLEPASS_FUSED_TC_KNN_HPP_
 
 #include <string>
 
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_knn.hpp"
+#include "bits/knn_args.hpp"
 #include "bits/topk/singlepass/fused_tc_policy.hpp"
 
 template <typename Policy>
@@ -50,4 +51,4 @@ class fused_tc_double_knn : public fused_tc_knn<fused_tc_double_policy>
     std::string id() const override { return "fused-tc-double"; }
 };
 
-#endif // FUSED_TC_KNN_HPP_
+#endif // BITS_TOPK_SINGLEPASS_FUSED_TC_KNN_HPP_

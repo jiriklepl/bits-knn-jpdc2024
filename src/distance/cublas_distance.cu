@@ -75,7 +75,7 @@ __global__ void add_norm_kernel(const float* norms, array_view<float, 2> dist)
     for (std::size_t i = 0; i < POINTS_PER_THREAD; ++i)
     {
         const auto point_idx = blockIdx.x * POINTS_PER_BLOCK + threadIdx.x + i * BLOCK_SIZE;
-        norms_reg[i] = point_idx < point_count ? norms[point_idx] : 0.f;
+        norms_reg[i] = point_idx < point_count ? norms[point_idx] : 0.F;
     }
 
     // add the norms to the distance matrix

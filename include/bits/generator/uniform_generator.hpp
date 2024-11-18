@@ -1,11 +1,12 @@
-#ifndef UNIFORM_GENERATOR_HPP_
-#define UNIFORM_GENERATOR_HPP_
+#ifndef BITS_GENERATOR_UNIFORM_GENERATOR_HPP_
+#define BITS_GENERATOR_UNIFORM_GENERATOR_HPP_
 
 #include <cstddef>
 #include <random>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "bits/generator/data_generator.hpp"
 
@@ -26,7 +27,7 @@ public:
 
     uniform_generator(std::size_t seed, float max) : uniform_generator{seed, 0, max} {}
 
-    uniform_generator(std::size_t seed) : uniform_generator{seed, 0, 1} {}
+    explicit uniform_generator(std::size_t seed) : uniform_generator{seed, 0, 1} {}
 
     uniform_generator() : uniform_generator{0} {}
 
@@ -54,7 +55,7 @@ public:
     {
         std::random_device dev;
         engine_ = std::default_random_engine{seed == 0 ? dev() : seed};
-        engine_.discard(1 << 12);
+        engine_.discard(1U << 12U);
     }
 
     void set_params(float min, float max)
@@ -94,4 +95,4 @@ private:
     std::default_random_engine engine_;
 };
 
-#endif // UNIFORM_GENERATOR_HPP_
+#endif // BITS_GENERATOR_UNIFORM_GENERATOR_HPP_

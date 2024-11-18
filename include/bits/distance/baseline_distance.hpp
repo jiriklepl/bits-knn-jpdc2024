@@ -1,9 +1,10 @@
-#ifndef BASELINE_DISTANCE_HPP_
-#define BASELINE_DISTANCE_HPP_
+#ifndef BITS_DISTANCE_BASELINE_DISTANCE_HPP_
+#define BITS_DISTANCE_BASELINE_DISTANCE_HPP_
 
 #include <string>
 
 #include "bits/distance/cuda_distance.hpp"
+#include "bits/knn_args.hpp"
 
 /** Baseline CUDA kernel for computing distances
  */
@@ -16,4 +17,4 @@ public:
     std::string name() const override { return "baseline-dist"; }
 };
 
-#endif // BASELINE_DISTANCE_HPP_
+#endif // BITS_DISTANCE_BASELINE_DISTANCE_HPP_
