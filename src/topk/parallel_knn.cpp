@@ -15,6 +15,7 @@ void parallel_knn::initialize(const knn_args& args)
     {
         set_dist_impl(std::make_unique<eigen_distance>());
     }
+
     knn::initialize(args);
 }
 

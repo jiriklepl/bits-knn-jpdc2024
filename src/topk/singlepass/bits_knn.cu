@@ -78,8 +78,6 @@ __global__ void populate_label_offsets_kernel(std::int32_t* label_offsets, std::
 
 } // namespace
 
-void bits_knn::initialize(const knn_args& args) { cuda_knn::initialize(args); }
-
 void bits_knn::selection()
 {
     cuda_knn::selection();

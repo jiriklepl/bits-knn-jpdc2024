@@ -13,7 +13,6 @@
 class bits_knn : public cuda_knn
 {
 public:
-    void initialize(const knn_args& args) override;
     void selection() override;
 
     std::string id() const override { return "bits"; }
