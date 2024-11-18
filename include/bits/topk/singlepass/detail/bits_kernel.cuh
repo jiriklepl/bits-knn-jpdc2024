@@ -27,10 +27,10 @@ namespace
  * @param shm Shared memory for the operation
  * @return the largest value in the sorted, block-wide register array @p topk
  */
-template <std::size_t BLOCK_SIZE, std::size_t ITEMS_PER_THREAD>
-__device__ __forceinline__ float broadcast_radius(float (&topk)[ITEMS_PER_THREAD], std::size_t k)
+template <std::size_t BLOCK_SIZE, std::size_t ITEMS_PER_THREAD, class Value>
+__device__ __forceinline__ Value broadcast_radius(Value (&topk)[ITEMS_PER_THREAD], std::size_t k)
 {
-    __shared__ float radius;
+    __shared__ Value radius;
 
     assert(k > 0);
     assert(k <= BLOCK_SIZE * ITEMS_PER_THREAD);
@@ -50,6 +50,26 @@ __device__ __forceinline__ float broadcast_radius(float (&topk)[ITEMS_PER_THREAD
     return radius;
 }
 
+/**
+ * Returns std::numeric_limits<Value>::infinity() if applicable, otherwise returns
+ * std::numeric_limits<Value>::max()
+ */
+template <class Value>
+constexpr __device__ __forceinline__ Value bits_kernel_max_value() noexcept
+{
+    using limits = std::numeric_limits<Value>;
+
+    if constexpr (limits::has_infinity)
+    {
+        return limits::infinity();
+    }
+    else
+    {
+        static_assert(limits::is_bounded);
+        return limits::max();
+    }
+}
+
 /** Buffer with distance/index pairs in shared memory.
  *
  * Values (distance/label pairs) are inserted into the buffer in two steps:
@@ -59,7 +79,7 @@ __device__ __forceinline__ float broadcast_radius(float (&topk)[ITEMS_PER_THREAD
  * @tparam BUFFER_SIZE number of pairs that fit into the buffer in shared memory.
  * @tparam BLOCK_SIZE number of threads in each thread block.
  */
-template <std::size_t BUFFER_SIZE, std::size_t BLOCK_SIZE>
+template <std::size_t BUFFER_SIZE, std::size_t BLOCK_SIZE, class Value, class Idx>
 struct shared_buffer
 {
     enum status_t
@@ -70,11 +90,11 @@ struct shared_buffer
 
     /** Distance of each value in the buffer.
      */
-    float dist[BUFFER_SIZE];
+    Value dist[BUFFER_SIZE];
 
     /** Index of each value in the buffer.
      */
-    std::int32_t label[BUFFER_SIZE];
+    Idx label[BUFFER_SIZE];
 
     /** Number of allocated spots for pairs in the buffer in shared memory.
      *
@@ -96,7 +116,7 @@ struct shared_buffer
      */
     template <std::size_t ITEMS_PER_THREAD>
     __device__ __forceinline__ void alloc(std::int32_t (&buffer_pos)[ITEMS_PER_THREAD],
-                                          float (&batch_dist)[ITEMS_PER_THREAD], float radius)
+                                          Value (&batch_dist)[ITEMS_PER_THREAD], Value radius)
     {
 #pragma unroll
         for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
@@ -108,12 +128,12 @@ struct shared_buffer
     /** Merge buffer in shared memory with the top k list (a sorted, block-wide register array
      * @p block_dist , @p topk_label )
      *
-     * -# This method merges all strored values from the shared memory buffer into the top k list
+     * -# This method merges all stored values from the shared memory buffer into the top k list
      * and subtracts `BUFFER_SIZE` from the buffer's allocated size.
      * -# If the shared buffer's size is smaller than or equal to `BUFFER_SIZE`, this
      * method merges its items into the top k list and clears the buffer.
      *
-     * The algorithm loads the buffer values to registers and sortes them using full Bitonic sort
+     * The algorithm loads the buffer values to registers and sorts them using full Bitonic sort
      * in a descending order. It then uses a Bitonic separator to split the values to the lower and
      * upper halves in parallel. The lower half is a Bitonic sequence so it can be sorted by
      * a logarithmic number of Bitonic separator layers.
@@ -123,15 +143,14 @@ struct shared_buffer
      * @param topk_label Labels in a block-wide register array
      */
     template <std::size_t ITEMS_PER_THREAD,
-              typename Limit = std::integral_constant<std::int32_t, BUFFER_SIZE>>
-    __device__ __forceinline__ void merge(float (&topk_dist)[ITEMS_PER_THREAD],
-                                          std::int32_t (&topk_label)[ITEMS_PER_THREAD],
-                                          Limit limit = {})
+              typename Limit = std::integral_constant<std::size_t, BUFFER_SIZE>>
+    __device__ __forceinline__ void merge(Value (&topk_dist)[ITEMS_PER_THREAD],
+                                          Idx (&topk_label)[ITEMS_PER_THREAD], Limit limit = {})
     {
         static_assert(BUFFER_SIZE == ITEMS_PER_THREAD * BLOCK_SIZE);
 
-        float tmp_dist[ITEMS_PER_THREAD];
-        std::int32_t tmp_label[ITEMS_PER_THREAD];
+        Value tmp_dist[ITEMS_PER_THREAD];
+        Idx tmp_label[ITEMS_PER_THREAD];
 
         // load buffer to registers
 #pragma unroll
@@ -139,9 +158,9 @@ struct shared_buffer
         {
             const auto idx = i * BLOCK_SIZE + threadIdx.x;
 
-            tmp_dist[i] = std::numeric_limits<float>::infinity();
+            tmp_dist[i] = bits_kernel_max_value<Value>();
             __builtin_assume(idx < BUFFER_SIZE);
-            if (idx < (std::int32_t)limit)
+            if (idx < limit)
             {
                 tmp_dist[i] = dist[idx];
                 tmp_label[i] = label[idx];
@@ -184,8 +203,6 @@ struct shared_buffer
 
  * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions to prefetch
  the next batch.
- * @tparam ADD_NORMS if true, the kernel will add @p norms of the database vectors to @p in_dist
- distance matrix elements.
  * @tparam BLOCK_SIZE number of threads in a thread block.
  * @tparam BATCH_SIZE number of @p in_dist elements to load for each thread.
  * @param[out] batch_dist the loaded distances from the @p in_dist matrix for each thread.
@@ -200,31 +217,23 @@ struct shared_buffer
  * @param label_offsets the offsets to add to the labels. This is useful for single-query problems.
  If @p label_offsets is nullptr, the kernel does not add any offset to the labels. Otherwise, size
  of @p label_offsets must be equal to @p in_dist.size(0).
- * @param norms the norms of the database vectors. If @p norms is nullptr, the kernel does not add
- any norms to the distances. Otherwise, the size of @p norms must be equal to @p in_dist.size(1).
  */
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE>
+template <bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, class Value, class Idx>
 __device__ __forceinline__ void
-bits_kernel_load_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_label)[BATCH_SIZE],
-                       array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
-                       std::size_t i, const std::int32_t* label_offsets, const float* norms)
+bits_kernel_load_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BATCH_SIZE],
+                       array_view<Value, 2> in_dist, array_view<Idx, 2> in_label, std::size_t i,
+                       const Idx* label_offsets)
 {
 #pragma unroll
     for (std::size_t j = 0; j < BATCH_SIZE; ++j)
     {
-        batch_dist[j] = std::numeric_limits<float>::infinity();
+        batch_dist[j] = bits_kernel_max_value<Value>();
 
         // read the next value from input
         const auto point_idx = i + j * BLOCK_SIZE;
         if (point_idx < in_dist.size(1))
         {
             batch_dist[j] = in_dist(blockIdx.x, point_idx);
-
-            if constexpr (ADD_NORMS)
-            {
-                batch_dist[j] += norms[point_idx];
-            }
-
             batch_label[j] = !in_label.data() ? point_idx : in_label(blockIdx.x, point_idx);
 
             if (label_offsets != nullptr)
@@ -265,11 +274,12 @@ bits_kernel_load_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_lab
  * the loaded value should not be inserted.
  * @return the status of the buffer after all insertion attempts.
  */
-template <std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, std::size_t BUFFER_SIZE>
-__device__ __forceinline__ shared_buffer<BUFFER_SIZE, BLOCK_SIZE>::status_t
-bits_kernel_insert_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_label)[BATCH_SIZE],
-                          shared_buffer<BUFFER_SIZE, BLOCK_SIZE>& shm_buffer,
-                          std::int32_t (&buffer_pos)[BATCH_SIZE])
+template <std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, std::size_t BUFFER_SIZE, class Value,
+          class Idx>
+__device__ __forceinline__ typename shared_buffer<BUFFER_SIZE, BLOCK_SIZE, Value, Idx>::status_t
+bits_kernel_insert_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BATCH_SIZE],
+                         shared_buffer<BUFFER_SIZE, BLOCK_SIZE, Value, Idx>& shm_buffer,
+                         std::int32_t (&buffer_pos)[BATCH_SIZE])
 {
     bool overflown = false;
 
@@ -294,7 +304,6 @@ bits_kernel_insert_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_l
 /** Bitonic select (bits) kernel (small k, multi-query -- one query per thread block)
  *
  * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions.
- * @tparam ADD_NORMS if true, the kernel will add @p norms to @p in_dist elements.
  * @tparam BLOCK_SIZE number of threads in a thread block.
  * @tparam BATCH_SIZE number of elements to load for each thread in a single iteration.
  * @tparam K the number of values to find for each query.
@@ -304,27 +313,25 @@ bits_kernel_insert_batch(float (&batch_dist)[BATCH_SIZE], std::int32_t (&batch_l
  * @param[out] out_label top k indices for each query.
  * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
  * if not needed.
- * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
- *                  a postprocessing.
  */
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
 __global__ void __launch_bounds__(BLOCK_SIZE)
-    bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
-                array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label, std::size_t k,
-                const std::int32_t* label_offsets, const float* norms)
+    bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
+                array_view<Value, 2> out_dist, array_view<Idx, 2> out_label, std::size_t k,
+                const Idx* label_offsets)
 {
     // number of items stored in registers of each thread
     constexpr std::size_t ITEMS_PER_THREAD = (K + BLOCK_SIZE - 1) / BLOCK_SIZE;
     constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
 
-    __shared__ shared_buffer<BUFFER_SIZE, BLOCK_SIZE> shm_buffer;
+    __shared__ shared_buffer<BUFFER_SIZE, BLOCK_SIZE, Value, Idx> shm_buffer;
 
     shm_buffer.size = 0;
 
     // the top k queue
-    float topk_dist[ITEMS_PER_THREAD];
-    std::int32_t topk_label[ITEMS_PER_THREAD];
+    Value topk_dist[ITEMS_PER_THREAD];
+    Idx topk_label[ITEMS_PER_THREAD];
 
     assert(k > 0);
     assert(k <= K);
@@ -334,17 +341,11 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
     for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
     {
         topk_label[i] = threadIdx.x + i * BLOCK_SIZE;
-        topk_dist[i] = std::numeric_limits<float>::infinity();
+        topk_dist[i] = bits_kernel_max_value<Value>();
 
         if (topk_label[i] < in_dist.size(1))
         {
             topk_dist[i] = in_dist(blockIdx.x, topk_label[i]);
-
-            if constexpr (ADD_NORMS)
-            {
-                topk_dist[i] += norms[topk_label[i]];
-            }
-
             topk_label[i] = !in_label.data() ? topk_label[i] : in_label(blockIdx.x, topk_label[i]);
 
             // add an optional offset to make the label unique across all "queries" in single query
@@ -367,12 +368,12 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
     for (auto i = BUFFER_SIZE + threadIdx.x; i < in_dist.size(1) + threadIdx.x;
          i += BATCH_SIZE * BLOCK_SIZE)
     {
-        float batch_dist[BATCH_SIZE];
-        std::int32_t batch_label[BATCH_SIZE];
+        Value batch_dist[BATCH_SIZE];
+        Idx batch_label[BATCH_SIZE];
 
         // load the next batch into registers
-        bits_kernel_load_batch<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE>(
-            batch_dist, batch_label, in_dist, in_label, i, label_offsets, norms);
+        bits_kernel_load_batch<PREFETCH, BLOCK_SIZE, BATCH_SIZE>(batch_dist, batch_label, in_dist,
+                                                                 in_label, i, label_offsets);
 
         // allocate buffer positions for the loaded values if they are lower than the current radius
         std::int32_t buffer_pos[BATCH_SIZE];
@@ -410,21 +411,20 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
 
 /** Declare an instantiation of the bits kernel.
  */
-#define DECL_BITS_KERNEL(prefetch, add_norms, block_size, batch_size, k)                           \
-    template void run_bits_kernel<prefetch, add_norms, block_size, batch_size, k>(                 \
-        array_view<float, 2>, array_view<std::int32_t, 2>, array_view<float, 2>,                   \
-        array_view<std::int32_t, 2>, std::size_t, const std::int32_t*, const float*, cudaStream_t)
+#define DECL_BITS_KERNEL(Value, Idx, prefetch, block_size, batch_size, k)                          \
+    template void run_bits_kernel<Value, Idx, prefetch, block_size, batch_size, k>(                \
+        array_view<Value, 2>, array_view<Idx, 2>, array_view<Value, 2>, array_view<Idx, 2>,        \
+        std::size_t, const Idx*, cudaStream_t)
 
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
-void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
-                     array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
-                     std::size_t k, const std::int32_t* label_offsets, const float* norms,
-                     cudaStream_t stream)
+void run_bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
+                     array_view<Value, 2> out_dist, array_view<Idx, 2> out_label, std::size_t k,
+                     const Idx* label_offsets, cudaStream_t stream)
 {
-    bits_kernel<PREFETCH, ADD_NORMS, BLOCK_SIZE, BATCH_SIZE, K>
+    bits_kernel<Value, Idx, PREFETCH, BLOCK_SIZE, BATCH_SIZE, K>
         <<<in_dist.size(0), BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist, out_label, k,
-                                                     label_offsets, norms);
+                                                     label_offsets);
     CUCH(cudaGetLastError());
 }
 

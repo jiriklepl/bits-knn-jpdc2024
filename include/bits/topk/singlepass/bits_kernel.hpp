@@ -9,7 +9,6 @@
 /** Bitonic select (bits) kernel (small k, multi-query -- one query per thread block)
  *
  * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions.
- * @tparam ADD_NORMS if true, the kernel will add @p norms to @p in_dist elements.
  * @tparam BLOCK_SIZE number of threads in a thread block.
  * @tparam BATCH_SIZE number of elements to load for each thread in a single iteration.
  * @tparam K the number of values to find for each query.
@@ -19,15 +18,12 @@
  * @param[out] out_label top k indices for each query.
  * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
  * if not needed.
- * @param[in] norms computed norms of database vectors or nullptr if @p in_dist does not require
- *                  a postprocessing.
  */
-template <bool PREFETCH, bool ADD_NORMS, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
-extern void run_bits_kernel(array_view<float, 2> in_dist, array_view<std::int32_t, 2> in_label,
-                            array_view<float, 2> out_dist, array_view<std::int32_t, 2> out_label,
-                            std::size_t k, const std::int32_t* label_offsets = nullptr,
-                            const float* norms = nullptr,
+extern void run_bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
+                            array_view<Value, 2> out_dist, array_view<Idx, 2> out_label,
+                            std::size_t k, const Idx* label_offsets = nullptr,
                             cudaStream_t stream = cuda_stream::make_default().get());
 
 #endif // BITS_TOPK_SINGLEPASS_BITS_KERNEL_HPP

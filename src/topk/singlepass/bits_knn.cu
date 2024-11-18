@@ -33,9 +33,8 @@ struct bits
     array_view<float, 2> out_dist;
     array_view<std::int32_t, 2> out_label;
     const std::int32_t* label_offsets;
-    const float* norms;
 
-    template <bool PREFETCH, bool ADD_NORMS>
+    template <bool PREFETCH>
     void run(std::size_t block_size, std::size_t batch_size, std::size_t k)
     {
         if (!dynamic_switch<TOPK_SINGLEPASS_BITS_BLOCK_SIZES>(
@@ -44,10 +43,10 @@ struct bits
                             batch_size, [=, *this]<std::size_t BatchSize>() {
                                 if (k <= 0 || !dynamic_switch_le<TOPK_SINGLEPASS_K_VALUES>(
                                                   k, [=, *this]<std::size_t K>() {
-                                                      run_bits_kernel<PREFETCH, ADD_NORMS,
+                                                      run_bits_kernel<float, std::int32_t, PREFETCH,
                                                                       BlockSize, BatchSize, K>(
                                                           in_dist, in_label, out_dist, out_label, k,
-                                                          label_offsets, norms);
+                                                          label_offsets);
                                                   }))
                                 {
                                     throw std::runtime_error("Unsupported k value: " +
@@ -86,14 +85,12 @@ void bits_knn::selection()
                 .in_label = {}, // implicit (compute indices as labels)
                 .out_dist = out_dist_gpu(),
                 .out_label = out_label_gpu(),
-                .label_offsets = nullptr,
-                .norms = nullptr};
+                .label_offsets = nullptr};
     const auto batch_size = args_.items_per_thread[0];
     const auto block_size = args_.selection_block_size;
 
     constexpr bool PREFETCH = false;
-    constexpr bool ADD_NORMS = false;
-    kernel.run<PREFETCH, ADD_NORMS>(block_size, batch_size, k());
+    kernel.run<PREFETCH>(block_size, batch_size, k());
 
     cuda_stream::make_default().sync();
 }
@@ -106,14 +103,12 @@ void bits_prefetch_knn::selection()
                 .in_label = {}, // implicit (compute indices as labels)
                 .out_dist = out_dist_gpu(),
                 .out_label = out_label_gpu(),
-                .label_offsets = nullptr,
-                .norms = nullptr};
+                .label_offsets = nullptr};
     const auto batch_size = args_.items_per_thread[0];
     const auto block_size = args_.selection_block_size;
 
     constexpr bool PREFETCH = true;
-    constexpr bool ADD_NORMS = false;
-    kernel.run<PREFETCH, ADD_NORMS>(block_size, batch_size, k());
+    kernel.run<PREFETCH>(block_size, batch_size, k());
 
     cuda_stream::make_default().sync();
 }
@@ -139,14 +134,12 @@ void single_query_bits::selection()
     cuda_knn::selection();
 
     constexpr bool PREFETCH = true;
-    constexpr bool ADD_NORMS = false;
 
     bits kernel{.in_dist = in_dist_gpu(),
                 .in_label = {}, // implicit (compute indices as labels)
                 .out_dist = args_.deg == 1 ? out_dist_gpu() : tmp_dist_.view(),
                 .out_label = args_.deg == 1 ? out_label_gpu() : tmp_label_.view(),
-                .label_offsets = nullptr,
-                .norms = nullptr};
+                .label_offsets = nullptr};
     const auto batch_size = args_.items_per_thread[0];
     const auto block_size = args_.selection_block_size;
 
@@ -172,7 +165,7 @@ void single_query_bits::selection()
     kernel.in_dist =
         array_view<float, 2>{kernel.in_dist.data(), {row_count, column_count}, {column_count, 1}};
 
-    kernel.run<PREFETCH, ADD_NORMS>(block_size, batch_size, k());
+    kernel.run<PREFETCH>(block_size, batch_size, k());
 
     if (args_.deg > 1)
     {
@@ -186,7 +179,7 @@ void single_query_bits::selection()
         kernel.out_dist = out_dist_gpu();
         kernel.out_label = out_label_gpu();
 
-        kernel.run<PREFETCH, ADD_NORMS>(block_size, batch_size, k());
+        kernel.run<PREFETCH>(block_size, batch_size, k());
     }
 
     cuda_stream::make_default().sync();

@@ -33,7 +33,7 @@ FUSED_BLOCK_QUERY_DIMS = [4, 8, 16]
 FUSED_QUERY_REGS = [2, 4, 8]
 FUSED_POINTS_REGS = [4]
 
-FUSED_TC_VAL_TYPES = ["half", "bfloat16", "double"] # maybe don't change this one
+FUSED_TC_VAL_TYPES = ["half", "bfloat16", "double"] # don't change this one
 FUSED_TC_BLOCK_SIZES = [128, 256, 512]
 
 # create directory structure
@@ -119,9 +119,9 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
     print("set(TOPK_SINGLEPASS_ALL_SRC", file=cmake)
 
     # generate source files for the bits kernel
-    def bits(prefetch, add_norms, block_size, batch_size, k, file):
+    def bits(value_t : str, index_t : str, prefetch, block_size, batch_size, k, file):
         print(
-            f"DECL_BITS_KERNEL({prefetch}, {add_norms}, {block_size}, {batch_size}, {k});",
+            f"DECL_BITS_KERNEL({value_t}, {index_t}, {prefetch}, {block_size}, {batch_size}, {k});",
             file=file,
         )
 
@@ -149,8 +149,7 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
                     print("", file=f)
 
                     for prefetch in ["false", "true"]:
-                        for add_norms in ["false"]:
-                            bits(prefetch, add_norms, block_size, batch_size, k, f)
+                        bits("float", "std::int32_t", prefetch, block_size, batch_size, k, f)
 
     for dim_reg in FC_DIM_REGS_ALL:
         for dim_mult in FC_DIM_MULTS_ALL:
