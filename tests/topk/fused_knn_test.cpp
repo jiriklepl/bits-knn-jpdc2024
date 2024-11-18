@@ -68,22 +68,6 @@ TEST_CASE("Find the nearest neighbor using the fused kernel for k = 64", "[fused
     test.run();
 }
 
-TEST_CASE("Find the nearest neighbor using the fused kernel for k = 2", "[fused]")
-{
-    knn_args args;
-    args.dim = 16;
-    args.k = 2;
-    args.selection_block_size = 128;
-    args.point_count = 256;
-    args.query_count = 32;
-    args.dist_layout = matrix_layout::column_major;
-    args.points_layout = matrix_layout::row_major;
-    args.queries_layout = matrix_layout::row_major;
-
-    test_case<fused_regs_knn> test{args};
-    test.run();
-}
-
 TEST_CASE("Find the nearest neighbor using the fused kernel for k = 4", "[fused]")
 {
     knn_args args;
@@ -121,6 +105,22 @@ TEST_CASE("Find the nearest neighbor using the fused kernel for k = 16", "[fused
     knn_args args;
     args.dim = 16;
     args.k = 16;
+    args.selection_block_size = 128;
+    args.point_count = 256;
+    args.query_count = 32;
+    args.dist_layout = matrix_layout::column_major;
+    args.points_layout = matrix_layout::row_major;
+    args.queries_layout = matrix_layout::row_major;
+
+    test_case<fused_regs_knn> test{args};
+    test.run();
+}
+
+TEST_CASE("Find the nearest neighbor using the fused kernel for k = 32", "[fused]")
+{
+    knn_args args;
+    args.dim = 16;
+    args.k = 32;
     args.selection_block_size = 128;
     args.point_count = 256;
     args.query_count = 32;

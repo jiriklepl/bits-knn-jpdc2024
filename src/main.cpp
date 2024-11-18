@@ -287,7 +287,6 @@ try
     if (gen_it == generators.end())
     {
         std::cerr << "Unknown generator: '" << generator_id << "'" << '\n';
-        // TODO(jirka): print available generators
         return 1;
     }
 
@@ -310,7 +309,6 @@ try
     if (pre_it == preprocessors.end())
     {
         std::cerr << "Unknown preprocessor: '" << preprocessor_id << "'" << '\n';
-        // TODO(jirka): print available preprocessors
         return 1;
     }
 
@@ -319,7 +317,6 @@ try
     preprocessor->preprocess(data, query, dim);
 
     // create kNN instance
-    // TODO(jirka): add generator and preprocessor arguments
     knn_args args{.points = data.data(),
                   .queries = query.data(),
                   .point_count = input_size,

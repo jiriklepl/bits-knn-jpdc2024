@@ -3,6 +3,7 @@
 #include "bits/distance/eigen_distance.hpp"
 #include "bits/topk/parallel_knn.hpp"
 
+#include "bits/knn_args.hpp"
 #include "knn_test.hpp"
 
 TEST_CASE("Parallel kNN on the CPU", "[parallel_knn]")

@@ -18,6 +18,9 @@
 #include "bits/topk/bitonic_sort.cuh"
 #include "bits/topk/bitonic_sorter.cuh"
 
+namespace
+{
+
 template <std::size_t BLOCK_SIZE, std::size_t ITEMS_PER_THREAD, bool USE_OLD = false>
 __global__ void bitonic_sorter_kernel(float* global_keys, std::int32_t* global_values,
                                       std::size_t value_count)
@@ -46,11 +49,11 @@ std::vector<float> random_permutation(std::size_t value_count)
     std::default_random_engine eng{42};
 
     std::vector<float> values(value_count);
-    float val = 0.0f;
+    float val = 0.0F;
     for (std::size_t i = 0; i < value_count; ++i)
     {
         values[i] = val;
-        val += 0.1f;
+        val += 0.1F;
     }
 
     std::shuffle(values.begin(), values.end(), eng);
@@ -119,6 +122,8 @@ double run_bitonic_sorter_test(std::size_t value_count)
     }
     return duration;
 }
+
+} // namespace
 
 TEST_CASE("Sort small block", "[bitonic_sorter]")
 {

@@ -3,6 +3,7 @@
 #include "bits/topk/singlepass/partial_bitonic.hpp"
 #include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
 
+#include "bits/knn_args.hpp"
 #include "knn_test.hpp"
 
 TEST_CASE("Select top k using the partial bitonic algorithm", "[partial_bitonic]")

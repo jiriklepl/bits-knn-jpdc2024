@@ -13,8 +13,8 @@ BITS_BATCH_SIZES_ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 BITS_BLOCK_SIZES_ALL = [128, 256, 512]
 
 # WE ASSUME THAT THE MINIMAL CONFIGURATION IS A SUBSET OF THE ALL CONFIGURATION
-BITS_BATCH_SIZES_MINIMAL = [16]
-BITS_BLOCK_SIZES_MINIMAL = [256]
+BITS_BATCH_SIZES_MINIMAL = [1, 7, 16]
+BITS_BLOCK_SIZES_MINIMAL = [128]
 
 FC_DIM_REGS_ALL = [1, 2, 4]
 FC_DIM_MULTS_ALL = [1, 2, 4]
@@ -27,7 +27,7 @@ FC_DIM_REGS_MINIMAL = [2]
 FC_DIM_MULTS_MINIMAL = [2]
 FC_QUERY_REGS_MINIMAL = [8]
 FC_DB_REGS_MINIMAL = [4]
-FC_BLOCK_QUERY_DIMS_MINIMAL = [1, 2, 4]
+FC_BLOCK_QUERY_DIMS_MINIMAL = [4]
 
 FUSED_BLOCK_QUERY_DIMS = [4, 8, 16]
 FUSED_QUERY_REGS = [2, 4, 8]
@@ -35,6 +35,20 @@ FUSED_POINTS_REGS = [4]
 
 FUSED_TC_VAL_TYPES = ["half", "bfloat16", "double"] # don't change this one
 FUSED_TC_BLOCK_SIZES = [128, 256, 512]
+
+
+# Checks for the mentioned assumptions
+assert all([x in BITS_BATCH_SIZES_ALL for x in BITS_BATCH_SIZES_MINIMAL])
+assert all([x in BITS_BLOCK_SIZES_ALL for x in BITS_BLOCK_SIZES_MINIMAL])
+
+assert all([x in FC_DIM_REGS_ALL for x in FC_DIM_REGS_MINIMAL])
+assert all([x in FC_DIM_MULTS_ALL for x in FC_DIM_MULTS_MINIMAL])
+assert all([x in FC_QUERY_REGS_ALL for x in FC_QUERY_REGS_MINIMAL])
+assert all([x in FC_DB_REGS_ALL for x in FC_DB_REGS_MINIMAL])
+assert all([x in FC_BLOCK_QUERY_DIMS_ALL for x in FC_BLOCK_QUERY_DIMS_MINIMAL])
+
+assert all([x in ["half", "bfloat16", "double"] for x in FUSED_TC_VAL_TYPES])
+
 
 # create directory structure
 os.makedirs("topk/detail", exist_ok=True)
@@ -47,6 +61,46 @@ def comma_separated(values):
 
 def define(name : str, values : list, file):
     print(f"#define {name} {comma_separated(values)}", file=file)
+
+# generate source files for the bits kernel
+def bits(value_t : str, index_t : str, prefetch, block_size, batch_size, k, file):
+    print(
+        f"DECL_BITS_KERNEL({value_t}, {index_t}, {prefetch}, {block_size}, {batch_size}, {k});",
+        file=file,
+    )
+
+# generate source files for the fused cache kernel
+def fc(
+    query_reg, db_reg, dim_reg, block_query_dim, block_db_dim, dim_mult, k, file
+):
+    print(
+        f"DECL_FC_KERNEL({query_reg}, {db_reg}, {dim_reg}, {block_query_dim}, {block_db_dim}, {dim_mult}, {k});",
+        file=file,
+    )
+
+def fused_kernel(k, reg_query, reg_points, block_query_dim, file):
+    print(
+        f"template void fused_kernel_runner::operator()<{k}, {reg_query}, {reg_points}, {block_query_dim}>();",
+        file=file,
+    )
+
+def fused_tc_kernel(val_type, block_size, k, file):
+    print(
+        f"template void fused_tc_kernel_runner<fused_tc_{val_type}_policy>::operator()<{k}, {block_size}>();",
+        file=file,
+    )
+
+def warp_select(block_size, thread_queue, k, file):
+    print(
+        f"template void warp_select_runner::operator()<{block_size}, {thread_queue}, {k}>();",
+        file=file,
+    )
+
+def block_select(block_size, thread_queue, k, file):
+    print(
+        f"template void block_select_runner::operator()<{block_size}, {thread_queue}, {k}>();",
+        file=file,
+    )
 
 with open(
     "../include/bits/topk/singlepass/detail/definitions_common.hpp", "w"
@@ -118,22 +172,6 @@ with open(
 with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
     print("set(TOPK_SINGLEPASS_ALL_SRC", file=cmake)
 
-    # generate source files for the bits kernel
-    def bits(value_t : str, index_t : str, prefetch, block_size, batch_size, k, file):
-        print(
-            f"DECL_BITS_KERNEL({value_t}, {index_t}, {prefetch}, {block_size}, {batch_size}, {k});",
-            file=file,
-        )
-
-    # generate source files for the fused cache kernel
-    def fc(
-        query_reg, db_reg, dim_reg, block_query_dim, block_db_dim, dim_mult, k, file
-    ):
-        print(
-            f"DECL_FC_KERNEL({query_reg}, {db_reg}, {dim_reg}, {block_query_dim}, {block_db_dim}, {dim_mult}, {k});",
-            file=file,
-        )
-
     for batch_size in BITS_BATCH_SIZES_ALL:
         for block_size in BITS_BLOCK_SIZES_ALL:
             for k in K_VALUES:
@@ -188,16 +226,10 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
         file=cmake,
     )
     print(
-        f"target_compile_definitions(topk-singlepass-all PRIVATE TOPK_SINGLEPASS_USE_ALL)",
+        "target_compile_definitions(topk-singlepass-all PRIVATE TOPK_SINGLEPASS_USE_ALL)",
         file=cmake,
     )
     print("", file=cmake)
-
-    # TODO: add source files for the tests
-    # print("target_sources(topk-singlepass-test PRIVATE ${TOPK_SINGLEPASS_ALL_SRC})", file=cmake)
-    # print(f"target_compile_definitions(topk-singlepass-test PRIVATE \"TOPK_SINGLEPASS_K_VALUES={comma_separated(K_VALUES)}\")", file=cmake)
-    # print(f"target_compile_definitions(topk-singlepass-test PRIVATE \"TOPK_SINGLEPASS_FUSED_K_VALUES={comma_separated(FUSED_K_VALUES)}\")", file=cmake)
-    # print("", file=cmake)
 
     print("set(TOPK_SINGLEPASS_MINIMAL_SRC", file=cmake)
 
@@ -227,7 +259,7 @@ with open("topk/singlepass/detail/CMakeLists.txt", "w") as cmake:
         file=cmake,
     )
     print(
-        f"target_compile_definitions(topk-singlepass-minimal PRIVATE TOPK_SINGLEPASS_USE_MINIMAL)",
+        "target_compile_definitions(topk-singlepass-minimal PRIVATE TOPK_SINGLEPASS_USE_MINIMAL)",
         file=cmake,
     )
 
@@ -235,30 +267,6 @@ with open("topk/CMakeLists.txt", "w") as cmake:
     print("set(TOPK_SRC", file=cmake)
     print("    serial_knn.cpp", file=cmake)
     print("    parallel_knn.cpp", file=cmake)
-
-    def fused_kernel(k, reg_query, reg_points, block_query_dim, file):
-        print(
-            f"template void fused_kernel_runner::operator()<{k}, {reg_query}, {reg_points}, {block_query_dim}>();",
-            file=file,
-        )
-
-    def fused_tc_kernel(val_type, block_size, k, file):
-        print(
-            f"template void fused_tc_kernel_runner<fused_tc_{val_type}_policy>::operator()<{k}, {block_size}>();",
-            file=file,
-        )
-
-    def warp_select(block_size, thread_queue, k, file):
-        print(
-            f"template void warp_select_runner::operator()<{block_size}, {thread_queue}, {k}>();",
-            file=file,
-        )
-
-    def block_select(block_size, thread_queue, k, file):
-        print(
-            f"template void block_select_runner::operator()<{block_size}, {thread_queue}, {k}>();",
-            file=file,
-        )
 
     for k in FUSED_K_VALUES:
         name = f"detail/fused_kernel{k}.cu"
@@ -274,6 +282,7 @@ with open("topk/CMakeLists.txt", "w") as cmake:
                     for reg_points in FUSED_POINTS_REGS:
                         fused_kernel(k, reg_query, reg_points, block_query_dim, f)
 
+    # fused-tc-*
     for val_type in FUSED_TC_VAL_TYPES:
         for block_size in FUSED_TC_BLOCK_SIZES:
             name = f"detail/fused_tc_kernel_{val_type}_{block_size}.cu"
@@ -290,6 +299,7 @@ with open("topk/CMakeLists.txt", "w") as cmake:
                 for k in FUSED_K_VALUES:
                     fused_tc_kernel(val_type, block_size, k, f)
 
+    # warp-select
     for k in K_VALUES:
         name = f"detail/warp_select{k}.cu"
         path = f"topk/{name}"
@@ -303,6 +313,7 @@ with open("topk/CMakeLists.txt", "w") as cmake:
                 for thread_queue in FAISS_THREAD_QUEUES:
                     warp_select(block_size, thread_queue, k, f)
 
+    # block-select
     for k in K_VALUES:
         name = f"detail/block_select{k}.cu"
         path = f"topk/{name}"

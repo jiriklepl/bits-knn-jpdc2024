@@ -110,7 +110,6 @@ add_library(topk-multipass-all SHARED)
 add_library(topk-multipass-minimal SHARED)
 add_library(topk-singlepass-all SHARED)
 add_library(topk-singlepass-minimal SHARED)
-# add_library(topk-singlepass-test SHARED)
 
 add_executable(knn ${SRC_DIR}/main.cpp)
 add_executable(knn-minimal ${SRC_DIR}/main.cpp)
@@ -138,7 +137,6 @@ set_target_properties(topk-multipass-all PROPERTIES CUDA_ARCHITECTURES "${CMAKE_
 set_target_properties(topk-multipass-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(topk-singlepass-all PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 set_target_properties(topk-singlepass-minimal PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
-# set_target_properties(topk-singlepass-test PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
 
 set_target_properties(knn-static PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(knn PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
@@ -155,7 +153,6 @@ set_target_properties(topk-multipass-all PROPERTIES CUDA_SEPARABLE_COMPILATION O
 set_target_properties(topk-multipass-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(topk-singlepass-all PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(topk-singlepass-minimal PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-# set_target_properties(topk-singlepass-test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 target_compile_options(topk PRIVATE "${OpenMP_CXX_FLAGS}")
 
@@ -170,4 +167,4 @@ add_subdirectory(${TEST_DIR})
 # link
 target_link_libraries(knn PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-multipass-all topk-singlepass-all)
 target_link_libraries(knn-minimal PRIVATE ${KNN_LIBRARIES} knn-static dist-minimal topk topk-multipass-minimal topk-singlepass-minimal)
-target_link_libraries(test PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-singlepass-all Catch2::Catch2WithMain) # TODO: add topk-singlepass-test
+target_link_libraries(test PRIVATE ${KNN_LIBRARIES} knn-static dist-all topk topk-singlepass-minimal Catch2::Catch2WithMain)

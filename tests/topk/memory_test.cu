@@ -1,3 +1,7 @@
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 #include <catch2/catch_test_macros.hpp>
 #include <cuda_runtime.h>
 
@@ -8,6 +12,9 @@
 #include "bits/knn.hpp"
 
 #include "bits/memory.cuh"
+
+namespace
+{
 
 template <std::size_t ITEMS_PER_THREAD, std::size_t BLOCK_SIZE, bool LOAD_STRIPED,
           bool STORE_STRIPED>
@@ -67,6 +74,8 @@ std::vector<std::int32_t> run_load_store_test()
 
     return output_cpu;
 }
+
+} // namespace
 
 TEST_CASE("Load and store a block of memory using striped arrangement", "[memory]")
 {

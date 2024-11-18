@@ -19,7 +19,7 @@ TEST_CASE("Find the nearest neighbor using the fused cache kernel", "[fused-cach
     args.dist_layout = matrix_layout::row_major;
     args.points_layout = matrix_layout::row_major;
     args.queries_layout = matrix_layout::row_major;
-    args.items_per_thread = std::array<std::size_t, 3>{4, 4, 2};
+    args.items_per_thread = std::array<std::size_t, 3>{8, 4, 2};
     args.selection_block_size = 4;
     args.deg = 2;
 
@@ -37,7 +37,7 @@ TEST_CASE("fused-cache kernel dim = 16, n = 1024", "[fused-cache]")
     args.dist_layout = matrix_layout::row_major;
     args.points_layout = matrix_layout::row_major;
     args.queries_layout = matrix_layout::row_major;
-    args.items_per_thread = std::array<std::size_t, 3>{4, 4, 2};
+    args.items_per_thread = std::array<std::size_t, 3>{8, 4, 2};
     args.selection_block_size = 4;
     args.deg = 2;
 
@@ -55,7 +55,7 @@ TEST_CASE("fused-cache kernel dim = 37, n = 997, q = 43", "[fused-cache]")
     args.dist_layout = matrix_layout::row_major;
     args.points_layout = matrix_layout::row_major;
     args.queries_layout = matrix_layout::row_major;
-    args.items_per_thread = std::array<std::size_t, 3>{4, 8, 4};
+    args.items_per_thread = std::array<std::size_t, 3>{8, 4, 2};
     args.selection_block_size = 4;
     args.deg = 2;
 
@@ -73,7 +73,7 @@ TEST_CASE("fused-cache kernel dim = 9, n = 25, q = 7", "[fused-cache]")
     args.dist_layout = matrix_layout::row_major;
     args.points_layout = matrix_layout::row_major;
     args.queries_layout = matrix_layout::row_major;
-    args.items_per_thread = std::array<std::size_t, 3>{4, 8, 4};
+    args.items_per_thread = std::array<std::size_t, 3>{8, 4, 2};
     args.selection_block_size = 4;
     args.deg = 2;
 

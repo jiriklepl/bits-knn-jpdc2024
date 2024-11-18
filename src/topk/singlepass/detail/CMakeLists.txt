@@ -1145,14 +1145,30 @@ target_sources(topk-singlepass-all PRIVATE ${TOPK_SINGLEPASS_ALL_SRC})
 target_compile_definitions(topk-singlepass-all PRIVATE TOPK_SINGLEPASS_USE_ALL)
 
 set(TOPK_SINGLEPASS_MINIMAL_SRC
-    bts_16_16_256.cu
-    bts_32_16_256.cu
-    bts_64_16_256.cu
-    bts_128_16_256.cu
-    bts_256_16_256.cu
-    bts_512_16_256.cu
-    bts_1024_16_256.cu
-    bts_2048_16_256.cu
+    bts_16_1_128.cu
+    bts_32_1_128.cu
+    bts_64_1_128.cu
+    bts_128_1_128.cu
+    bts_256_1_128.cu
+    bts_512_1_128.cu
+    bts_1024_1_128.cu
+    bts_2048_1_128.cu
+    bts_16_7_128.cu
+    bts_32_7_128.cu
+    bts_64_7_128.cu
+    bts_128_7_128.cu
+    bts_256_7_128.cu
+    bts_512_7_128.cu
+    bts_1024_7_128.cu
+    bts_2048_7_128.cu
+    bts_16_16_128.cu
+    bts_32_16_128.cu
+    bts_64_16_128.cu
+    bts_128_16_128.cu
+    bts_256_16_128.cu
+    bts_512_16_128.cu
+    bts_1024_16_128.cu
+    bts_2048_16_128.cu
     fc_8_4_2_2_4.cu
     fc_8_4_2_2_8.cu
     fc_8_4_2_2_16.cu

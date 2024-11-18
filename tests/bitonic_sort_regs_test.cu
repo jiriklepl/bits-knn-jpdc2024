@@ -1,18 +1,25 @@
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+
 #include <cuda_runtime.h>
 
 #include "bits/cuch.hpp"
 #include "bits/cuda_array.hpp"
 #include "bits/cuda_stream.hpp"
-#include "bits/generator/data_generator.hpp"
 #include "bits/generator/uniform_generator.hpp"
 #include "bits/knn.hpp"
 
 #include "bits/topk/bitonic_sort_regs.cuh"
 
+namespace
+{
+
 template <std::size_t ITEMS_PER_THREAD, std::size_t BLOCK_SIZE, order_t ORDER = order_t::ascending>
-__global__ void sort_regs_test(float* data, knn::pair_t* result)
+__global__ void sort_regs_test(const float* data, knn::pair_t* result)
 {
     constexpr std::size_t VALUE_COUNT = BLOCK_SIZE * ITEMS_PER_THREAD;
 
@@ -76,6 +83,8 @@ void run_sort_regs_test()
         }
     }
 }
+
+} // namespace
 
 TEST_CASE("Sort array with 32 threads, 1 value per thread", "[bitonic_sort_regs]")
 {
