@@ -2,8 +2,10 @@
 #SBATCH -o data/opt-distances-%N-%j.csv
 #SBATCH -e data/opt-distances-%N-%j.err
 #SBATCH --gpus 1
-#SBATCH -p gpu-long
-#SBATCH --time=6:00:00
+#SBATCH -p gpu-short
+#SBATCH --time=2:00:00
+#SBATCH --mem=0
+#SBATCH --exclusive
 
 root_dir="$SLURM_SUBMIT_DIR"
 if [ -z "$root_dir" ]; then
