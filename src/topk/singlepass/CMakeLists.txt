@@ -12,14 +12,8 @@ set(TOPK_SINGLEPASS_SRC
     warp_select.cu
 )
 
-target_include_directories(topk-singlepass-all PRIVATE ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/include/)
-target_include_directories(topk-singlepass-minimal PRIVATE ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/include/)
-
-target_link_directories(topk-singlepass-all PUBLIC ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/third_party/)
-target_link_directories(topk-singlepass-minimal PUBLIC ${CMAKE_SOURCE_DIR}/external/gpu_topK_benchmark/third_party/)
-
 target_sources(topk-singlepass-all PRIVATE ${TOPK_SINGLEPASS_SRC})
 target_sources(topk-singlepass-minimal PRIVATE ${TOPK_SINGLEPASS_SRC})
 
-target_link_libraries(topk-singlepass-all PRIVATE raft::raft gridselect)
-target_link_libraries(topk-singlepass-minimal PRIVATE raft::raft gridselect)
+target_link_libraries(topk-singlepass-all PRIVATE raft::raft)
+target_link_libraries(topk-singlepass-minimal PRIVATE raft::raft)

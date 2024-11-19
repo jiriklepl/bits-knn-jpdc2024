@@ -38,11 +38,11 @@ struct bits
     void run(std::size_t block_size, std::size_t batch_size, std::size_t k)
     {
         if (!dynamic_switch<TOPK_SINGLEPASS_BITS_BLOCK_SIZES>(
-                block_size, [=, *this]<std::size_t BlockSize>() {
+                block_size, [=, this]<std::size_t BlockSize>() {
                     if (!dynamic_switch<TOPK_SINGLEPASS_BITS_BATCH_SIZES>(
-                            batch_size, [=, *this]<std::size_t BatchSize>() {
+                            batch_size, [=, this]<std::size_t BatchSize>() {
                                 if (k <= 0 || !dynamic_switch_le<TOPK_SINGLEPASS_K_VALUES>(
-                                                  k, [=, *this]<std::size_t K>() {
+                                                  k, [=, this]<std::size_t K>() {
                                                       run_bits_kernel<float, std::int32_t, PREFETCH,
                                                                       BlockSize, BatchSize, K>(
                                                           in_dist, in_label, out_dist, out_label, k,
