@@ -52,7 +52,6 @@ def plot(file, hostname, jobid):
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(f"figures/gpu-speedup-{hostname}-{jobid}.pgf")
     fig.savefig(f"figures/gpu-speedup-{hostname}-{jobid}.pdf")
 
     plt.close(fig)

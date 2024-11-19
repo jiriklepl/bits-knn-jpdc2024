@@ -97,7 +97,6 @@ def plot(file, hostname, jobid):
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(f"figures/kselection-sp-untuned-{hostname}-{jobid}.pgf", bbox_inches='tight')
     fig.savefig(f"figures/kselection-sp-untuned-{hostname}-{jobid}.pdf", bbox_inches='tight')
 
     plt.close(fig)

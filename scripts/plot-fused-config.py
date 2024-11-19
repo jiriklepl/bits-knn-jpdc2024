@@ -80,7 +80,6 @@ def plot(file, hostname, jobid):
     # create directory if not exists
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(f"figures/fused-config-{hostname}-{jobid}.pgf")
     fig.savefig(f"figures/fused-config-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
