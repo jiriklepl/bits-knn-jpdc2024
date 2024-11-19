@@ -13,16 +13,16 @@ COLORS = sns.color_palette("colorblind", 10)
 def MEMORY_FLOAT_THROUGHPUT(hostname):
     """The peak Global Memory Bandwidth (in floats) for the given hostname"""
     if hostname.startswith("volta05"):
-        # V100 32GB SXM2: https://images.nvidia.com/content/technologies/volta/pdf/tesla-volta-v100-datasheet-letter-fnl-web.pdf
+        # NVIDIA Tesla V100 32GB SXM2: https://images.nvidia.com/content/technologies/volta/pdf/tesla-volta-v100-datasheet-letter-fnl-web.pdf
         return 900.0 * 1024 * 1024 * 1024 / 4
     elif hostname.startswith("ampere01"):
-        # L40: https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/support-guide/NVIDIA-L40-Datasheet-January-2023.pdf
+        # NVIDIA L40: https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/support-guide/NVIDIA-L40-Datasheet-January-2023.pdf
         return 864.0 * 1024 * 1024 * 1024 / 4
     elif hostname.startswith("ampere02"):
-        # A100 80GB PCIe: https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/nvidia-a100-datasheet-nvidia-us-2188504-web.pdf
+        # NVIDIA A100 80GB PCIe: https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/nvidia-a100-datasheet-nvidia-us-2188504-web.pdf
         return 1935.0 * 1024 * 1024 * 1024 / 4
     elif hostname.startswith("hopper01"):
-        # H100 PCIe: https://resources.nvidia.com/en-us-tensor-core
+        # NVIDIA H100 PCIe: https://resources.nvidia.com/en-us-tensor-core
         return 2039.0 * 1024 * 1024 * 1024 / 4
     else:
         raise ValueError(f"unknown hostname: {hostname}")
