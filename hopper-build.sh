@@ -13,8 +13,12 @@ run_batch() {
     sbatch -w "$worker" --export=worker,CUDA_ARCHITECTURES,build_dir,account "$@"
 }
 
+# $1 == runner
 run_single() {
-    srun -A "$account" -p "$partition" --gres=gpu:1 -w "$builder" -t "$long_time" -c 16 -n 1 -- \
+    runner=${1:-"$worker"}
+    shift
+
+    srun -A "$account" -p "$partition" --gres=gpu:1 -w "$runner" -t "$long_time" -c 16 -n 1 -- \
         "$@"
 }
 
