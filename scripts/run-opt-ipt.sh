@@ -2,8 +2,8 @@
 #SBATCH -o data/opt-ipt-%N-%j.csv
 #SBATCH -e data/opt-ipt-%N-%j.err
 #SBATCH --gpus 1
-#SBATCH -p gpu-long
-#SBATCH --time=4:00:00
+#SBATCH -p gpu-short
+#SBATCH --time=2:00:00
 #SBATCH --mem=0
 #SBATCH --exclusive
 
