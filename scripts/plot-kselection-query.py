@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import glob
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -54,12 +56,7 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
     handles,labels = ax.get_legend_handles_labels()
     return handles,labels
 
-def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
-    data = pd.read_csv(file)
-
-    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["algorithm"] != "warp-select") & (data["algorithm"] != "block-select") & (data["algorithm"] != "warp-select-tunable") & (data["algorithm"] != "bits")]
-
-
+def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, data : pd.DataFrame, paper : bool):
     if not doing_fused:
         proposed_algorithm = "bits"
 
@@ -177,7 +174,7 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
 
                 title = f"q={bs}" + (r' n=$2^{%s}$' %(str(n_power)))
                 if data["dim"].nunique() > 1:
-                    title += f" dim={dim}"
+                    title += f" d={dim}"
 
                 if index==0:
                     handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
@@ -303,8 +300,30 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(file.replace("data/", "figures/").replace(".csv", f"-{dataset}.pdf"))
+    if paper:
+        fig.savefig(file.replace("data/", "figures/").replace(".csv", f"-{dataset}.pdf"))
+    else:
+        fig.savefig(file.replace("data/", "figures/extra-").replace(".csv", f"-{dataset}.pdf"))
+
     plt.close(fig)
+
+
+def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
+    data = pd.read_csv(file)
+
+    data = data.loc[(data["iteration"] >= utils.WARMUP)]
+
+    # remove untuned versions of BlockSelect and WarpSelect
+    data = data.loc[(data["algorithm"] != "warp-select") & (data["algorithm"] != "block-select")]
+
+    # remove the bits implementation without prefetching
+    data = data.loc[(data["algorithm"] != "bits")]
+
+    drawFigInner(file, hostname, jobid, doing_fused, data.copy(True), False)
+
+    # remove algorithms superseded by SotA
+    data = data.loc[(data["algorithm"] != "warp-select-tunable") & (data["algorithm"] != "radik") & (data["algorithm"] != "warpsort")]
+    drawFigInner(file, hostname, jobid, doing_fused, data, True)
 
 if __name__ == "__main__":
     print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")

@@ -8,23 +8,19 @@ import utils
 import glob
 import os
 
-
-# the file name is data/distances-HOSTNAME-JOBID.csv
+# The file name is data/distances-HOSTNAME-JOBID.csv
 files = glob.glob("data/distances-*-*.csv")
 
-def plot(file, hostname, jobid):
-
-    data = pd.read_csv(file, sep=',')
-    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "distances") &
-                    (data["algorithm"] != "magma-dist") & (data["algorithm"] != "tiled-dist")]
-
-    # change labels to human readable strings
+def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, paper : bool):
+    # Change labels to human readable strings
     data = data.replace({"algorithm": {
         "baseline-dist": "baseline",
+        "magma-dist": "MAGMA-distance Unextended",
         "magma-part-dist": "MAGMA-distance",
         "cublas-dist": "cuBLAS GEMM + postprocessing",
         "tiled-dist": "Kuang et al.",
     }})
+
     data = data.filter(items=["point_count", "query_count", "algorithm", "dim", "time"])
 
     ROWS=1
@@ -100,7 +96,7 @@ def plot(file, hostname, jobid):
     font_height = ax.xaxis.label.get_window_extent().transformed(fig.transFigure.inverted()).height
 
     handles, labels = ax.get_legend_handles_labels()
-    legend = fig.legend(handles, labels, loc='lower center',  bbox_to_anchor=(0.5, -0.03), frameon=False, ncol=3)
+    legend = fig.legend(handles, labels, loc='lower center',  bbox_to_anchor=(0.5, -0.03), frameon=False, ncol=4)
 
     # legend size
     try_height = 1
@@ -123,12 +119,27 @@ def plot(file, hostname, jobid):
     # create directory if it does not exist
     os.makedirs("figures", exist_ok=True)
 
-    fig.savefig(f"figures/distances-{hostname}-{jobid}.pdf")
+    if paper:
+        fig.savefig(f"figures/distances-{hostname}-{jobid}.pdf")
+    else:
+        fig.savefig(f"figures/extra-distances-{hostname}-{jobid}.pdf")
+
     plt.close(fig)
 
-for file in files:
-    hostname, jobid = file.split(".")[-2].split("-")[-2:]
-    try:
-        plot(file, hostname, jobid)
-    except Exception as e:
-        print(f"Failed to plot {file}: {e}")
+def plot(file : str, hostname : str, jobid : str):
+    data = pd.read_csv(file, sep=',')
+
+    data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "distances")]
+
+    plotInner(file, hostname, jobid, data.copy(True), False)
+
+    data = data.loc[(data["algorithm"] != "magma-dist") & (data["algorithm"] != "tiled-dist")]
+    plotInner(file, hostname, jobid, data, True)
+
+if __name__ == "__main__":
+    for file in files:
+        hostname, jobid = file.split(".")[-2].split("-")[-2:]
+        try:
+            plot(file, hostname, jobid)
+        except Exception as e:
+            print(f"Failed to plot {file}: {e}")
