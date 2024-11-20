@@ -82,6 +82,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
             "bits-prefetch": "bits + MAGMA",
             "block-select-tunable": "BlockSelect",
             "fused-cache": proposed_algorithm,
+            "fused-regs-tunable": "bits-fused (without MAGMA)",
             "rapidsai-fused": "raftL2-fused",
         }})
 
@@ -188,6 +189,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                 proposed_throughput = data_N.loc[data_N["algorithm"] == proposed_algorithm, ["k", "throughput"]]
 
                 speedups = []
+                relative_throughputs = []
                 k_values = []
                 for k in sota_throughput["k"].unique():
                     sota_throughput_k = sota_throughput.loc[sota_throughput["k"] == k, "throughput"]
@@ -203,6 +205,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                     speedup = proposed_throughput_k / sota_throughput_k
 
                     speedups.append(speedup)
+                    relative_throughputs.append(proposed_throughput_k / MAX)
                     k_values.append(k)
 
                 # print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
@@ -220,6 +223,15 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
 
                 avg_speedup = np.mean(speedups)
                 print(f"{file},{dataset},{dim},{bs},{N},avg_speedup,0,0,0,{avg_speedup}")
+
+                max_relative_throughput_index = np.argmax(relative_throughputs)
+                print(f"{file},{dataset},{dim},{bs},{N},max_relative_throughput,{k_values[max_relative_throughput_index]},{sota_throughput.loc[sota_throughput['k'] == k_values[max_relative_throughput_index], 'throughput'].iloc[0]},{proposed_throughput.loc[proposed_throughput['k'] == k_values[max_relative_throughput_index], 'throughput'].iloc[0]},{relative_throughputs[max_relative_throughput_index]}")
+
+                min_relative_throughput_index = np.argmin(relative_throughputs)
+                print(f"{file},{dataset},{dim},{bs},{N},min_relative_throughput,{k_values[min_relative_throughput_index]},{sota_throughput.loc[sota_throughput['k'] == k_values[min_relative_throughput_index], 'throughput'].iloc[0]},{proposed_throughput.loc[proposed_throughput['k'] == k_values[min_relative_throughput_index], 'throughput'].iloc[0]},{relative_throughputs[min_relative_throughput_index]}")
+
+                avg_relative_throughput = np.mean(relative_throughputs)
+                print(f"{file},{dataset},{dim},{bs},{N},avg_relative_throughput,0,0,0,{avg_relative_throughput}")
             col += 1
         row += 1
 
@@ -231,6 +243,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
         proposed_throughput = data_dim.loc[data_dim["algorithm"] == proposed_algorithm, ["k", "query_count", "point_count", "throughput"]]
 
         speedups = []
+        relative_throughputs = []
         parameters = []
         for k in sota_throughput["k"].unique():
             for bs in sota_throughput["query_count"].unique():
@@ -248,6 +261,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                     speedup = proposed_throughput_k / sota_throughput_k
 
                     speedups.append(speedup)
+                    relative_throughputs.append(proposed_throughput_k / MAX)
                     parameters.append([k, bs, N])
 
         # print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
@@ -268,6 +282,16 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
         avg_speedup = np.mean(speedups)
         print(f"{file},{dataset},{dim},0,0,global_avg_speedup,0,0,0,{avg_speedup}")
 
+        max_relative_throughput_index = np.argmax(relative_throughputs)
+        max_param = parameters[max_relative_throughput_index]
+        print(f"{file},{dataset},{dim},{max_param[1]},{max_param[2]},global_max_relative_throughput,{max_param[0]},{sota_throughput.loc[(sota_throughput['k'] == max_param[0]) & (sota_throughput['query_count'] == max_param[1]) & (sota_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{proposed_throughput.loc[(proposed_throughput['k'] == max_param[0]) & (proposed_throughput['query_count'] == max_param[1]) & (proposed_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{relative_throughputs[max_relative_throughput_index]}")
+
+        min_relative_throughput_index = np.argmin(relative_throughputs)
+        min_param = parameters[min_relative_throughput_index]
+        print(f"{file},{dataset},{dim},{min_param[1]},{min_param[2]},global_min_relative_throughput,{min_param[0]},{sota_throughput.loc[(sota_throughput['k'] == min_param[0]) & (sota_throughput['query_count'] == min_param[1]) & (sota_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{proposed_throughput.loc[(proposed_throughput['k'] == min_param[0]) & (proposed_throughput['query_count'] == min_param[1]) & (proposed_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{relative_throughputs[min_relative_throughput_index]}")
+
+        avg_relative_throughput = np.mean(relative_throughputs)
+        print(f"{file},{dataset},{dim},0,0,global_avg_relative_throughput,0,0,0,{avg_relative_throughput}")
 
 
     fig.supylabel("Throughput [distances/s]", x=0.005, y=0.6)
@@ -321,7 +345,10 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
     drawFigInner(file, hostname, jobid, doing_fused, data.copy(True), False)
 
     # remove algorithms superseded by SotA
-    data = data.loc[(data["algorithm"] != "warp-select-tunable") & (data["algorithm"] != "radik") & (data["algorithm"] != "warpsort")]
+    data = data.loc[(data["algorithm"] != "warp-select-tunable") &
+                    (data["algorithm"] != "radik") &
+                    (data["algorithm"] != "warpsort") &
+                    (data["algorithm"] != "fused-regs-tunable")]
     drawFigInner(file, hostname, jobid, doing_fused, data, True)
 
 if __name__ == "__main__":

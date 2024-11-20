@@ -14,20 +14,20 @@ def plot(file, hostname, jobid):
     data = pd.read_csv(file, sep=',')
     data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "selection")]
     if "partial-bitonic" in data["algorithm"].unique():
+        baseline_name = "baseline"
         data = data.replace({"algorithm": {
             "bits" : "bits",
-            "partial-bitonic": "baseline",
-            "partial-bitonic-warp": "warp shuffles",
-            "partial-bitonic-warp-static": "static warp shuffles",
-            "partial-bitonic-regs": "sort in regs",
+            "partial-bitonic": baseline_name,
+            "partial-bitonic-warp": "warp-shuffle (dynamic)",
+            "partial-bitonic-warp-static": "warp-shuffle",
+            "partial-bitonic-regs": "sort-in-registers",
         }})
-        baseline_name = "baseline"
     elif "partial-bitonic-regs" in data["algorithm"].unique():
+        baseline_name = "sort-in-registers"
         data = data.replace({"algorithm": {
-            "partial-bitonic-regs": "sort in regs",
-            "bits" : "bits (sort in regs + buffer)",
+            "partial-bitonic-regs": baseline_name,
+            "bits" : "bits (sort-in-registers + buffer)",
         }})
-        baseline_name = "sort in regs"
     else:
         raise ValueError("Unknown data")
 

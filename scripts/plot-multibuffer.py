@@ -31,20 +31,20 @@ def plot(files, hostname):
     data = data.loc[(data["iteration"] >= utils.WARMUP) & (data["phase"] == "selection")]
 
     if "partial-bitonic" in data["algorithm"].unique():
-        data = data.replace({"algorithm": {
-            "bits" : "bits",
-            "partial-bitonic": "baseline",
-            "partial-bitonic-warp": "warp shuffles",
-            "partial-bitonic-warp-static": "static warp shuffles",
-            "partial-bitonic-regs": "sort in regs",
-        }})
         baseline_name = "baseline"
-    elif "partial-bitonic-regs" in data["algorithm"].unique():
         data = data.replace({"algorithm": {
-            "partial-bitonic-regs": "sort in regs (any data)",
+            "bits" : "bits",
+            "partial-bitonic": baseline_name,
+            "partial-bitonic-warp": "warp-shuffle (dynamic)",
+            "partial-bitonic-warp-static": "warp-shuffle",
+            "partial-bitonic-regs": "sort-in-registers",
+        }})
+    elif "partial-bitonic-regs" in data["algorithm"].unique():
+        baseline_name = "sort-in-registers (any data)"
+        data = data.replace({"algorithm": {
+            "partial-bitonic-regs": baseline_name,
             "bits" : "bits",
         }})
-        baseline_name = "sort in regs (any data)"
     else:
         raise ValueError("Unknown data")
 
@@ -57,6 +57,25 @@ def plot(files, hostname):
     fig, ax = plt.subplots(1, data["query_count"].nunique(), sharey=True)
 
     alg_shapes = dict(zip(data["algorithm"].unique(), zip(utils.SHAPES, utils.COLORS)))
+
+    max_speedup = 0
+    for query_count in data["query_count"].unique():
+        query_data = data.loc[data["query_count"] == query_count]
+
+        # extract baseline - partial sorting with Bitonic sort in shared memory
+        baseline = query_data.loc[query_data["algorithm"] == baseline_name]
+        assert len(baseline) > 0, f"Cannot determine baseline: {baseline}"
+
+        baseline = baseline.groupby(['k'])['time'].mean()
+
+        # compute speed-up for each algorithm
+        for alg in query_data["algorithm"].unique():
+            time = query_data.loc[query_data["algorithm"] == alg]
+            time = time.groupby(['k'])['time'].mean()
+
+            speedup = baseline / time
+
+            max_speedup = max(max_speedup, speedup.max())
 
     # number of non-warmup iterations
     counter = 1
@@ -106,7 +125,7 @@ def plot(files, hostname):
         ax.set_xticklabels(f"$2^{{{int(x)}}}$" for x in log_xticks)
 
         ax.grid(alpha=0.4, linestyle="--")
-        ax.set_ylim(0)
+        ax.set_ylim(0., max_speedup * 1.05)
 
     fig.supylabel("Speedup", x=0.005, y=0.6)
     fig.set_size_inches(4.5, 3)
