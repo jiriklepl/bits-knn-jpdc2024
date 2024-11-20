@@ -9,8 +9,8 @@ import pandas as pd
 import sys
 import utils
 
-# The file name is data/kselection-query-HOSTNAME-JOBID.csv
-kselection_files = glob.glob("data/kselection-query-*-*.csv")
+# The file name is data/kselection-query-HOSTNAME-JOBID.csv or data/kselection-HOSTNAME-JOBID.csv (both can be matched with the same pattern)
+kselection_files = glob.glob("data/kselection-*-*.csv")
 
 # The file name is data/fused-HOSTNAME-JOBID.csv
 fused_files = glob.glob("data/fused-*-*.csv")
@@ -20,7 +20,6 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
     i = 0
     for alg in algorithms:
         ax.plot(df.loc[df["algorithm"] == alg]["k"].astype(str), df.loc[df["algorithm"] == alg]["throughput"], utils.SHAPES[i] + '-', label=alg, color=utils.COLORS[i])
-
         i += 1
 
     if MEMORY_FLOAT_THROUGHPUT > 0:

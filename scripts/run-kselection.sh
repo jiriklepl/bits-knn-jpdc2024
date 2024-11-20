@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH -o data/kselection-query-%N-%j.csv
-#SBATCH -e data/kselection-query-%N-%j.err
+#SBATCH -o data/kselection-%N-%j.csv
+#SBATCH -e data/kselection-%N-%j.err
 #SBATCH --gpus 1
 #SBATCH -p gpu-short
 #SBATCH --time=2:00:00
