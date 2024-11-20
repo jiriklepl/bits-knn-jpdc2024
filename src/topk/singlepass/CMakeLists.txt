@@ -1,6 +1,5 @@
 set(TOPK_SINGLEPASS_SRC
     bits_knn.cu
-    cub_knn.cu
     fused_cache_knn.cu
     fused_knn.cu
     fused_tc_knn.cu

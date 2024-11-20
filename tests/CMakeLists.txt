@@ -17,7 +17,6 @@ set(TESTS
     topk/bits_knn_test.cpp
     topk/fused_knn_test.cpp
     topk/fused_cache_kernel_test.cu
-    topk/cub_knn_test.cpp
     topk/memory_test.cu
     topk/bitonic_sorter_test.cu
     topk/parallel_knn_test.cpp

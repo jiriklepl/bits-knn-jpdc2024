@@ -43,7 +43,6 @@
 #include "bits/topk/multipass/radik_knn.hpp"
 
 #include "bits/topk/singlepass/bits_knn.hpp"
-#include "bits/topk/singlepass/cub_knn.hpp"
 #include "bits/topk/singlepass/fused_cache_knn.hpp"
 #include "bits/topk/singlepass/fused_knn.hpp"
 #include "bits/topk/singlepass/fused_tc_knn.hpp"
@@ -144,9 +143,6 @@ try
     algorithms.push_back(std::make_unique<fused_tc_double_knn>());
 
     algorithms.push_back(std::make_unique<rapidsai_fused>());
-
-    algorithms.push_back(std::make_unique<cub_knn>());
-    algorithms.push_back(std::make_unique<cub_direct>());
 
     algorithms.push_back(std::make_unique<radik_knn>());
 
