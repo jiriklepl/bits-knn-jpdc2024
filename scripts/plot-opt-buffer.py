@@ -49,9 +49,9 @@ def plot(file, hostname, jobid):
     plt.ylim(ymin=0, ymax=math.ceil(max(speedup) * 1.1))
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(f"figures/opt-buffer-{hostname}-{jobid}.pdf")
+    fig.savefig(f"plots/opt-buffer-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
 

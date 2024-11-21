@@ -225,13 +225,13 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                 print(f"{file},{dataset},{dim},{bs},{N},avg_speedup,0,0,0,{avg_speedup}")
 
                 max_relative_throughput_index = np.argmax(relative_throughputs)
-                print(f"{file},{dataset},{dim},{bs},{N},max_relative_throughput,{k_values[max_relative_throughput_index]},{sota_throughput.loc[sota_throughput['k'] == k_values[max_relative_throughput_index], 'throughput'].iloc[0]},{proposed_throughput.loc[proposed_throughput['k'] == k_values[max_relative_throughput_index], 'throughput'].iloc[0]},{relative_throughputs[max_relative_throughput_index]}")
+                print(f"{file},{dataset},{dim},{bs},{N},max_relative_throughput,{k_values[max_relative_throughput_index]},{MAX},{proposed_throughput.loc[proposed_throughput['k'] == k_values[max_relative_throughput_index], 'throughput'].iloc[0]},{relative_throughputs[max_relative_throughput_index]}")
 
                 min_relative_throughput_index = np.argmin(relative_throughputs)
-                print(f"{file},{dataset},{dim},{bs},{N},min_relative_throughput,{k_values[min_relative_throughput_index]},{sota_throughput.loc[sota_throughput['k'] == k_values[min_relative_throughput_index], 'throughput'].iloc[0]},{proposed_throughput.loc[proposed_throughput['k'] == k_values[min_relative_throughput_index], 'throughput'].iloc[0]},{relative_throughputs[min_relative_throughput_index]}")
+                print(f"{file},{dataset},{dim},{bs},{N},min_relative_throughput,{k_values[min_relative_throughput_index]},{MAX},{proposed_throughput.loc[proposed_throughput['k'] == k_values[min_relative_throughput_index], 'throughput'].iloc[0]},{relative_throughputs[min_relative_throughput_index]}")
 
                 avg_relative_throughput = np.mean(relative_throughputs)
-                print(f"{file},{dataset},{dim},{bs},{N},avg_relative_throughput,0,0,0,{avg_relative_throughput}")
+                print(f"{file},{dataset},{dim},{bs},{N},avg_relative_throughput,0,{MAX},{avg_relative_throughput * MAX},{avg_relative_throughput}")
             col += 1
         row += 1
 
@@ -284,14 +284,14 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
 
         max_relative_throughput_index = np.argmax(relative_throughputs)
         max_param = parameters[max_relative_throughput_index]
-        print(f"{file},{dataset},{dim},{max_param[1]},{max_param[2]},global_max_relative_throughput,{max_param[0]},{sota_throughput.loc[(sota_throughput['k'] == max_param[0]) & (sota_throughput['query_count'] == max_param[1]) & (sota_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{proposed_throughput.loc[(proposed_throughput['k'] == max_param[0]) & (proposed_throughput['query_count'] == max_param[1]) & (proposed_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{relative_throughputs[max_relative_throughput_index]}")
+        print(f"{file},{dataset},{dim},{max_param[1]},{max_param[2]},global_max_relative_throughput,{max_param[0]},{MAX},{proposed_throughput.loc[(proposed_throughput['k'] == max_param[0]) & (proposed_throughput['query_count'] == max_param[1]) & (proposed_throughput['point_count'] == max_param[2]), 'throughput'].iloc[0]},{relative_throughputs[max_relative_throughput_index]}")
 
         min_relative_throughput_index = np.argmin(relative_throughputs)
         min_param = parameters[min_relative_throughput_index]
-        print(f"{file},{dataset},{dim},{min_param[1]},{min_param[2]},global_min_relative_throughput,{min_param[0]},{sota_throughput.loc[(sota_throughput['k'] == min_param[0]) & (sota_throughput['query_count'] == min_param[1]) & (sota_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{proposed_throughput.loc[(proposed_throughput['k'] == min_param[0]) & (proposed_throughput['query_count'] == min_param[1]) & (proposed_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{relative_throughputs[min_relative_throughput_index]}")
+        print(f"{file},{dataset},{dim},{min_param[1]},{min_param[2]},global_min_relative_throughput,{min_param[0]},{MAX},{proposed_throughput.loc[(proposed_throughput['k'] == min_param[0]) & (proposed_throughput['query_count'] == min_param[1]) & (proposed_throughput['point_count'] == min_param[2]), 'throughput'].iloc[0]},{relative_throughputs[min_relative_throughput_index]}")
 
         avg_relative_throughput = np.mean(relative_throughputs)
-        print(f"{file},{dataset},{dim},0,0,global_avg_relative_throughput,0,0,0,{avg_relative_throughput}")
+        print(f"{file},{dataset},{dim},0,0,global_avg_relative_throughput,0,{MAX},{MAX * avg_relative_throughput},{avg_relative_throughput}")
 
 
     fig.supylabel("Throughput [distances/s]", x=0.005, y=0.6)
@@ -321,12 +321,12 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
         break
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
     if paper:
-        fig.savefig(file.replace("data/", "figures/").replace(".csv", f"-{dataset}.pdf"))
+        fig.savefig(file.replace("data/", "plots/").replace(".csv", f"-{dataset}.pdf"))
     else:
-        fig.savefig(file.replace("data/", "figures/extra-").replace(".csv", f"-{dataset}.pdf"))
+        fig.savefig(file.replace("data/", "plots/extra-").replace(".csv", f"-{dataset}.pdf"))
 
     plt.close(fig)
 

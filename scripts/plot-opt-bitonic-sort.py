@@ -97,9 +97,9 @@ def plot(file, hostname, jobid):
         break
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(f"figures/opt-bitonic-sort-{hostname}-{jobid}.pdf")
+    fig.savefig(f"plots/opt-bitonic-sort-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
 

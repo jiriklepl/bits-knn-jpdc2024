@@ -88,9 +88,9 @@ def plot(file, hostname, jobid):
     fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, -0.03), frameon=False, ncol=2)
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(f"figures/fused-{hostname}-{jobid}.pdf")
+    fig.savefig(f"plots/fused-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
 

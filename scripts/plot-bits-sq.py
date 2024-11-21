@@ -55,9 +55,9 @@ def plot(file, hostname, jobid):
     plt.grid(alpha=0.4, linestyle="--")
 
     # create directory if not exists
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(f"figures/bits-sq-{hostname}-{jobid}.pdf")
+    fig.savefig(f"plots/bits-sq-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
 

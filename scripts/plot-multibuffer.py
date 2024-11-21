@@ -158,9 +158,9 @@ def plot(files, hostname):
         break
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(f"figures/multibuffer-{hostname}.pdf", bbox_inches='tight')
+    fig.savefig(f"plots/multibuffer-{hostname}.pdf", bbox_inches='tight')
     plt.close(fig)
 
 hosted_files = {}

@@ -130,9 +130,9 @@ def plot(file, hostname, jobid):
     fig.subplots_adjust(bottom=0.04, top=0.99, right=0.99, wspace=0.3, hspace=0.5)
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(f"figures/opt-ipt-{hostname}-{jobid}.pdf")
+    fig.savefig(f"plots/opt-ipt-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
 

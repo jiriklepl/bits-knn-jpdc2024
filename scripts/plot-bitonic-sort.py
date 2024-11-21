@@ -116,9 +116,9 @@ def plot(file, hostname, jobid):
         break
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
-    fig.savefig(file.replace("data", "figures").replace("csv", "pdf"))
+    fig.savefig(file.replace("data", "plots").replace("csv", "pdf"))
     plt.close(fig)
 
 for file in files:

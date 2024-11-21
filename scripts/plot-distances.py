@@ -15,7 +15,7 @@ def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, pape
     # Change labels to human readable strings
     data = data.replace({"algorithm": {
         "baseline-dist": "baseline",
-        "magma-dist": "MAGMA-distance Unextended",
+        "magma-dist": "MAGMA-distance (unexpanded)",
         "magma-part-dist": "MAGMA-distance",
         "cublas-dist": "cuBLAS GEMM + postprocessing",
         "tiled-dist": "Kuang et al.",
@@ -117,12 +117,12 @@ def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, pape
         break
 
     # create directory if it does not exist
-    os.makedirs("figures", exist_ok=True)
+    os.makedirs("plots", exist_ok=True)
 
     if paper:
-        fig.savefig(f"figures/distances-{hostname}-{jobid}.pdf")
+        fig.savefig(f"plots/distances-{hostname}-{jobid}.pdf")
     else:
-        fig.savefig(f"figures/extra-distances-{hostname}-{jobid}.pdf")
+        fig.savefig(f"plots/extra-distances-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
 
