@@ -32,7 +32,7 @@ plt.rcParams['pgf.texsystem'] = 'pdflatex'
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.size'] = 14
 plt.rcParams['pgf.rcfonts'] = False
-plt.rcParams['text.usetex'] = True
+# plt.rcParams['text.usetex'] = True
 
 def restricted_size(data, axis):
     if type(axis) is int:
