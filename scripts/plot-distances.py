@@ -11,7 +11,7 @@ import os
 # The file name is data/distances-HOSTNAME-JOBID.csv
 files = glob.glob("data/distances-*-*.csv")
 
-def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, paper : bool):
+def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, filtered : bool):
     # Change labels to human readable strings
     data = data.replace({"algorithm": {
         "baseline-dist": "baseline",
@@ -119,7 +119,7 @@ def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, pape
     # create directory if it does not exist
     os.makedirs("plots", exist_ok=True)
 
-    if paper:
+    if filtered:
         fig.savefig(f"plots/distances-{hostname}-{jobid}.pdf")
     else:
         fig.savefig(f"plots/extra-distances-{hostname}-{jobid}.pdf")

@@ -1,38 +1,48 @@
 #!/usr/bin/env python3
 
+# Run this script in the `src` directory to generate the source files for the bits kernels
+# (and the tuned versions of the kernels from the FAISS library)
+
 import os
 
+# The k values for which we generate the `bits`, `partial-bitonic`, etc. kernels
 K_VALUES = [16, 32, 64, 128, 256, 512, 1024, 2048]
+# The k values for which we generate the `fused-regs`, `fused-tc`, etc. kernels
 FUSED_K_VALUES = [4, 8, 16, 32, 64, 128, 256]
+# The k values for which we generate the `fused-cache` kernels; in the paper, referred to as `bits-fused``
 FUSED_CACHE_K_VALUES = [4, 8, 16, 32, 64, 128, 256]
 
+# The block sizes and thread queues for which we generate the `warp-select` and `block-select` kernels
 FAISS_BLOCK_SIZES = [64, 128]
 FAISS_THREAD_QUEUES = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 
+# The items-per-thread configurations for the `bits` kernels
 BITS_BATCH_SIZES_ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+# The block sizes for the `bits` kernels
 BITS_BLOCK_SIZES_ALL = [128, 256, 512]
 
 # WE ASSUME THAT THE MINIMAL CONFIGURATION IS A SUBSET OF THE ALL CONFIGURATION
-BITS_BATCH_SIZES_MINIMAL = [1, 7, 16]
-BITS_BLOCK_SIZES_MINIMAL = [128]
+BITS_BATCH_SIZES_MINIMAL = [1, 7, 16] # subset of BITS_BATCH_SIZES_ALL used in the minimal configuration
+BITS_BLOCK_SIZES_MINIMAL = [128] # subset of BITS_BLOCK_SIZES_ALL used in the minimal configuration
 
+# The various tile sizes for the fused-cache (bits-fused) kernel
 FC_DIM_REGS_ALL = [1, 2, 4]
 FC_DIM_MULTS_ALL = [1, 2, 4]
 FC_QUERY_REGS_ALL = [2, 4, 8, 16]
 FC_DB_REGS_ALL = [4, 8, 16]
 FC_BLOCK_QUERY_DIMS_ALL = [1, 2, 4]
-
-# WE ASSUME THAT THE MINIMAL CONFIGURATION IS A SUBSET OF THE ALL CONFIGURATION
-FC_DIM_REGS_MINIMAL = [2]
-FC_DIM_MULTS_MINIMAL = [2]
-FC_QUERY_REGS_MINIMAL = [8]
-FC_DB_REGS_MINIMAL = [4]
-FC_BLOCK_QUERY_DIMS_MINIMAL = [4]
-
 FUSED_BLOCK_QUERY_DIMS = [4, 8, 16]
 FUSED_QUERY_REGS = [2, 4, 8]
 FUSED_POINTS_REGS = [4]
 
+# WE ASSUME THAT THE MINIMAL CONFIGURATION IS A SUBSET OF THE ALL CONFIGURATION
+FC_DIM_REGS_MINIMAL = [2] # subset of FC_DIM_REGS_ALL used in the minimal configuration
+FC_DIM_MULTS_MINIMAL = [2] # subset of FC_DIM_MULTS_ALL used in the minimal configuration
+FC_QUERY_REGS_MINIMAL = [8] # subset of FC_QUERY_REGS_ALL used in the minimal configuration
+FC_DB_REGS_MINIMAL = [4] # subset of FC_DB_REGS_ALL used in the minimal configuration
+FC_BLOCK_QUERY_DIMS_MINIMAL = [4] # subset of FC_BLOCK_QUERY_DIMS_ALL used in the minimal configuration
+
+# The various value types and block sizes for the fused-tc kernel (not used in the paper as it is suboptimal)
 FUSED_TC_VAL_TYPES = ["half", "bfloat16", "double"] # don't change this one
 FUSED_TC_BLOCK_SIZES = [128, 256, 512]
 

@@ -55,7 +55,7 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
     handles,labels = ax.get_legend_handles_labels()
     return handles,labels
 
-def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, data : pd.DataFrame, paper : bool):
+def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, data : pd.DataFrame, filtered : bool):
     if not doing_fused:
         proposed_algorithm = "bits"
 
@@ -114,7 +114,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
         data = pd.concat([data, instadist])
         # data = pd.concat([data, half_dist])
 
-        MEMORY_FLOAT_THROUGHPUT = 0
+        MEMORY_FLOAT_THROUGHPUT = 0 # do not plot theoretical throughput
 
     # merge columns "generator" and "preprocessor" into "dataset"
     if "generator" in data.columns and "preprocessor" in data.columns:
@@ -155,6 +155,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
 
     max_throughput = data["throughput"].max()
 
+    # to scale the plots uniformly
     MAX = MEMORY_FLOAT_THROUGHPUT if MEMORY_FLOAT_THROUGHPUT > 0 else max_throughput
 
     row = 0
@@ -181,7 +182,9 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                 else:
                     genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
 
-                if doing_fused:
+                # continue only if not evaluating the fused algorithms
+                #  and not fitering out some algorithms
+                if doing_fused or filtered:
                     continue
 
                 # SotA throughput
@@ -235,7 +238,9 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
             col += 1
         row += 1
 
-        if doing_fused:
+        # continue only if not evaluating the fused algorithms
+        #  and not fitering out some algorithms
+        if doing_fused or filtered:
             continue
 
         # SotA throughput
@@ -323,7 +328,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
     # create directory if it does not exist
     os.makedirs("plots", exist_ok=True)
 
-    if paper:
+    if filtered:
         fig.savefig(file.replace("data/", "plots/").replace(".csv", f"-{dataset}.pdf"))
     else:
         fig.savefig(file.replace("data/", "plots/extra-").replace(".csv", f"-{dataset}.pdf"))

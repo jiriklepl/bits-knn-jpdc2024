@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-export worker=${1:-ampere01} # NVIDIA Tesla L40 PCIe 40 GB
+export worker=${1:-ampere01} # NVIDIA L40 PCIe 40 GB
 builder=${builder:-"$worker"}
 export CUDA_ARCHITECTURES=${2:-"89"} # L40
 export build_dir=build-adalovelace

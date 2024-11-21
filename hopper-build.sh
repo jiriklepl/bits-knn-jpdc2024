@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-export worker=${1:-hopper01}         # NVIDIA Tesla H100 PCIe 40 GB
+export worker=${1:-hopper01}         # NVIDIA H100 PCIe 40 GB
 builder=${builder:-"volta05"}        # NVIDIA Tesla V100 PCIe 32 GB
 export CUDA_ARCHITECTURES=${2:-"90"} # H100
 export build_dir=build-hopper

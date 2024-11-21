@@ -1,6 +1,6 @@
 # Manual Build for the `knn` benchmarking binary
 
-To build the source code manually, if the process outlined in [README.md](README.md) does not work, follow these steps:
+To build the source code manually, if the process outlined in [README.md](../README.md) does not work, follow these steps:
 
 0. Choose a `NAME` that will be used to distinguish your build from others (e.g., `build-volta`)
 
