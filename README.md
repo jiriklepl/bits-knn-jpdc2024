@@ -90,7 +90,7 @@ To tune the algorithm parameters, run the following commands (replace `CUDA_ARCH
 
 This generates various `./data/EXPERIMENT-NAME-TIMESTAMP.csv` and `./data/EXPERIMENT-NAME-TIMESTAMP.err` files. Their format is discussed in [data-format.md](docs/data-format.md). Note that these scripts can take a long time (typically, up to two hours) to run.
 
-Then, run the following commands to generate `./scripts/optima.csv` and `./scripts/optima-dist.csv` files, run the following commands (they also automatically prepare a virtual environment `.venv` and install the required Python packages using `pip`):
+Then, run the following commands to generate `./scripts/optima.csv` and `./scripts/optima-dist.csv` files, which contain the best-performing parameters for the algorithms, run the following commands (they also automatically prepare a virtual environment `.venv` and install the required Python packages using `pip`):
 
 ```bash
 # produce the `./scripts/optima.csv` file:
@@ -228,4 +228,4 @@ In the example output above, `bits` outperforms the state-of-the-art algorithms 
 
 The source code and the replication package are licensed under the MIT License. The license text is available in the `LICENSE.txt` file.
 
-Some parts of the source code come from third-party projects. Their licenses are available in the `licenses.txt` file.
+Some parts of the source code come from third-party projects. Their licenses are available in the `licenses.txt` file. The relevant parts of the source code are marked with the original license text.
