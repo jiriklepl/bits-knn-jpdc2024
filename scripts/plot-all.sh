@@ -13,8 +13,8 @@ if [ -n "$1" ]; then
     if [ "$1" = "all" ]; then
         :
     elif [ "$1" = "help" ]; then
-        echo "Usage: $0 [plot-name]" >&2
-        exit 1
+        echo "Usage: $0 [plot-name | all]" >&2
+        exit 0
     elif [ ! -f "scripts/plot-$1.py" ]; then
         echo "Invalid plot name: $1" >&2
         exit 1
@@ -25,7 +25,7 @@ python3 -m venv .venv >&2
 source .venv/bin/activate >&2
 python3 -m pip install -r scripts/requirements.txt >&2
 
-if [ -z "$1" ]; then
+if [ -z "$1" ] || [ "$1" = "all" ]; then
     find scripts -name "plot-*.py" -exec python3 {} \;
 else
     python3 "scripts/plot-$1.py"

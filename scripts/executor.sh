@@ -34,20 +34,3 @@ elif [ -n "$3" ]; then
     run_batch "$@"
     exit 0
 fi
-
-run_batch scripts/run-distances.sh
-run_batch scripts/run-bits-sq.sh
-run_batch scripts/run-eval-mq.sh
-run_batch scripts/run-fused.sh
-run_batch scripts/run-kselection-sp.sh
-run_batch scripts/run-opt-bitonic-sort.sh
-run_batch scripts/run-opt-buffer.sh
-run_batch scripts/run-opt-ipt.sh
-run_batch scripts/run-opt-two-stage.sh
-run_batch scripts/run-parallel.sh
-run_batch scripts/run-params-warp-select.sh
-
-# May contain impossible configurations, for tuning:
-run_batch scripts/run-fused-cache-params.sh
-run_batch scripts/run-fused-params.sh
-run_batch scripts/run-params-block-select.sh
