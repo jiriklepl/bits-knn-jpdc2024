@@ -19,7 +19,7 @@ To build the source code manually, if the process outlined in [README.md](../REA
         -DCMAKE_CUDA_ARCHITECTURES="90" -S .
     ```
 
-    (Replace the `CMAKE_CUDA_ARCHITECTURES` with the compute capability of your GPU, add `-DCMAKE_CXX_COMPILER=g++-13` to explicitly set the compiler)
+    (Replace the `CMAKE_CUDA_ARCHITECTURES` with the compute capability of your GPU, and add `-DCMAKE_CXX_COMPILER=g++-13` to explicitly set the compiler to `g++-13`)
 
 3. Build the source code (replace `NAME` with the chosen name):
 
