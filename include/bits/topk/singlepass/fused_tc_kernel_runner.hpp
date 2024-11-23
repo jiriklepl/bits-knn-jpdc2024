@@ -44,8 +44,6 @@ struct fused_tc_kernel_runner
      */
     std::size_t block_size;
 
-    /** TODO: Add description.
-     */
     template <std::int32_t K, std::int32_t BLOCK_SIZE>
     void operator()();
 };
