@@ -16,7 +16,7 @@ kselection_files = glob.glob("data/kselection-*-*.csv")
 fused_files = glob.glob("data/fused-*-*.csv")
 
 # MEMORY_FLOAT_THROUGHPUT (0 : do not plot theoretical throughput)
-def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max_throughput : float, MEMORY_FLOAT_THROUGHPUT : float):
+def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max_throughput : float, MEMORY_FLOAT_THROUGHPUT : float, is_last : bool = False):
     i = 0
     for alg in algorithms:
         ax.plot(df.loc[df["algorithm"] == alg]["k"].astype(str), df.loc[df["algorithm"] == alg]["throughput"], utils.SHAPES[i] + '-', label=alg, color=utils.COLORS[i])
@@ -29,8 +29,10 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
         ax2.set_ylim([0.0, 110])
         ax2.plot([], [])
         ax2.set_yticks([0, 25, 50, 75, 100])
-        ax2.set_yticklabels(["0 %", "25 %", "50 %", "75 %", "100 %"], rotation='vertical', verticalalignment='center')
-        # ax2.set_ylabel("Relative to peak throughput (%)")
+        if is_last:
+            ax2.set_yticklabels(["0%", "25%", "50%", "75%", "100%"], rotation='vertical', verticalalignment='center')
+        else:
+            ax2.set_yticklabels([])
         ax2.yaxis.set_label_position("right")
 
     ax.set_xlabel(f"k ({title})")
@@ -178,9 +180,9 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                     title += f" d={dim}"
 
                 if index==0:
-                    handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
+                    handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT, is_last=col == COLS - 1)
                 else:
-                    genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT)
+                    genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT, is_last=col == COLS - 1)
 
                 # continue only if not evaluating the fused algorithms
                 #  and not fitering out some algorithms
@@ -318,7 +320,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
-            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.06, right=0.99-font_height/4, hspace=0.3, wspace=0.3)
+            fig.subplots_adjust(bottom=0.03 + legend_height + font_height * 1.3, top=.99-font_height/2, left=0.06, right=0.99-font_height/4, hspace=0.3, wspace=0.2)
         except ValueError:
             print(f"Legend does not fit, trying with {try_height}", file=sys.stderr)
             try_height += .5
