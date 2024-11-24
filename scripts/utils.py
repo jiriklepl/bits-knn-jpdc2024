@@ -25,7 +25,7 @@ def MEMORY_FLOAT_THROUGHPUT(hostname):
         # NVIDIA H100 PCIe: https://resources.nvidia.com/en-us-tensor-core
         return 2039.0 * 1024 * 1024 * 1024 / 4
     else:
-        raise ValueError(f"unknown hostname: {hostname}")
+        return 0
 
 plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
 plt.rcParams['pgf.texsystem'] = 'pdflatex'

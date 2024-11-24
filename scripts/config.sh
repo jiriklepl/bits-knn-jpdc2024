@@ -96,8 +96,12 @@ export knn="$build_dir/knn"
 
 # parameters: optima_file algorithm query_count k dim
 config_generic() {
+    if [ -z "$worker" ]; then
+        worker=$(hostname)
+    fi
+
     # find the best configuration for the algorithm in optima_file
-    awk -F, -v algorithm="$2" -v GPU="$GPU" -v query_count="$3" -v k="$4" -v dim="$5" '
+    awk -F, -v algorithm="$2" -v hostname="$worker" -v query_count="$3" -v k="$4" -v dim="$5" '
         BEGIN {
             slack = 0
             score = 0
@@ -113,13 +117,13 @@ config_generic() {
                 col[$i] = i
             }
 
-            if (!col["algorithm"] || !col["GPU"]) {
+            if (!col["algorithm"] || !col["hostname"]) {
                 exit 1
             }
 
             next
         }
-        $col["algorithm"] == algorithm && (GPU == "None" || $col["GPU"] == GPU) {
+        $col["algorithm"] == algorithm && (hostname == "None" || $col["hostname"] == hostname) {
             new_score = 0
             new_slack = 1
 

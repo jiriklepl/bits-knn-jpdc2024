@@ -24,7 +24,11 @@ data = None
 for file in files:
     hostname, jobid = file.split(".")[-2].split("-")[-2:]
 
-    more_data = pd.read_csv(file, sep=',')
+    try:
+        more_data = pd.read_csv(file, sep=',')
+    except pd.errors.EmptyDataError:
+        continue
+
     more_data["hostname"] = hostname
     if hostname in gpu_dict:
         more_data["GPU"] = gpu_dict[hostname]
