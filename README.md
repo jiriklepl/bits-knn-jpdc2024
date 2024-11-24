@@ -1,4 +1,4 @@
-# Replication package for the paper Towards Optimal GPU-accelerated K-Nearest Neighbors Search
+# Replication package for the paper *Towards Optimal GPU-accelerated K-Nearest Neighbors Search*
 
 This is the replication package for the paper *Towards Optimal GPU-accelerated K-Nearest Neighbors Search* submitted to the [Journal of Parallel and Distributed Computing](https://www.sciencedirect.com/journal/journal-of-parallel-and-distributed-computing) (JPDC).
 
