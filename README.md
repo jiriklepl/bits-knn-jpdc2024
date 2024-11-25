@@ -78,11 +78,11 @@ To tune the algorithm parameters, run the following commands (replace `CUDA_ARCH
 ./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-opt-ipt.sh 512 # 512 is the block size
 
 # To benchmark various parameters of the variants of the `bits-fused` algorithm
-./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-cache-params.sh
-# fused-cache-params is split into three scripts to reduce the running time of each script
-./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-params.sh 1
-./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-params.sh 2
-./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-params.sh 4
+./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-params.sh
+# fused-cache-params is split into three scripts to reduce the running time of each script:
+./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-cache-params.sh 1
+./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-cache-params.sh 2
+./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-fused-cache-params.sh 4
 
 # To benchmark various parameters of the optimized Bitonic sort algorithms
 ./local-build.sh NAME CUDA_ARCHITECTURES scripts/run-opt-bitonic-sort.sh
