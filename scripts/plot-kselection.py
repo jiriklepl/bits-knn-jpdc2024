@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
 import glob
+import sys
+import os.path
+
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import matplotlib.ticker as mticker
 import numpy as np
-import os.path
 import pandas as pd
-import sys
+from pandas import DataFrame
 import utils
 
 # The file name is data/kselection-query-HOSTNAME-JOBID.csv or data/kselection-HOSTNAME-JOBID.csv (both can be matched with the same pattern)
@@ -15,8 +18,9 @@ kselection_files = glob.glob("data/kselection-*-*.csv")
 # The file name is data/fused-HOSTNAME-JOBID.csv
 fused_files = glob.glob("data/fused-*-*.csv")
 
-# MEMORY_FLOAT_THROUGHPUT (0 : do not plot theoretical throughput)
-def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max_throughput : float, MEMORY_FLOAT_THROUGHPUT : float, is_last : bool = False):
+
+# MEMORY_FLOAT_THROUGHPUT (0: do not plot theoretical throughput)
+def genFig(df: DataFrame, ax: Axes, title: str, algorithms: list, max_throughput: float, MEMORY_FLOAT_THROUGHPUT: float, is_last: bool = False):
     i = 0
     for alg in algorithms:
         ax.plot(df.loc[df["algorithm"] == alg]["k"].astype(str), df.loc[df["algorithm"] == alg]["throughput"], utils.SHAPES[i] + '-', label=alg, color=utils.COLORS[i])
@@ -39,7 +43,7 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
 
     xticks = df["k"].unique()
     log_xticks = np.round(np.log2(xticks)).astype(int)
-    ax.set_xticks(ticks = xticks.astype(str))
+    ax.set_xticks(ticks=xticks.astype(str))
     ax.set_xticklabels([f"$2^{{{int(x)}}}$" for x in log_xticks])
 
     if MEMORY_FLOAT_THROUGHPUT > 0:
@@ -54,10 +58,11 @@ def genFig(df : pd.DataFrame, ax : plt.Axes, title : str, algorithms : list, max
 
     ax.grid(True, which="both", ls="--", alpha=0.4)
 
-    handles,labels = ax.get_legend_handles_labels()
-    return handles,labels
+    handles, labels = ax.get_legend_handles_labels()
+    return handles, labels
 
-def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, data : pd.DataFrame, filtered : bool):
+
+def drawFigInner(file: str, hostname: str, jobid: str, doing_fused: bool, data: pd.DataFrame, filtered: bool):
     if not doing_fused:
         proposed_algorithm = "bits"
 
@@ -77,7 +82,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
 
         # Data have to be moved from the device to SMs
         MEMORY_FLOAT_THROUGHPUT = utils.MEMORY_FLOAT_THROUGHPUT(hostname)
-    else: # if doing_fused:
+    else:  # if doing_fused:
         proposed_algorithm = "bits-fused"
 
         data = data.replace({"algorithm": {
@@ -116,7 +121,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
         data = pd.concat([data, instadist])
         # data = pd.concat([data, half_dist])
 
-        MEMORY_FLOAT_THROUGHPUT = 0 # do not plot theoretical throughput
+        MEMORY_FLOAT_THROUGHPUT = 0  # do not plot theoretical throughput
 
     # merge columns "generator" and "preprocessor" into "dataset"
     if "generator" in data.columns and "preprocessor" in data.columns:
@@ -132,15 +137,15 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
     else:
         data["dataset"] = "Uniform"
 
-    ROWS=data["dim"].nunique()
-    COLS=data["query_count"].nunique()
+    ROWS = data["dim"].nunique()
+    COLS = data["query_count"].nunique()
 
     algorithms = data["algorithm"].unique()
 
     LEGEND_COLS = algorithms.size
 
     if ROWS == 0 or COLS == 0:
-        return # Skip empty plots
+        return  # Skip empty plots
 
     dataset = data["dataset"].unique()
     assert len(dataset) == 1, "Multiple datasets in the same file"
@@ -162,15 +167,15 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
 
     row = 0
     for dim in sorted(data["dim"].unique()):
-        data_dim=data.loc[data["dim"] == dim]
+        data_dim = data.loc[data["dim"] == dim]
 
         col = 0
         for bs in sorted(data_dim["query_count"].unique()):
-            data_bs=data_dim.loc[data_dim["query_count"] == bs]
+            data_bs = data_dim.loc[data_dim["query_count"] == bs]
             for N in sorted(data_bs["point_count"].unique()):
                 index = row * COLS + col
-                n_power=int(np.log2(N))
-                data_N=data_bs.loc[data_bs["point_count"] == N]
+                n_power = int(np.log2(N))
+                data_N = data_bs.loc[data_bs["point_count"] == N]
 
                 if data_N.size == 0:
                     continue
@@ -179,10 +184,10 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
                 if data["dim"].nunique() > 1:
                     title += f" d={dim}"
 
-                if index==0:
-                    handles, labels = genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT, is_last=col == COLS - 1)
+                if index == 0:
+                    handles, labels = genFig(data_N, axes[index], title, algorithms, max_throughput, MEMORY_FLOAT_THROUGHPUT, is_last=col == COLS - 1)
                 else:
-                    genFig(data_N,axes[index],title,algorithms,max_throughput,MEMORY_FLOAT_THROUGHPUT, is_last=col == COLS - 1)
+                    genFig(data_N, axes[index], title, algorithms, max_throughput, MEMORY_FLOAT_THROUGHPUT, is_last=col == COLS - 1)
 
                 # continue only if not evaluating the fused algorithms
                 #  and not fitering out some algorithms
@@ -300,7 +305,6 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
         avg_relative_throughput = np.mean(relative_throughputs)
         print(f"{file},{dataset},{dim},0,0,global_avg_relative_throughput,0,{MAX},{MAX * avg_relative_throughput},{avg_relative_throughput}")
 
-
     fig.supylabel("Throughput [distances/s]", x=0.005, y=0.6)
     fig.set_size_inches(4.5, ROWS*3)
 
@@ -310,13 +314,12 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
     legend = fig.legend(handles, labels, ncols=LEGEND_COLS + 1,  frameon=False, loc='lower center')
 
     # legend size
-    try_height = 1
-    while True: # until the legend fits
+    try_height = 1.
+    while True:  # until the legend fits
         try:
             legend_width = legend.get_window_extent().transformed(fig.transFigure.inverted()).width * 4.5
             plots_width = 3 * data["query_count"].nunique()
-            fig.set_size_inches(max(plots_width, legend_width),
-                                ROWS*3 + 1 + try_height)
+            fig.set_size_inches(max(plots_width, legend_width), ROWS*3 + 1 + try_height)
             legend_height = legend.get_window_extent().transformed(fig.transFigure.inverted()).height
 
             # adjust the plot to make room for the legend
@@ -338,7 +341,7 @@ def drawFigInner(file : str, hostname : str, jobid : str, doing_fused : bool, da
     plt.close(fig)
 
 
-def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
+def drawFig(file: str, hostname: str, jobid: str, doing_fused: bool):
     data = pd.read_csv(file)
 
     data = data.loc[(data["iteration"] >= utils.WARMUP)]
@@ -358,8 +361,9 @@ def drawFig(file : str, hostname : str, jobid : str, doing_fused : bool):
                     (data["algorithm"] != "fused-regs-tunable")]
     drawFigInner(file, hostname, jobid, doing_fused, data, True)
 
-if __name__ == "__main__":
-    print(f"file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
+
+def main():
+    print("file,dataset,dim,query_count,point_count,situation,k,sota,proposed,speedup")
 
     for file in kselection_files:
         hostname, jobid = file.split(".")[-2].split("-")[-2:]
@@ -377,3 +381,7 @@ if __name__ == "__main__":
             drawFig(file, hostname, jobid, doing_fused=True)
         except Exception as e:
             print(f"Failed to plot {file}: {e}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
