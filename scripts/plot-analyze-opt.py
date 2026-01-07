@@ -184,12 +184,10 @@ categorization = {
         "q != 64": lambda df: df["query_count"] != 64,
     },
     "fused-cache": {
-        "q == 256": lambda df: df["query_count"] == 256,
-        "q != 256": lambda df: df["query_count"] != 256,
+        "q >= 1024": lambda df: df["query_count"] >= 1024,
     },
     "fused-regs-tunable": {
-        "q == 256": lambda df: df["query_count"] == 256,
-        "q != 256": lambda df: df["query_count"] != 256,
+        "q == 256": lambda df: df["query_count"] >= 1024,
     },
     "partial-bitonic": {
         "q == 64": lambda df: df["query_count"] == 64,
