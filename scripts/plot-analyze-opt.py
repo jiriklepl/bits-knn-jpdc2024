@@ -132,6 +132,9 @@ def geom_mean(values: pd.Series) -> float:
         return float("nan")
     return float(np.exp(np.log(positive).mean()))
 
+def below_threshold(values: pd.Series, threshold: float) -> float:
+    return int((values < threshold).sum()) / len(values)
+
 # parameters driving the optimization
 parameters = ["hostname", "GPU", "algorithm", "point_count", "query_count", "k", "dim"]
 
@@ -162,48 +165,52 @@ mean_time.sort_values(parameters + ["slowdown"], inplace=True)
 with open("scripts/mean-time-with-slowdown.csv", "w") as f:
     mean_time.to_csv(f, index=False)
 
+
+
+# Do fixed sizes for saturated cases
+
 collapsed_dims = [dim for dim in ["point_count"] if dim in mean_time.columns]
 
 category_dim = "category"
 category_params = ["query_count", "k"]
 categorization = {
+    "partial-bitonic": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
+    },
+    "partial-bitonic-regs": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
+    },
+    "partial-bitonic-warp": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
+    },
+    "partial-bitonic-warp-static": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
+    },
     "bits": {
         "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
     },
     "bits-prefetch": {
         "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
     },
     "warp-select-tunable": {
         "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
     },
     "block-select-tunable": {
         "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
+        "q >= 256": lambda df: (df["query_count"] >= 256),
     },
     "fused-cache": {
         "q >= 1024": lambda df: df["query_count"] >= 1024,
     },
     "fused-regs-tunable": {
-        "q == 256": lambda df: df["query_count"] >= 1024,
-    },
-    "partial-bitonic": {
-        "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
-    },
-    "partial-bitonic-regs": {
-        "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
-    },
-    "partial-bitonic-warp": {
-        "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
-    },
-    "partial-bitonic-warp-static": {
-        "q == 64": lambda df: df["query_count"] == 64,
-        "q != 64": lambda df: df["query_count"] != 64,
+        "q >= 1024": lambda df: df["query_count"] >= 1024,
     },
 }
 
@@ -217,20 +224,112 @@ for algorithm_name, categories in categorization.items():
 extra_dims = [category_dim]
 
 group_columns = [param for param in parameters + extra_dims if param not in collapsed_dims]
-gross = mean_time.groupby(group_columns + optimized_values).agg(
+all_columns = [param for param in parameters + extra_dims + optimized_values if param not in collapsed_dims]
+
+gross = mean_time.groupby(all_columns).agg(
     geommean_slowdown=("slowdown", geom_mean),
     min_slowdown=("slowdown", "min"),
     max_slowdown=("slowdown", "max"),
+    under10percent=("slowdown", lambda x: below_threshold(x, 1.1)),
+    under20percent=("slowdown", lambda x: below_threshold(x, 1.2)),
+    _90percentile_slowdown=("slowdown", lambda x: np.percentile(x, 90)),
+    total_count=("slowdown", "count"),
 ).reset_index()
-gross.sort_values(group_columns + optimized_values, inplace=True)
+gross.sort_values(all_columns, inplace=True)
 
-with open("scripts/gross.csv", "w") as f:
-    gross.to_csv(f, index=False)
-
-for col in ["geommean_slowdown", "min_slowdown", "max_slowdown"]:
+for col in ["geommean_slowdown", "max_slowdown"]:
     optima_gross = gross.groupby(group_columns).apply(
         lambda df: df.nsmallest(1, col),
         include_groups=False
     ).reset_index(level=group_columns).reset_index(drop=True)
-    with open(f"scripts/optima-gross-{col}.csv", "w") as f:
+    with open(f"scripts/optima-fixed-{col}.csv", "w") as f:
+        optima_gross.to_csv(f, index=False)
+
+# Do heuristic block sizes and other params for saturated cases
+
+collapsed_dims = [dim for dim in ["point_count"] if dim in mean_time.columns]
+
+category_dim = "category"
+category_params = ["query_count", "k", "block_size", "items_per_thread"]
+categorization = {
+    "partial-bitonic": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == clip(k / 2, 64, 512)": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == (df["k"] // 2).clip(64, 512)),
+    },
+    "partial-bitonic-regs": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == 128": lambda df: (df["query_count"] >= 256) & (df["block_size"] == 128),
+    },
+    "partial-bitonic-warp": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == clip(k / 1, 128, 256)": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == (df["k"] // 1).clip(128, 256)),
+    },
+    "partial-bitonic-warp-static": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == clip(k / 1, 64, 256)": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == (df["k"] // 1).clip(64, 256)),
+    },
+    "bits": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == clip(k / 2, 256, 512) && ipt == 9": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == (df["k"] // 2).clip(256, 512)) &
+                                                        (df["items_per_thread"] == 9),
+    },
+    "bits-prefetch": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == clip(k / 2, 256, 512) && ipt == 8": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == (df["k"] // 2).clip(256, 512)) &
+                                                        (df["items_per_thread"] == 8),
+    },
+    "warp-select-tunable": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == 128 && ipt == 9": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == 128) &
+                                                        (df["items_per_thread"] == 9),
+    },
+    "block-select-tunable": {
+        "q == 64": lambda df: df["query_count"] == 64,
+        "q >= 256 && bs == 128 && ipt == 8": lambda df: (df["query_count"] >= 256) &
+                                                        (df["block_size"] == 128) &
+                                                        (df["items_per_thread"] == 8),
+    },
+    "fused-cache": {
+        "q >= 1024": lambda df: df["query_count"] >= 1024,
+    },
+    "fused-regs-tunable": {
+        "q >= 1024": lambda df: df["query_count"] >= 1024,
+    },
+}
+
+collapsed_dims += category_params
+mean_time[category_dim] = "other"
+
+for algorithm_name, categories in categorization.items():
+    for cat_name, cat_func in categories.items():
+        cat_mask = cat_func(mean_time) & (mean_time["algorithm"] == algorithm_name)
+        mean_time.loc[cat_mask, category_dim] = cat_name
+extra_dims = [category_dim]
+
+group_columns = [param for param in parameters + extra_dims if param not in collapsed_dims]
+all_columns = [param for param in parameters + extra_dims + optimized_values if param not in collapsed_dims]
+
+gross = mean_time.groupby(all_columns).agg(
+    geommean_slowdown=("slowdown", geom_mean),
+    min_slowdown=("slowdown", "min"),
+    max_slowdown=("slowdown", "max"),
+    under10percent=("slowdown", lambda x: below_threshold(x, 1.1)),
+    under20percent=("slowdown", lambda x: below_threshold(x, 1.2)),
+    _90percentile_slowdown=("slowdown", lambda x: np.percentile(x, 90)),
+    total_count=("slowdown", "count"),
+).reset_index()
+gross.sort_values(all_columns, inplace=True)
+
+for col in ["geommean_slowdown", "max_slowdown"]:
+    optima_gross = gross.groupby(group_columns).apply(
+        lambda df: df.nsmallest(1, col),
+        include_groups=False
+    ).reset_index(level=group_columns).reset_index(drop=True)
+    with open(f"scripts/optima-heuristic-{col}.csv", "w") as f:
         optima_gross.to_csv(f, index=False)
