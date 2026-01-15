@@ -107,7 +107,7 @@ scripts/plot-all.sh analyze-opt
 scripts/plot-all.sh analyze-dist
 ```
 
-The two files also produce files `scripts/mean-time[-dist]-fixed-max_slowdown.csv` and `scripts/optima[-dist]-fixed-max_slowdown.csv` with the tuning results used to choose one fixed set of parameters for each algorithm (filtered to knn configurations of sufficient query counts) that performs the best across all problem configurations. Each line also shows the slowdown of the run with fixed parameters compared to the best-performing parameters for the given problem configuration (a slowdown of 1.5 would represent a 50% runtime overhead compared to the best-performing run on the given problem configuration). The data in these files are reported in Section 5 in discussions comparing per-configuration tuning to choosing a single fixed configuration for each algorithm.
+The two files also produce files `scripts/mean-time[-dist]-fixed-max_slowdown.csv` and `scripts/optima[-dist]-fixed-max_slowdown.csv` with the tuning results used to choose one fixed set of parameters for each algorithm (filtered to knn configurations of sufficient query counts) that performs the best across all problem configurations. Each line also shows the slowdown of the run with fixed parameters compared to the best-performing parameters for the given problem configuration (a slowdown of 1.5 would represent a 50% runtime overhead compared to the best-performing run on the given problem configuration). The data in these files are reported in Section 5 in discussions comparing per-configuration tuning to choosing a single fixed parametrization for each algorithm.
 
 
 #### Running the benchmarks
