@@ -95,7 +95,7 @@ def find_optima(data: pd.DataFrame,
 
     ascending = [val == "mean" or val == "min" for _, val in crita]
 
-    optima = pd.DataFrame(columns=parameters + optimized_values)
+    optima = None
     # group by the parameters
     for params, parameterized in data.groupby(parameters):
         # aggregate the measurements for the given parameters
@@ -112,20 +112,17 @@ def find_optima(data: pd.DataFrame,
             aggregated[param] = params[iparam]
 
         # select only the columns of interest
-        aggregated = aggregated[parameters + optimized_values]
+        aggregated = aggregated[parameters + optimized_values + [crit for crit, _ in crita]]
 
         # append to the optima
-        optima = pd.concat([optima, aggregated])
+        optima = pd.concat([optima, aggregated]) if optima is not None else aggregated
+
+    if optima is None:
+        return pd.DataFrame(columns=parameters + optimized_values + [crit for crit, _ in crita])
 
     optima.sort_values(parameters, inplace=True)
 
     return optima
-
-def geom_mean(values: pd.Series) -> float:
-    positive = values[values > 0]
-    if positive.empty:
-        return float("nan")
-    return float(np.exp(np.log(positive).mean()))
 
 # parameters driving the optimization
 parameters = ["hostname", "GPU", "algorithm", "point_count", "query_count", "k", "dim"]
@@ -141,20 +138,16 @@ optima = find_optima(data, parameters, optimized_values, criteria)
 with open("scripts/optima-dist.csv", "w") as f:
     optima.to_csv(f, index=False)
 
-mean_time = data.groupby(parameters + optimized_values)["time"].mean().reset_index()
-optima_with_time = optima.merge(mean_time, on=parameters + optimized_values, how="left")
-missing_time = optima_with_time["time"].isna()
-if missing_time.any():
-    print("Warning: missing mean time for some optima rows", file=sys.stderr)
+mean_time = data.groupby(parameters + optimized_values, dropna=False)["time"].mean().reset_index()
 
-best_time = optima_with_time[parameters + ["time"]].rename(columns={"time": "best_time"})
+best_time = optima[parameters + ["time"]].rename(columns={"time": "best_time"})
 mean_time = mean_time.merge(best_time, on=parameters, how="left")
 mean_time = mean_time[mean_time["best_time"].notna()].copy()
 mean_time["slowdown"] = mean_time["time"] / mean_time["best_time"]
 mean_time.drop(columns=["best_time"], inplace=True)
 mean_time.sort_values(parameters + ["slowdown"], inplace=True)
 
-with open("scripts/dist-mean-time-with-slowdown.csv", "w") as f:
+with open("scripts/mean-time-dist-with-slowdown.csv", "w") as f:
     mean_time.to_csv(f, index=False)
 
 collapsed_dims = [dim for dim in ["point_count"] if dim in mean_time.columns]
@@ -162,7 +155,6 @@ collapsed_dims = [dim for dim in ["point_count"] if dim in mean_time.columns]
 category_dim = "category"
 category_params = ["query_count", "k"]
 categorization = {
-
 }
 
 collapsed_dims += category_params
@@ -175,20 +167,38 @@ for algorithm_name, categories in categorization.items():
 extra_dims = [category_dim]
 
 group_columns = [param for param in parameters + extra_dims if param not in collapsed_dims]
-gross = mean_time.groupby(group_columns + optimized_values).agg(
-    geommean_slowdown=("slowdown", geom_mean),
+all_columns = [param for param in parameters + extra_dims + optimized_values if param not in collapsed_dims]
+
+def all_count(values: pd.Series) -> int:
+    return values.size
+
+gross = mean_time.groupby(all_columns, dropna=False).agg(
     min_slowdown=("slowdown", "min"),
     max_slowdown=("slowdown", "max"),
+    total_count=("slowdown", all_count),
 ).reset_index()
-gross.sort_values(group_columns + optimized_values, inplace=True)
+gross.sort_values(all_columns, inplace=True)
 
-with open("scripts/gross-dist.csv", "w") as f:
-    gross.to_csv(f, index=False)
+for col in ["max_slowdown"]:
+    optima_gross = gross.groupby(group_columns, dropna=False)
 
-for col in ["geommean_slowdown", "min_slowdown", "max_slowdown"]:
-    optima_gross = gross.groupby(group_columns).apply(
+    # eliminate those that do not have all_count equal to the maximum in the group to avoid false optima
+    max_counts = optima_gross["total_count"].transform("max")
+    optima_gross = gross[max_counts == gross["total_count"]].groupby(group_columns, dropna=False)
+
+    optima_gross = optima_gross.apply(
         lambda df: df.nsmallest(1, col),
         include_groups=False
     ).reset_index(level=group_columns).reset_index(drop=True)
-    with open(f"scripts/optima-dist-gross-{col}.csv", "w") as f:
+    with open(f"scripts/optima-dist-fixed-{col}.csv", "w") as f:
         optima_gross.to_csv(f, index=False)
+
+    # filter data to only these optima
+    merged = mean_time.merge(
+        optima_gross[group_columns + optimized_values],
+        on=group_columns + optimized_values,
+        how="inner"
+    )
+    merged.sort_values(all_columns, inplace=True)
+    with open(f"scripts/mean-time-dist-fixed-{col}.csv", "w") as f:
+        merged.to_csv(f, index=False)

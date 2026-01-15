@@ -120,11 +120,18 @@ def plotInner(file : str, hostname : str, jobid : str, data : pd.DataFrame, filt
     os.makedirs("plots", exist_ok=True)
 
     if filtered:
+        with open(f"plots/distances-{hostname}-{jobid}.csv", "w") as f:
+            data.to_csv(f, index=False)
+
         fig.savefig(f"plots/distances-{hostname}-{jobid}.pdf")
     else:
+        with open(f"plots/extra-distances-{hostname}-{jobid}.csv", "w") as f:
+            data.to_csv(f, index=False)
+
         fig.savefig(f"plots/extra-distances-{hostname}-{jobid}.pdf")
 
     plt.close(fig)
+
 
 def plot(file : str, hostname : str, jobid : str):
     data = pd.read_csv(file, sep=',')
@@ -135,6 +142,7 @@ def plot(file : str, hostname : str, jobid : str):
 
     data = data.loc[(data["algorithm"] != "magma-dist") & (data["algorithm"] != "tiled-dist")]
     plotInner(file, hostname, jobid, data, True)
+
 
 if __name__ == "__main__":
     for file in files:

@@ -1,0 +1,81 @@
+hostname,GPU,algorithm,category,block_size,items_per_thread,items_per_thread2,items_per_thread3,deg,min_slowdown,max_slowdown,total_count
+ampere01,L40,bits,q == 64,512,13,1,1,1,1.0,1.0266995269969308,11
+ampere01,L40,bits,q >= 256,512,5,1,1,1,1.0,1.0292869766805457,66
+ampere01,L40,bits-prefetch,q == 64,512,9,1,1,1,1.0,1.0288718916706248,11
+ampere01,L40,bits-prefetch,q >= 256,512,5,1,1,1,1.0,1.0171768651461937,66
+ampere01,L40,block-select-tunable,q == 64,64,4,1,1,1,1.2911798494032407,1.9452799367313607,7
+ampere01,L40,block-select-tunable,q >= 256,64,4,1,1,1,1.0231530106511446,1.8826670025110612,42
+ampere01,L40,fused-cache,other,1,4,8,2,1,1.0,1.0639538706397027,36
+ampere01,L40,fused-cache,q >= 1024,2,4,4,4,1,1.0230755642723315,1.4561925407899385,72
+ampere01,L40,fused-regs-tunable,other,4,2,4,1,1,1.0,1.0,36
+ampere01,L40,fused-regs-tunable,q >= 1024,4,4,4,1,1,1.0,1.4660482906098784,72
+ampere01,L40,partial-bitonic,q == 64,512,1,1,1,1,1.0,1.0975133186168327,7
+ampere01,L40,partial-bitonic,q >= 256,128,1,1,1,1,1.0,1.2920728751169035,21
+ampere01,L40,partial-bitonic-regs,q == 64,512,1,1,1,1,1.0,1.1597135601207829,7
+ampere01,L40,partial-bitonic-regs,q >= 256,128,1,1,1,1,1.0,1.3037270171185036,21
+ampere01,L40,partial-bitonic-warp,q == 64,512,1,1,1,1,1.0,1.0347247503574277,7
+ampere01,L40,partial-bitonic-warp,q >= 256,128,1,1,1,1,1.0,1.4415951273689005,21
+ampere01,L40,partial-bitonic-warp-static,q == 64,512,1,1,1,1,1.0,1.0441956551078433,7
+ampere01,L40,partial-bitonic-warp-static,q >= 256,128,1,1,1,1,1.0,1.4244119930454808,21
+ampere01,L40,warp-select-tunable,q == 64,64,7,1,1,1,1.0,1.021621239860241,7
+ampere01,L40,warp-select-tunable,q >= 256,128,9,1,1,1,1.0,1.436915000527205,42
+ampere02,A100,bits,q == 64,512,16,1,1,1,1.0,1.041995990855262,11
+ampere02,A100,bits,q >= 256,256,14,1,1,1,1.006036294190467,1.2427130086768028,66
+ampere02,A100,bits-prefetch,q == 64,512,13,1,1,1,1.0,1.057400314214874,11
+ampere02,A100,bits-prefetch,q >= 256,512,7,1,1,1,1.0,1.2711318708000876,66
+ampere02,A100,block-select-tunable,q == 64,64,8,1,1,1,1.0268769786251606,1.9217646349259583,7
+ampere02,A100,block-select-tunable,q >= 256,64,3,1,1,1,1.0803429395546322,1.9248186235121085,42
+ampere02,A100,fused-cache,other,1,4,4,2,2,1.0174945455775832,1.1375894705482792,36
+ampere02,A100,fused-cache,q >= 1024,2,4,4,1,4,1.0066612907364378,1.415668823547081,72
+ampere02,A100,fused-regs-tunable,other,4,2,4,1,1,1.0,1.0,36
+ampere02,A100,fused-regs-tunable,q >= 1024,4,2,4,1,1,1.0,1.26004194607158,72
+ampere02,A100,partial-bitonic,q == 64,512,1,1,1,1,1.0,1.0995785295420353,7
+ampere02,A100,partial-bitonic,q >= 256,128,1,1,1,1,1.0,1.3379811323115116,21
+ampere02,A100,partial-bitonic-regs,q == 64,512,1,1,1,1,1.0,1.130450393439758,7
+ampere02,A100,partial-bitonic-regs,q >= 256,128,1,1,1,1,1.0,1.1760285843599403,21
+ampere02,A100,partial-bitonic-warp,q == 64,512,1,1,1,1,1.0,1.0491236461340974,7
+ampere02,A100,partial-bitonic-warp,q >= 256,128,1,1,1,1,1.0,1.5391682348810887,21
+ampere02,A100,partial-bitonic-warp-static,q == 64,512,1,1,1,1,1.0,1.0619370235958636,7
+ampere02,A100,partial-bitonic-warp-static,q >= 256,128,1,1,1,1,1.0,1.5799002336911447,21
+ampere02,A100,warp-select-tunable,q == 64,64,7,1,1,1,1.0023876596186003,1.0223995145002303,7
+ampere02,A100,warp-select-tunable,q >= 256,128,9,1,1,1,1.0,1.7533088514935877,42
+hopper01,H100,bits,q == 64,512,16,1,1,1,1.0,1.0253283933716117,11
+hopper01,H100,bits,q >= 256,256,12,1,1,1,1.0,1.3584151704545044,66
+hopper01,H100,bits-prefetch,q == 64,512,15,1,1,1,1.0,1.0343832791006256,11
+hopper01,H100,bits-prefetch,q >= 256,256,13,1,1,1,1.0,1.316021484180798,66
+hopper01,H100,block-select-tunable,q == 64,128,7,1,1,1,1.0,1.013155870042219,6
+hopper01,H100,block-select-tunable,q >= 256,128,8,1,1,1,1.0,1.55939604964277,36
+hopper01,H100,fused-cache,other,1,4,8,2,2,1.0,1.1716499494171517,36
+hopper01,H100,fused-cache,q >= 1024,1,8,4,2,1,1.0,1.2710071010243318,72
+hopper01,H100,fused-regs-tunable,other,4,2,4,1,1,1.0,1.0,36
+hopper01,H100,fused-regs-tunable,q >= 1024,4,2,4,1,1,1.0,1.354281343460356,72
+hopper01,H100,partial-bitonic,q == 64,512,1,1,1,1,1.0,1.0617769203630807,7
+hopper01,H100,partial-bitonic,q >= 256,128,1,1,1,1,1.0,1.3127980768769043,21
+hopper01,H100,partial-bitonic-regs,q == 64,512,1,1,1,1,1.0,1.0966426197109294,7
+hopper01,H100,partial-bitonic-regs,q >= 256,128,1,1,1,1,1.0,1.2149168915823076,21
+hopper01,H100,partial-bitonic-warp,q == 64,512,1,1,1,1,1.0,1.053173396434921,7
+hopper01,H100,partial-bitonic-warp,q >= 256,128,1,1,1,1,1.0,1.2924807463210304,21
+hopper01,H100,partial-bitonic-warp-static,q == 64,512,1,1,1,1,1.0,1.105481615825504,7
+hopper01,H100,partial-bitonic-warp-static,q >= 256,128,1,1,1,1,1.0,1.382660359177047,21
+hopper01,H100,warp-select-tunable,q == 64,128,9,1,1,1,1.0,1.020750006833691,7
+hopper01,H100,warp-select-tunable,q >= 256,128,9,1,1,1,1.0,1.8089905095722916,42
+volta05,V100,bits,q == 64,512,15,1,1,1,1.0,1.0430453803725666,11
+volta05,V100,bits,q >= 256,512,7,1,1,1,1.0,1.257243445781592,66
+volta05,V100,bits-prefetch,q == 64,512,9,1,1,1,1.0,1.0223172005827963,11
+volta05,V100,bits-prefetch,q >= 256,512,5,1,1,1,1.0,1.1643136178589242,66
+volta05,V100,block-select-tunable,q == 64,64,4,1,1,1,1.362441360947625,1.9214971186342023,7
+volta05,V100,block-select-tunable,q >= 256,64,4,1,1,1,1.038225817045275,1.7563600209066232,42
+volta05,V100,fused-cache,other,1,4,8,1,2,1.0,1.072052584516396,36
+volta05,V100,fused-cache,q >= 1024,1,8,4,1,2,1.0,1.3433672604044125,72
+volta05,V100,fused-regs-tunable,other,4,2,4,1,1,1.0,1.0,36
+volta05,V100,fused-regs-tunable,q >= 1024,4,4,4,1,1,1.0,1.6877124278333195,72
+volta05,V100,partial-bitonic,q == 64,512,1,1,1,1,1.0,1.1613293834596259,7
+volta05,V100,partial-bitonic,q >= 256,128,1,1,1,1,1.0,1.4551638350424048,21
+volta05,V100,partial-bitonic-regs,q == 64,512,1,1,1,1,1.0,1.1302859179376892,7
+volta05,V100,partial-bitonic-regs,q >= 256,128,1,1,1,1,1.0,1.4944860124084365,21
+volta05,V100,partial-bitonic-warp,q == 64,512,1,1,1,1,1.0,1.053463184555947,7
+volta05,V100,partial-bitonic-warp,q >= 256,128,1,1,1,1,1.0,1.9621316976440641,21
+volta05,V100,partial-bitonic-warp-static,q == 64,512,1,1,1,1,1.0,1.0630033765454712,7
+volta05,V100,partial-bitonic-warp-static,q >= 256,128,1,1,1,1,1.0,1.8358392821164788,21
+volta05,V100,warp-select-tunable,q == 64,64,8,1,1,1,1.0040363970354274,1.040372716620725,7
+volta05,V100,warp-select-tunable,q >= 256,128,9,1,1,1,1.0,1.5754733763392217,42

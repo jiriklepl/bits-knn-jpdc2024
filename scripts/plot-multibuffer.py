@@ -163,6 +163,10 @@ def plot(files, hostname):
     fig.savefig(f"plots/multibuffer-{hostname}.pdf", bbox_inches='tight')
     plt.close(fig)
 
+    with open(f"plots/multibuffer-{hostname}.csv", "w") as f:
+        data.to_csv(f, index=False)
+
+
 hosted_files = {}
 for file in files:
     hostname, jobid = file.split(".")[-2].split("-")[-2:]

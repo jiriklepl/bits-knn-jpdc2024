@@ -121,6 +121,10 @@ def plot(file, hostname, jobid):
     fig.savefig(file.replace("data", "plots").replace("csv", "pdf"))
     plt.close(fig)
 
+    with open(file.replace("data/", "plots/"), "w") as f:
+        data.to_csv(f, index=False)
+
+
 for file in files:
     hostname, jobid = file.split(".")[-2].split("-")[-2:]
     try:

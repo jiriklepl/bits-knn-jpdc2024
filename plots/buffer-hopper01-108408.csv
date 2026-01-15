@@ -1,0 +1,561 @@
+algorithm,generator,preprocessor,iteration,point_count,query_count,dim,block_size,k,items_per_thread,deg,phase,time
+sort-in-registers,uniform,descending,10,16777216,64,1,512,32,"1,1,1",1,selection,0.125649814
+sort-in-registers,uniform,descending,11,16777216,64,1,512,32,"1,1,1",1,selection,0.125665679
+sort-in-registers,uniform,descending,12,16777216,64,1,512,32,"1,1,1",1,selection,0.125658647
+sort-in-registers,uniform,descending,13,16777216,64,1,512,32,"1,1,1",1,selection,0.125664577
+sort-in-registers,uniform,descending,14,16777216,64,1,512,32,"1,1,1",1,selection,0.125677266
+sort-in-registers,uniform,descending,15,16777216,64,1,512,32,"1,1,1",1,selection,0.125668753
+sort-in-registers,uniform,descending,16,16777216,64,1,512,32,"1,1,1",1,selection,0.125643706
+sort-in-registers,uniform,descending,17,16777216,64,1,512,32,"1,1,1",1,selection,0.125651737
+sort-in-registers,uniform,descending,18,16777216,64,1,512,32,"1,1,1",1,selection,0.125649314
+sort-in-registers,uniform,descending,19,16777216,64,1,512,32,"1,1,1",1,selection,0.125644176
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,32,"1,1,1",1,selection,0.142661095
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,32,"1,1,1",1,selection,0.14267043
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,32,"1,1,1",1,selection,0.142643138
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,32,"1,1,1",1,selection,0.142651961
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,32,"1,1,1",1,selection,0.142637589
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,32,"1,1,1",1,selection,0.142678422
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,32,"1,1,1",1,selection,0.142688948
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,32,"1,1,1",1,selection,0.142697481
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,32,"1,1,1",1,selection,0.142693154
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,32,"1,1,1",1,selection,0.142685573
+sort-in-registers,uniform,descending,10,16777216,64,1,512,64,"1,1,1",1,selection,0.125669084
+sort-in-registers,uniform,descending,11,16777216,64,1,512,64,"1,1,1",1,selection,0.125660831
+sort-in-registers,uniform,descending,12,16777216,64,1,512,64,"1,1,1",1,selection,0.125657997
+sort-in-registers,uniform,descending,13,16777216,64,1,512,64,"1,1,1",1,selection,0.125654141
+sort-in-registers,uniform,descending,14,16777216,64,1,512,64,"1,1,1",1,selection,0.125672329
+sort-in-registers,uniform,descending,15,16777216,64,1,512,64,"1,1,1",1,selection,0.125645628
+sort-in-registers,uniform,descending,16,16777216,64,1,512,64,"1,1,1",1,selection,0.125647631
+sort-in-registers,uniform,descending,17,16777216,64,1,512,64,"1,1,1",1,selection,0.125663285
+sort-in-registers,uniform,descending,18,16777216,64,1,512,64,"1,1,1",1,selection,0.125659339
+sort-in-registers,uniform,descending,19,16777216,64,1,512,64,"1,1,1",1,selection,0.125677407
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,64,"1,1,1",1,selection,0.14265124
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,64,"1,1,1",1,selection,0.142676268
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,64,"1,1,1",1,selection,0.142682648
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,64,"1,1,1",1,selection,0.142691001
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,64,"1,1,1",1,selection,0.14271006
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,64,"1,1,1",1,selection,0.142727326
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,64,"1,1,1",1,selection,0.14272346
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,64,"1,1,1",1,selection,0.142753376
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,64,"1,1,1",1,selection,0.142702749
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,64,"1,1,1",1,selection,0.142709209
+sort-in-registers,uniform,descending,10,16777216,64,1,512,128,"1,1,1",1,selection,0.125700322
+sort-in-registers,uniform,descending,11,16777216,64,1,512,128,"1,1,1",1,selection,0.125673
+sort-in-registers,uniform,descending,12,16777216,64,1,512,128,"1,1,1",1,selection,0.125674783
+sort-in-registers,uniform,descending,13,16777216,64,1,512,128,"1,1,1",1,selection,0.12565992
+sort-in-registers,uniform,descending,14,16777216,64,1,512,128,"1,1,1",1,selection,0.125678608
+sort-in-registers,uniform,descending,15,16777216,64,1,512,128,"1,1,1",1,selection,0.125676515
+sort-in-registers,uniform,descending,16,16777216,64,1,512,128,"1,1,1",1,selection,0.125683195
+sort-in-registers,uniform,descending,17,16777216,64,1,512,128,"1,1,1",1,selection,0.125678227
+sort-in-registers,uniform,descending,18,16777216,64,1,512,128,"1,1,1",1,selection,0.125663385
+sort-in-registers,uniform,descending,19,16777216,64,1,512,128,"1,1,1",1,selection,0.125657276
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,128,"1,1,1",1,selection,0.142679643
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,128,"1,1,1",1,selection,0.142672783
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,128,"1,1,1",1,selection,0.142653764
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,128,"1,1,1",1,selection,0.142648777
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,128,"1,1,1",1,selection,0.142665192
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,128,"1,1,1",1,selection,0.142657259
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,128,"1,1,1",1,selection,0.142661346
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,128,"1,1,1",1,selection,0.142669648
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,128,"1,1,1",1,selection,0.142675858
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,128,"1,1,1",1,selection,0.142652672
+sort-in-registers,uniform,descending,10,16777216,64,1,512,256,"1,1,1",1,selection,0.125672709
+sort-in-registers,uniform,descending,11,16777216,64,1,512,256,"1,1,1",1,selection,0.125654451
+sort-in-registers,uniform,descending,12,16777216,64,1,512,256,"1,1,1",1,selection,0.125665719
+sort-in-registers,uniform,descending,13,16777216,64,1,512,256,"1,1,1",1,selection,0.125665929
+sort-in-registers,uniform,descending,14,16777216,64,1,512,256,"1,1,1",1,selection,0.125664827
+sort-in-registers,uniform,descending,15,16777216,64,1,512,256,"1,1,1",1,selection,0.125655744
+sort-in-registers,uniform,descending,16,16777216,64,1,512,256,"1,1,1",1,selection,0.125652097
+sort-in-registers,uniform,descending,17,16777216,64,1,512,256,"1,1,1",1,selection,0.125656165
+sort-in-registers,uniform,descending,18,16777216,64,1,512,256,"1,1,1",1,selection,0.125658829
+sort-in-registers,uniform,descending,19,16777216,64,1,512,256,"1,1,1",1,selection,0.125663595
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,256,"1,1,1",1,selection,0.142652442
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,256,"1,1,1",1,selection,0.142649287
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,256,"1,1,1",1,selection,0.142642347
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,256,"1,1,1",1,selection,0.142643879
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,256,"1,1,1",1,selection,0.142650078
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,256,"1,1,1",1,selection,0.142636578
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,256,"1,1,1",1,selection,0.142640003
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,256,"1,1,1",1,selection,0.142656649
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,256,"1,1,1",1,selection,0.14267113
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,256,"1,1,1",1,selection,0.142684111
+sort-in-registers,uniform,descending,10,16777216,64,1,256,512,"1,1,1",1,selection,0.114991641
+sort-in-registers,uniform,descending,11,16777216,64,1,256,512,"1,1,1",1,selection,0.115013684
+sort-in-registers,uniform,descending,12,16777216,64,1,256,512,"1,1,1",1,selection,0.11499812
+sort-in-registers,uniform,descending,13,16777216,64,1,256,512,"1,1,1",1,selection,0.114986312
+sort-in-registers,uniform,descending,14,16777216,64,1,256,512,"1,1,1",1,selection,0.115010348
+sort-in-registers,uniform,descending,15,16777216,64,1,256,512,"1,1,1",1,selection,0.114998851
+sort-in-registers,uniform,descending,16,16777216,64,1,256,512,"1,1,1",1,selection,0.114999082
+sort-in-registers,uniform,descending,17,16777216,64,1,256,512,"1,1,1",1,selection,0.115009778
+sort-in-registers,uniform,descending,18,16777216,64,1,256,512,"1,1,1",1,selection,0.114963347
+sort-in-registers,uniform,descending,19,16777216,64,1,256,512,"1,1,1",1,selection,0.114967404
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,512,"1,1,1",1,selection,0.142649047
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,512,"1,1,1",1,selection,0.142635707
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,512,"1,1,1",1,selection,0.142645952
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,512,"1,1,1",1,selection,0.142662778
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,512,"1,1,1",1,selection,0.142627314
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,512,"1,1,1",1,selection,0.142639473
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,512,"1,1,1",1,selection,0.142668226
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,512,"1,1,1",1,selection,0.142667785
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,512,"1,1,1",1,selection,0.142680475
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,512,"1,1,1",1,selection,0.142697892
+sort-in-registers,uniform,descending,10,16777216,64,1,512,1024,"1,1,1",1,selection,0.098892719
+sort-in-registers,uniform,descending,11,16777216,64,1,512,1024,"1,1,1",1,selection,0.098877826
+sort-in-registers,uniform,descending,12,16777216,64,1,512,1024,"1,1,1",1,selection,0.0988865
+sort-in-registers,uniform,descending,13,16777216,64,1,512,1024,"1,1,1",1,selection,0.098895083
+sort-in-registers,uniform,descending,14,16777216,64,1,512,1024,"1,1,1",1,selection,0.098907241
+sort-in-registers,uniform,descending,15,16777216,64,1,512,1024,"1,1,1",1,selection,0.09889318
+sort-in-registers,uniform,descending,16,16777216,64,1,512,1024,"1,1,1",1,selection,0.098904837
+sort-in-registers,uniform,descending,17,16777216,64,1,512,1024,"1,1,1",1,selection,0.098892298
+sort-in-registers,uniform,descending,18,16777216,64,1,512,1024,"1,1,1",1,selection,0.098898127
+sort-in-registers,uniform,descending,19,16777216,64,1,512,1024,"1,1,1",1,selection,0.09889973
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,1024,"1,1,1",1,selection,0.120777042
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,1024,"1,1,1",1,selection,0.120789021
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,1024,"1,1,1",1,selection,0.120783021
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,1024,"1,1,1",1,selection,0.120777624
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,1024,"1,1,1",1,selection,0.120811845
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,1024,"1,1,1",1,selection,0.12076905
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,1024,"1,1,1",1,selection,0.12082152
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,1024,"1,1,1",1,selection,0.12082168
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,1024,"1,1,1",1,selection,0.120818746
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,1024,"1,1,1",1,selection,0.120803052
+sort-in-registers,uniform,descending,10,16777216,64,1,512,2048,"1,1,1",1,selection,0.097243046
+sort-in-registers,uniform,descending,11,16777216,64,1,512,2048,"1,1,1",1,selection,0.097229616
+sort-in-registers,uniform,descending,12,16777216,64,1,512,2048,"1,1,1",1,selection,0.097256017
+sort-in-registers,uniform,descending,13,16777216,64,1,512,2048,"1,1,1",1,selection,0.097251269
+sort-in-registers,uniform,descending,14,16777216,64,1,512,2048,"1,1,1",1,selection,0.09724808400000001
+sort-in-registers,uniform,descending,15,16777216,64,1,512,2048,"1,1,1",1,selection,0.097255987
+sort-in-registers,uniform,descending,16,16777216,64,1,512,2048,"1,1,1",1,selection,0.097249576
+sort-in-registers,uniform,descending,17,16777216,64,1,512,2048,"1,1,1",1,selection,0.097253433
+sort-in-registers,uniform,descending,18,16777216,64,1,512,2048,"1,1,1",1,selection,0.097250758
+sort-in-registers,uniform,descending,19,16777216,64,1,512,2048,"1,1,1",1,selection,0.097237177
+bits (sort-in-registers + buffer),uniform,descending,10,16777216,64,1,512,2048,"1,1,1",1,selection,0.121910279
+bits (sort-in-registers + buffer),uniform,descending,11,16777216,64,1,512,2048,"1,1,1",1,selection,0.121890569
+bits (sort-in-registers + buffer),uniform,descending,12,16777216,64,1,512,2048,"1,1,1",1,selection,0.121906422
+bits (sort-in-registers + buffer),uniform,descending,13,16777216,64,1,512,2048,"1,1,1",1,selection,0.121876688
+bits (sort-in-registers + buffer),uniform,descending,14,16777216,64,1,512,2048,"1,1,1",1,selection,0.121925933
+bits (sort-in-registers + buffer),uniform,descending,15,16777216,64,1,512,2048,"1,1,1",1,selection,0.121895626
+bits (sort-in-registers + buffer),uniform,descending,16,16777216,64,1,512,2048,"1,1,1",1,selection,0.121879411
+bits (sort-in-registers + buffer),uniform,descending,17,16777216,64,1,512,2048,"1,1,1",1,selection,0.121888485
+bits (sort-in-registers + buffer),uniform,descending,18,16777216,64,1,512,2048,"1,1,1",1,selection,0.121902837
+bits (sort-in-registers + buffer),uniform,descending,19,16777216,64,1,512,2048,"1,1,1",1,selection,0.12191125
+sort-in-registers,uniform,descending,10,4194304,256,1,256,32,"1,1,1",1,selection,0.05877911
+sort-in-registers,uniform,descending,11,4194304,256,1,256,32,"1,1,1",1,selection,0.058750125
+sort-in-registers,uniform,descending,12,4194304,256,1,256,32,"1,1,1",1,selection,0.058776546
+sort-in-registers,uniform,descending,13,4194304,256,1,256,32,"1,1,1",1,selection,0.058781253
+sort-in-registers,uniform,descending,14,4194304,256,1,256,32,"1,1,1",1,selection,0.058755795
+sort-in-registers,uniform,descending,15,4194304,256,1,256,32,"1,1,1",1,selection,0.058754492
+sort-in-registers,uniform,descending,16,4194304,256,1,256,32,"1,1,1",1,selection,0.058774713
+sort-in-registers,uniform,descending,17,4194304,256,1,256,32,"1,1,1",1,selection,0.058746079
+sort-in-registers,uniform,descending,18,4194304,256,1,256,32,"1,1,1",1,selection,0.058781974
+sort-in-registers,uniform,descending,19,4194304,256,1,256,32,"1,1,1",1,selection,0.058758999
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,256,32,"1,1,1",1,selection,0.064308362
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,256,32,"1,1,1",1,selection,0.064329955
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,256,32,"1,1,1",1,selection,0.06432686
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,256,32,"1,1,1",1,selection,0.064324907
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,256,32,"1,1,1",1,selection,0.064322524
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,256,32,"1,1,1",1,selection,0.06433303
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,256,32,"1,1,1",1,selection,0.064313129
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,256,32,"1,1,1",1,selection,0.06433347
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,256,32,"1,1,1",1,selection,0.064316514
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,256,32,"1,1,1",1,selection,0.064330465
+sort-in-registers,uniform,descending,10,4194304,256,1,256,64,"1,1,1",1,selection,0.058756846
+sort-in-registers,uniform,descending,11,4194304,256,1,256,64,"1,1,1",1,selection,0.058740932
+sort-in-registers,uniform,descending,12,4194304,256,1,256,64,"1,1,1",1,selection,0.058746179
+sort-in-registers,uniform,descending,13,4194304,256,1,256,64,"1,1,1",1,selection,0.058805229
+sort-in-registers,uniform,descending,14,4194304,256,1,256,64,"1,1,1",1,selection,0.058751097
+sort-in-registers,uniform,descending,15,4194304,256,1,256,64,"1,1,1",1,selection,0.058747932
+sort-in-registers,uniform,descending,16,4194304,256,1,256,64,"1,1,1",1,selection,0.058755153
+sort-in-registers,uniform,descending,17,4194304,256,1,256,64,"1,1,1",1,selection,0.058776937
+sort-in-registers,uniform,descending,18,4194304,256,1,256,64,"1,1,1",1,selection,0.058738819
+sort-in-registers,uniform,descending,19,4194304,256,1,256,64,"1,1,1",1,selection,0.058768474
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,256,64,"1,1,1",1,selection,0.064336334
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,256,64,"1,1,1",1,selection,0.064332959
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,256,64,"1,1,1",1,selection,0.064327411
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,256,64,"1,1,1",1,selection,0.064346721
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,256,64,"1,1,1",1,selection,0.064340791
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,256,64,"1,1,1",1,selection,0.064351778
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,256,64,"1,1,1",1,selection,0.064316644
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,256,64,"1,1,1",1,selection,0.064319969
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,256,64,"1,1,1",1,selection,0.064337476
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,256,64,"1,1,1",1,selection,0.064321131
+sort-in-registers,uniform,descending,10,4194304,256,1,256,128,"1,1,1",1,selection,0.058938383
+sort-in-registers,uniform,descending,11,4194304,256,1,256,128,"1,1,1",1,selection,0.058963571
+sort-in-registers,uniform,descending,12,4194304,256,1,256,128,"1,1,1",1,selection,0.058964473
+sort-in-registers,uniform,descending,13,4194304,256,1,256,128,"1,1,1",1,selection,0.058971203
+sort-in-registers,uniform,descending,14,4194304,256,1,256,128,"1,1,1",1,selection,0.058977171
+sort-in-registers,uniform,descending,15,4194304,256,1,256,128,"1,1,1",1,selection,0.058972384
+sort-in-registers,uniform,descending,16,4194304,256,1,256,128,"1,1,1",1,selection,0.058961848
+sort-in-registers,uniform,descending,17,4194304,256,1,256,128,"1,1,1",1,selection,0.058957693
+sort-in-registers,uniform,descending,18,4194304,256,1,256,128,"1,1,1",1,selection,0.058971943
+sort-in-registers,uniform,descending,19,4194304,256,1,256,128,"1,1,1",1,selection,0.058991333
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,256,128,"1,1,1",1,selection,0.064343566
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,256,128,"1,1,1",1,selection,0.064324196
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,256,128,"1,1,1",1,selection,0.064325868
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,256,128,"1,1,1",1,selection,0.06432667
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,256,128,"1,1,1",1,selection,0.064343536
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,256,128,"1,1,1",1,selection,0.064325829
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,256,128,"1,1,1",1,selection,0.064324517
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,256,128,"1,1,1",1,selection,0.064318257
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,256,128,"1,1,1",1,selection,0.064325458
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,256,128,"1,1,1",1,selection,0.064345037
+sort-in-registers,uniform,descending,10,4194304,256,1,128,256,"1,1,1",1,selection,0.051673287
+sort-in-registers,uniform,descending,11,4194304,256,1,128,256,"1,1,1",1,selection,0.051682871
+sort-in-registers,uniform,descending,12,4194304,256,1,128,256,"1,1,1",1,selection,0.051683612
+sort-in-registers,uniform,descending,13,4194304,256,1,128,256,"1,1,1",1,selection,0.051650041
+sort-in-registers,uniform,descending,14,4194304,256,1,128,256,"1,1,1",1,selection,0.05166935
+sort-in-registers,uniform,descending,15,4194304,256,1,128,256,"1,1,1",1,selection,0.051670602
+sort-in-registers,uniform,descending,16,4194304,256,1,128,256,"1,1,1",1,selection,0.051659005
+sort-in-registers,uniform,descending,17,4194304,256,1,128,256,"1,1,1",1,selection,0.051664223
+sort-in-registers,uniform,descending,18,4194304,256,1,128,256,"1,1,1",1,selection,0.051664513
+sort-in-registers,uniform,descending,19,4194304,256,1,128,256,"1,1,1",1,selection,0.05164247
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,256,256,"1,1,1",1,selection,0.064330696
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,256,256,"1,1,1",1,selection,0.064338898
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,256,256,"1,1,1",1,selection,0.06432705
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,256,256,"1,1,1",1,selection,0.064311717
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,256,256,"1,1,1",1,selection,0.064338367
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,256,256,"1,1,1",1,selection,0.064334421
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,256,256,"1,1,1",1,selection,0.064319619
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,256,256,"1,1,1",1,selection,0.064324737
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,256,256,"1,1,1",1,selection,0.064332418
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,256,256,"1,1,1",1,selection,0.064314651
+sort-in-registers,uniform,descending,10,4194304,256,1,128,512,"1,1,1",1,selection,0.052713161
+sort-in-registers,uniform,descending,11,4194304,256,1,128,512,"1,1,1",1,selection,0.052723506
+sort-in-registers,uniform,descending,12,4194304,256,1,128,512,"1,1,1",1,selection,0.052723377
+sort-in-registers,uniform,descending,13,4194304,256,1,128,512,"1,1,1",1,selection,0.052718098
+sort-in-registers,uniform,descending,14,4194304,256,1,128,512,"1,1,1",1,selection,0.052712799
+sort-in-registers,uniform,descending,15,4194304,256,1,128,512,"1,1,1",1,selection,0.052714513
+sort-in-registers,uniform,descending,16,4194304,256,1,128,512,"1,1,1",1,selection,0.052720251
+sort-in-registers,uniform,descending,17,4194304,256,1,128,512,"1,1,1",1,selection,0.052712961
+sort-in-registers,uniform,descending,18,4194304,256,1,128,512,"1,1,1",1,selection,0.052722344
+sort-in-registers,uniform,descending,19,4194304,256,1,128,512,"1,1,1",1,selection,0.05272557
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,256,512,"1,1,1",1,selection,0.062828428
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,256,512,"1,1,1",1,selection,0.062824362
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,256,512,"1,1,1",1,selection,0.062804
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,256,512,"1,1,1",1,selection,0.062783659
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,256,512,"1,1,1",1,selection,0.062823731
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,256,512,"1,1,1",1,selection,0.062797861
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,256,512,"1,1,1",1,selection,0.062810691
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,256,512,"1,1,1",1,selection,0.062812344
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,256,512,"1,1,1",1,selection,0.062805623
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,256,512,"1,1,1",1,selection,0.062816339
+sort-in-registers,uniform,descending,10,4194304,256,1,256,1024,"1,1,1",1,selection,0.05308025
+sort-in-registers,uniform,descending,11,4194304,256,1,256,1024,"1,1,1",1,selection,0.053036303
+sort-in-registers,uniform,descending,12,4194304,256,1,256,1024,"1,1,1",1,selection,0.053049473
+sort-in-registers,uniform,descending,13,4194304,256,1,256,1024,"1,1,1",1,selection,0.053039187
+sort-in-registers,uniform,descending,14,4194304,256,1,256,1024,"1,1,1",1,selection,0.05306083
+sort-in-registers,uniform,descending,15,4194304,256,1,256,1024,"1,1,1",1,selection,0.053056753
+sort-in-registers,uniform,descending,16,4194304,256,1,256,1024,"1,1,1",1,selection,0.053052387
+sort-in-registers,uniform,descending,17,4194304,256,1,256,1024,"1,1,1",1,selection,0.053057775
+sort-in-registers,uniform,descending,18,4194304,256,1,256,1024,"1,1,1",1,selection,0.053065978
+sort-in-registers,uniform,descending,19,4194304,256,1,256,1024,"1,1,1",1,selection,0.053046649
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,512,1024,"1,1,1",1,selection,0.073155757
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,512,1024,"1,1,1",1,selection,0.07315116
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,512,1024,"1,1,1",1,selection,0.07316644399999998
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,512,1024,"1,1,1",1,selection,0.073151821
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,512,1024,"1,1,1",1,selection,0.07319011
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,512,1024,"1,1,1",1,selection,0.073153444
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,512,1024,"1,1,1",1,selection,0.07316180599999998
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,512,1024,"1,1,1",1,selection,0.073125671
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,512,1024,"1,1,1",1,selection,0.07313029899999998
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,512,1024,"1,1,1",1,selection,0.073160796
+sort-in-registers,uniform,descending,10,4194304,256,1,256,2048,"1,1,1",1,selection,0.054391396
+sort-in-registers,uniform,descending,11,4194304,256,1,256,2048,"1,1,1",1,selection,0.054376363
+sort-in-registers,uniform,descending,12,4194304,256,1,256,2048,"1,1,1",1,selection,0.054362833
+sort-in-registers,uniform,descending,13,4194304,256,1,256,2048,"1,1,1",1,selection,0.054390225
+sort-in-registers,uniform,descending,14,4194304,256,1,256,2048,"1,1,1",1,selection,0.054382203
+sort-in-registers,uniform,descending,15,4194304,256,1,256,2048,"1,1,1",1,selection,0.054359128
+sort-in-registers,uniform,descending,16,4194304,256,1,256,2048,"1,1,1",1,selection,0.054370225
+sort-in-registers,uniform,descending,17,4194304,256,1,256,2048,"1,1,1",1,selection,0.054364486
+sort-in-registers,uniform,descending,18,4194304,256,1,256,2048,"1,1,1",1,selection,0.054354971
+sort-in-registers,uniform,descending,19,4194304,256,1,256,2048,"1,1,1",1,selection,0.054350714
+bits (sort-in-registers + buffer),uniform,descending,10,4194304,256,1,512,2048,"1,1,1",1,selection,0.07263838999999998
+bits (sort-in-registers + buffer),uniform,descending,11,4194304,256,1,512,2048,"1,1,1",1,selection,0.072689978
+bits (sort-in-registers + buffer),uniform,descending,12,4194304,256,1,512,2048,"1,1,1",1,selection,0.07269038899999998
+bits (sort-in-registers + buffer),uniform,descending,13,4194304,256,1,512,2048,"1,1,1",1,selection,0.072664479
+bits (sort-in-registers + buffer),uniform,descending,14,4194304,256,1,512,2048,"1,1,1",1,selection,0.072669077
+bits (sort-in-registers + buffer),uniform,descending,15,4194304,256,1,512,2048,"1,1,1",1,selection,0.07270425
+bits (sort-in-registers + buffer),uniform,descending,16,4194304,256,1,512,2048,"1,1,1",1,selection,0.072669126
+bits (sort-in-registers + buffer),uniform,descending,17,4194304,256,1,512,2048,"1,1,1",1,selection,0.07262577
+bits (sort-in-registers + buffer),uniform,descending,18,4194304,256,1,512,2048,"1,1,1",1,selection,0.072639401
+bits (sort-in-registers + buffer),uniform,descending,19,4194304,256,1,512,2048,"1,1,1",1,selection,0.07268026299999998
+sort-in-registers,uniform,descending,10,1048576,1024,1,64,32,"1,1,1",1,selection,0.034116284
+sort-in-registers,uniform,descending,11,1048576,1024,1,64,32,"1,1,1",1,selection,0.034103395
+sort-in-registers,uniform,descending,12,1048576,1024,1,64,32,"1,1,1",1,selection,0.034081812
+sort-in-registers,uniform,descending,13,1048576,1024,1,64,32,"1,1,1",1,selection,0.034094371
+sort-in-registers,uniform,descending,14,1048576,1024,1,64,32,"1,1,1",1,selection,0.03410021
+sort-in-registers,uniform,descending,15,1048576,1024,1,64,32,"1,1,1",1,selection,0.034096785
+sort-in-registers,uniform,descending,16,1048576,1024,1,64,32,"1,1,1",1,selection,0.03411288
+sort-in-registers,uniform,descending,17,1048576,1024,1,64,32,"1,1,1",1,selection,0.034091096
+sort-in-registers,uniform,descending,18,1048576,1024,1,64,32,"1,1,1",1,selection,0.034091337
+sort-in-registers,uniform,descending,19,1048576,1024,1,64,32,"1,1,1",1,selection,0.034096224
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,256,32,"1,1,1",1,selection,0.040292692
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,256,32,"1,1,1",1,selection,0.040299022
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,256,32,"1,1,1",1,selection,0.040282677
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,256,32,"1,1,1",1,selection,0.040288146
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,256,32,"1,1,1",1,selection,0.040276057
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,256,32,"1,1,1",1,selection,0.040293724
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,256,32,"1,1,1",1,selection,0.040283498
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,256,32,"1,1,1",1,selection,0.040288386
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,256,32,"1,1,1",1,selection,0.040282907
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,256,32,"1,1,1",1,selection,0.040305641
+sort-in-registers,uniform,descending,10,1048576,1024,1,64,64,"1,1,1",1,selection,0.033938574
+sort-in-registers,uniform,descending,11,1048576,1024,1,64,64,"1,1,1",1,selection,0.033937572
+sort-in-registers,uniform,descending,12,1048576,1024,1,64,64,"1,1,1",1,selection,0.033933857
+sort-in-registers,uniform,descending,13,1048576,1024,1,64,64,"1,1,1",1,selection,0.033928318
+sort-in-registers,uniform,descending,14,1048576,1024,1,64,64,"1,1,1",1,selection,0.033928228
+sort-in-registers,uniform,descending,15,1048576,1024,1,64,64,"1,1,1",1,selection,0.033939485
+sort-in-registers,uniform,descending,16,1048576,1024,1,64,64,"1,1,1",1,selection,0.033946837
+sort-in-registers,uniform,descending,17,1048576,1024,1,64,64,"1,1,1",1,selection,0.033945644
+sort-in-registers,uniform,descending,18,1048576,1024,1,64,64,"1,1,1",1,selection,0.03393588
+sort-in-registers,uniform,descending,19,1048576,1024,1,64,64,"1,1,1",1,selection,0.033940066
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,128,64,"1,1,1",1,selection,0.037135803
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,128,64,"1,1,1",1,selection,0.037142604
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,128,64,"1,1,1",1,selection,0.037142554
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,128,64,"1,1,1",1,selection,0.037147171
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,128,64,"1,1,1",1,selection,0.037141463
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,128,64,"1,1,1",1,selection,0.037146379
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,128,64,"1,1,1",1,selection,0.037136134
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,128,64,"1,1,1",1,selection,0.037138048
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,128,64,"1,1,1",1,selection,0.03714639
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,128,64,"1,1,1",1,selection,0.037143235
+sort-in-registers,uniform,descending,10,1048576,1024,1,64,128,"1,1,1",1,selection,0.030606588
+sort-in-registers,uniform,descending,11,1048576,1024,1,64,128,"1,1,1",1,selection,0.030612738
+sort-in-registers,uniform,descending,12,1048576,1024,1,64,128,"1,1,1",1,selection,0.030624266
+sort-in-registers,uniform,descending,13,1048576,1024,1,64,128,"1,1,1",1,selection,0.030616353
+sort-in-registers,uniform,descending,14,1048576,1024,1,64,128,"1,1,1",1,selection,0.030613078
+sort-in-registers,uniform,descending,15,1048576,1024,1,64,128,"1,1,1",1,selection,0.030613389
+sort-in-registers,uniform,descending,16,1048576,1024,1,64,128,"1,1,1",1,selection,0.030614641
+sort-in-registers,uniform,descending,17,1048576,1024,1,64,128,"1,1,1",1,selection,0.030606659
+sort-in-registers,uniform,descending,18,1048576,1024,1,64,128,"1,1,1",1,selection,0.030609493
+sort-in-registers,uniform,descending,19,1048576,1024,1,64,128,"1,1,1",1,selection,0.03060083
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,128,128,"1,1,1",1,selection,0.037142033
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,128,128,"1,1,1",1,selection,0.037148553
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,128,128,"1,1,1",1,selection,0.037143275
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,128,128,"1,1,1",1,selection,0.037129153
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,128,128,"1,1,1",1,selection,0.037140831
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,128,128,"1,1,1",1,selection,0.037141282
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,128,128,"1,1,1",1,selection,0.037138608
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,128,128,"1,1,1",1,selection,0.037138027
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,128,128,"1,1,1",1,selection,0.037138828
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,128,128,"1,1,1",1,selection,0.037131207
+sort-in-registers,uniform,descending,10,1048576,1024,1,128,256,"1,1,1",1,selection,0.030596203
+sort-in-registers,uniform,descending,11,1048576,1024,1,128,256,"1,1,1",1,selection,0.0305875
+sort-in-registers,uniform,descending,12,1048576,1024,1,128,256,"1,1,1",1,selection,0.030598025
+sort-in-registers,uniform,descending,13,1048576,1024,1,128,256,"1,1,1",1,selection,0.030597305
+sort-in-registers,uniform,descending,14,1048576,1024,1,128,256,"1,1,1",1,selection,0.030603503
+sort-in-registers,uniform,descending,15,1048576,1024,1,128,256,"1,1,1",1,selection,0.030590835
+sort-in-registers,uniform,descending,16,1048576,1024,1,128,256,"1,1,1",1,selection,0.030593699
+sort-in-registers,uniform,descending,17,1048576,1024,1,128,256,"1,1,1",1,selection,0.030586649
+sort-in-registers,uniform,descending,18,1048576,1024,1,128,256,"1,1,1",1,selection,0.03060076
+sort-in-registers,uniform,descending,19,1048576,1024,1,128,256,"1,1,1",1,selection,0.030596664
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,128,256,"1,1,1",1,selection,0.036379091
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,128,256,"1,1,1",1,selection,0.036380633
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,128,256,"1,1,1",1,selection,0.036375716
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,128,256,"1,1,1",1,selection,0.0363722
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,128,256,"1,1,1",1,selection,0.036374884
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,128,256,"1,1,1",1,selection,0.036373563
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,128,256,"1,1,1",1,selection,0.036381635
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,128,256,"1,1,1",1,selection,0.036370998
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,128,256,"1,1,1",1,selection,0.036374575
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,128,256,"1,1,1",1,selection,0.036370638
+sort-in-registers,uniform,descending,10,1048576,1024,1,128,512,"1,1,1",1,selection,0.031318113
+sort-in-registers,uniform,descending,11,1048576,1024,1,128,512,"1,1,1",1,selection,0.031315689
+sort-in-registers,uniform,descending,12,1048576,1024,1,128,512,"1,1,1",1,selection,0.031317872
+sort-in-registers,uniform,descending,13,1048576,1024,1,128,512,"1,1,1",1,selection,0.031314156
+sort-in-registers,uniform,descending,14,1048576,1024,1,128,512,"1,1,1",1,selection,0.031317812
+sort-in-registers,uniform,descending,15,1048576,1024,1,128,512,"1,1,1",1,selection,0.031323001
+sort-in-registers,uniform,descending,16,1048576,1024,1,128,512,"1,1,1",1,selection,0.031320065
+sort-in-registers,uniform,descending,17,1048576,1024,1,128,512,"1,1,1",1,selection,0.031317191
+sort-in-registers,uniform,descending,18,1048576,1024,1,128,512,"1,1,1",1,selection,0.031324002
+sort-in-registers,uniform,descending,19,1048576,1024,1,128,512,"1,1,1",1,selection,0.031317662
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,256,512,"1,1,1",1,selection,0.042130631
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,256,512,"1,1,1",1,selection,0.042126355
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,256,512,"1,1,1",1,selection,0.042127608
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,256,512,"1,1,1",1,selection,0.042115529
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,256,512,"1,1,1",1,selection,0.04212957
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,256,512,"1,1,1",1,selection,0.042131754
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,256,512,"1,1,1",1,selection,0.042126334
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,256,512,"1,1,1",1,selection,0.042156331
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,256,512,"1,1,1",1,selection,0.042137702
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,256,512,"1,1,1",1,selection,0.042133106
+sort-in-registers,uniform,descending,10,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035907613
+sort-in-registers,uniform,descending,11,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035901914
+sort-in-registers,uniform,descending,12,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035901403
+sort-in-registers,uniform,descending,13,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035904498
+sort-in-registers,uniform,descending,14,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035895935
+sort-in-registers,uniform,descending,15,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035899821
+sort-in-registers,uniform,descending,16,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035908715
+sort-in-registers,uniform,descending,17,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035896986
+sort-in-registers,uniform,descending,18,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035899351
+sort-in-registers,uniform,descending,19,1048576,1024,1,256,1024,"1,1,1",1,selection,0.035910889
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052046124
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052047337
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,512,1024,"1,1,1",1,selection,0.05204289
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052066556
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052057191
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052031252
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052064051
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,512,1024,"1,1,1",1,selection,0.05204313
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052055169
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,512,1024,"1,1,1",1,selection,0.052067968
+sort-in-registers,uniform,descending,10,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038081808
+sort-in-registers,uniform,descending,11,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038099005
+sort-in-registers,uniform,descending,12,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038085354
+sort-in-registers,uniform,descending,13,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038098494
+sort-in-registers,uniform,descending,14,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038074828
+sort-in-registers,uniform,descending,15,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038083461
+sort-in-registers,uniform,descending,16,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038101649
+sort-in-registers,uniform,descending,17,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038077622
+sort-in-registers,uniform,descending,18,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038101518
+sort-in-registers,uniform,descending,19,1048576,1024,1,256,2048,"1,1,1",1,selection,0.038073305
+bits (sort-in-registers + buffer),uniform,descending,10,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051619355
+bits (sort-in-registers + buffer),uniform,descending,11,1048576,1024,1,512,2048,"1,1,1",1,selection,0.05159634
+bits (sort-in-registers + buffer),uniform,descending,12,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051601317
+bits (sort-in-registers + buffer),uniform,descending,13,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051619205
+bits (sort-in-registers + buffer),uniform,descending,14,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051612234
+bits (sort-in-registers + buffer),uniform,descending,15,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051522567
+bits (sort-in-registers + buffer),uniform,descending,16,1048576,1024,1,512,2048,"1,1,1",1,selection,0.05119679
+bits (sort-in-registers + buffer),uniform,descending,17,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051254008
+bits (sort-in-registers + buffer),uniform,descending,18,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051304965
+bits (sort-in-registers + buffer),uniform,descending,19,1048576,1024,1,512,2048,"1,1,1",1,selection,0.051315591
+sort-in-registers,uniform,descending,10,262144,4096,1,64,32,"1,1,1",1,selection,0.025078146
+sort-in-registers,uniform,descending,11,262144,4096,1,64,32,"1,1,1",1,selection,0.025073388
+sort-in-registers,uniform,descending,12,262144,4096,1,64,32,"1,1,1",1,selection,0.025082583
+sort-in-registers,uniform,descending,13,262144,4096,1,64,32,"1,1,1",1,selection,0.025079858
+sort-in-registers,uniform,descending,14,262144,4096,1,64,32,"1,1,1",1,selection,0.025079748
+sort-in-registers,uniform,descending,15,262144,4096,1,64,32,"1,1,1",1,selection,0.025079077
+sort-in-registers,uniform,descending,16,262144,4096,1,64,32,"1,1,1",1,selection,0.025081431
+sort-in-registers,uniform,descending,17,262144,4096,1,64,32,"1,1,1",1,selection,0.025079828
+sort-in-registers,uniform,descending,18,262144,4096,1,64,32,"1,1,1",1,selection,0.025079538
+sort-in-registers,uniform,descending,19,262144,4096,1,64,32,"1,1,1",1,selection,0.025081812
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,256,32,"1,1,1",1,selection,0.037059608
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,256,32,"1,1,1",1,selection,0.037053629
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,256,32,"1,1,1",1,selection,0.037059968
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,256,32,"1,1,1",1,selection,0.037063093
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,256,32,"1,1,1",1,selection,0.037058806
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,256,32,"1,1,1",1,selection,0.037055351
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,256,32,"1,1,1",1,selection,0.037060027
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,256,32,"1,1,1",1,selection,0.03706107
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,256,32,"1,1,1",1,selection,0.037061611
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,256,32,"1,1,1",1,selection,0.037067159
+sort-in-registers,uniform,descending,10,262144,4096,1,64,64,"1,1,1",1,selection,0.025073298
+sort-in-registers,uniform,descending,11,262144,4096,1,64,64,"1,1,1",1,selection,0.0250804
+sort-in-registers,uniform,descending,12,262144,4096,1,64,64,"1,1,1",1,selection,0.025077154
+sort-in-registers,uniform,descending,13,262144,4096,1,64,64,"1,1,1",1,selection,0.025077886
+sort-in-registers,uniform,descending,14,262144,4096,1,64,64,"1,1,1",1,selection,0.025076353
+sort-in-registers,uniform,descending,15,262144,4096,1,64,64,"1,1,1",1,selection,0.025080609
+sort-in-registers,uniform,descending,16,262144,4096,1,64,64,"1,1,1",1,selection,0.025076073
+sort-in-registers,uniform,descending,17,262144,4096,1,64,64,"1,1,1",1,selection,0.025073448
+sort-in-registers,uniform,descending,18,262144,4096,1,64,64,"1,1,1",1,selection,0.025079978
+sort-in-registers,uniform,descending,19,262144,4096,1,64,64,"1,1,1",1,selection,0.025080129
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,256,64,"1,1,1",1,selection,0.03706781
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,256,64,"1,1,1",1,selection,0.037063553
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,256,64,"1,1,1",1,selection,0.037053578
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,256,64,"1,1,1",1,selection,0.037058936
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,256,64,"1,1,1",1,selection,0.037055802
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,256,64,"1,1,1",1,selection,0.037059838
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,256,64,"1,1,1",1,selection,0.037056403
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,256,64,"1,1,1",1,selection,0.037056202
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,256,64,"1,1,1",1,selection,0.037055561
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,256,64,"1,1,1",1,selection,0.037062342
+sort-in-registers,uniform,descending,10,262144,4096,1,64,128,"1,1,1",1,selection,0.023522191
+sort-in-registers,uniform,descending,11,262144,4096,1,64,128,"1,1,1",1,selection,0.023525095
+sort-in-registers,uniform,descending,12,262144,4096,1,64,128,"1,1,1",1,selection,0.023524184
+sort-in-registers,uniform,descending,13,262144,4096,1,64,128,"1,1,1",1,selection,0.023517994
+sort-in-registers,uniform,descending,14,262144,4096,1,64,128,"1,1,1",1,selection,0.02352152
+sort-in-registers,uniform,descending,15,262144,4096,1,64,128,"1,1,1",1,selection,0.023517173
+sort-in-registers,uniform,descending,16,262144,4096,1,64,128,"1,1,1",1,selection,0.023522031
+sort-in-registers,uniform,descending,17,262144,4096,1,64,128,"1,1,1",1,selection,0.023523232
+sort-in-registers,uniform,descending,18,262144,4096,1,64,128,"1,1,1",1,selection,0.023519236
+sort-in-registers,uniform,descending,19,262144,4096,1,64,128,"1,1,1",1,selection,0.023519496
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,128,128,"1,1,1",1,selection,0.03133011
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,128,128,"1,1,1",1,selection,0.031320126
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,128,128,"1,1,1",1,selection,0.031323129
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,128,128,"1,1,1",1,selection,0.031317901
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,128,128,"1,1,1",1,selection,0.031322328
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,128,128,"1,1,1",1,selection,0.031324201
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,128,128,"1,1,1",1,selection,0.031329549
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,128,128,"1,1,1",1,selection,0.031327186
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,128,128,"1,1,1",1,selection,0.031322219
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,128,128,"1,1,1",1,selection,0.031318904
+sort-in-registers,uniform,descending,10,262144,4096,1,64,256,"1,1,1",1,selection,0.023601171
+sort-in-registers,uniform,descending,11,262144,4096,1,64,256,"1,1,1",1,selection,0.023598857
+sort-in-registers,uniform,descending,12,262144,4096,1,64,256,"1,1,1",1,selection,0.023596705
+sort-in-registers,uniform,descending,13,262144,4096,1,64,256,"1,1,1",1,selection,0.023597996
+sort-in-registers,uniform,descending,14,262144,4096,1,64,256,"1,1,1",1,selection,0.023596264
+sort-in-registers,uniform,descending,15,262144,4096,1,64,256,"1,1,1",1,selection,0.023597676
+sort-in-registers,uniform,descending,16,262144,4096,1,64,256,"1,1,1",1,selection,0.023598827
+sort-in-registers,uniform,descending,17,262144,4096,1,64,256,"1,1,1",1,selection,0.023596864
+sort-in-registers,uniform,descending,18,262144,4096,1,64,256,"1,1,1",1,selection,0.023599328
+sort-in-registers,uniform,descending,19,262144,4096,1,64,256,"1,1,1",1,selection,0.02360069
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,128,256,"1,1,1",1,selection,0.032077341
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,128,256,"1,1,1",1,selection,0.032084502
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,128,256,"1,1,1",1,selection,0.032080416
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,128,256,"1,1,1",1,selection,0.032077071
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,128,256,"1,1,1",1,selection,0.032077381
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,128,256,"1,1,1",1,selection,0.032078884
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,128,256,"1,1,1",1,selection,0.032081087
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,128,256,"1,1,1",1,selection,0.032085824
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,128,256,"1,1,1",1,selection,0.032091082
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,128,256,"1,1,1",1,selection,0.032087277
+sort-in-registers,uniform,descending,10,262144,4096,1,64,512,"1,1,1",1,selection,0.025581614
+sort-in-registers,uniform,descending,11,262144,4096,1,64,512,"1,1,1",1,selection,0.025574504
+sort-in-registers,uniform,descending,12,262144,4096,1,64,512,"1,1,1",1,selection,0.025573151
+sort-in-registers,uniform,descending,13,262144,4096,1,64,512,"1,1,1",1,selection,0.025577658
+sort-in-registers,uniform,descending,14,262144,4096,1,64,512,"1,1,1",1,selection,0.025576426
+sort-in-registers,uniform,descending,15,262144,4096,1,64,512,"1,1,1",1,selection,0.025575165
+sort-in-registers,uniform,descending,16,262144,4096,1,64,512,"1,1,1",1,selection,0.02557898
+sort-in-registers,uniform,descending,17,262144,4096,1,64,512,"1,1,1",1,selection,0.025572751
+sort-in-registers,uniform,descending,18,262144,4096,1,64,512,"1,1,1",1,selection,0.025574573
+sort-in-registers,uniform,descending,19,262144,4096,1,64,512,"1,1,1",1,selection,0.025575285
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,256,512,"1,1,1",1,selection,0.039710545
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,256,512,"1,1,1",1,selection,0.03971432
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,256,512,"1,1,1",1,selection,0.039709784
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,256,512,"1,1,1",1,selection,0.039696223
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,256,512,"1,1,1",1,selection,0.039700239
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,256,512,"1,1,1",1,selection,0.039704615
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,256,512,"1,1,1",1,selection,0.039712568
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,256,512,"1,1,1",1,selection,0.03970716
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,256,512,"1,1,1",1,selection,0.039718878
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,256,512,"1,1,1",1,selection,0.039708302
+sort-in-registers,uniform,descending,10,262144,4096,1,128,1024,"1,1,1",1,selection,0.03104152
+sort-in-registers,uniform,descending,11,262144,4096,1,128,1024,"1,1,1",1,selection,0.031003161
+sort-in-registers,uniform,descending,12,262144,4096,1,128,1024,"1,1,1",1,selection,0.030988449
+sort-in-registers,uniform,descending,13,262144,4096,1,128,1024,"1,1,1",1,selection,0.031032796
+sort-in-registers,uniform,descending,14,262144,4096,1,128,1024,"1,1,1",1,selection,0.031045917
+sort-in-registers,uniform,descending,15,262144,4096,1,128,1024,"1,1,1",1,selection,0.030983521
+sort-in-registers,uniform,descending,16,262144,4096,1,128,1024,"1,1,1",1,selection,0.031033928
+sort-in-registers,uniform,descending,17,262144,4096,1,128,1024,"1,1,1",1,selection,0.031000407
+sort-in-registers,uniform,descending,18,262144,4096,1,128,1024,"1,1,1",1,selection,0.030985515
+sort-in-registers,uniform,descending,19,262144,4096,1,128,1024,"1,1,1",1,selection,0.030990001
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,512,1024,"1,1,1",1,selection,0.051027031
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,512,1024,"1,1,1",1,selection,0.051008042
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,512,1024,"1,1,1",1,selection,0.051017997
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,512,1024,"1,1,1",1,selection,0.051005669
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,512,1024,"1,1,1",1,selection,0.051012439
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,512,1024,"1,1,1",1,selection,0.051014822
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,512,1024,"1,1,1",1,selection,0.051005648
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,512,1024,"1,1,1",1,selection,0.051015734
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,512,1024,"1,1,1",1,selection,0.051009033
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,512,1024,"1,1,1",1,selection,0.051004166
+sort-in-registers,uniform,descending,10,262144,4096,1,256,2048,"1,1,1",1,selection,0.036992235
+sort-in-registers,uniform,descending,11,262144,4096,1,256,2048,"1,1,1",1,selection,0.036945533
+sort-in-registers,uniform,descending,12,262144,4096,1,256,2048,"1,1,1",1,selection,0.036981919
+sort-in-registers,uniform,descending,13,262144,4096,1,256,2048,"1,1,1",1,selection,0.036972574
+sort-in-registers,uniform,descending,14,262144,4096,1,256,2048,"1,1,1",1,selection,0.03697602
+sort-in-registers,uniform,descending,15,262144,4096,1,256,2048,"1,1,1",1,selection,0.036954947
+sort-in-registers,uniform,descending,16,262144,4096,1,256,2048,"1,1,1",1,selection,0.036992234
+sort-in-registers,uniform,descending,17,262144,4096,1,256,2048,"1,1,1",1,selection,0.036960546
+sort-in-registers,uniform,descending,18,262144,4096,1,256,2048,"1,1,1",1,selection,0.036971893
+sort-in-registers,uniform,descending,19,262144,4096,1,256,2048,"1,1,1",1,selection,0.03695631
+bits (sort-in-registers + buffer),uniform,descending,10,262144,4096,1,512,2048,"1,1,1",1,selection,0.050479565
+bits (sort-in-registers + buffer),uniform,descending,11,262144,4096,1,512,2048,"1,1,1",1,selection,0.050467517
+bits (sort-in-registers + buffer),uniform,descending,12,262144,4096,1,512,2048,"1,1,1",1,selection,0.05046342
+bits (sort-in-registers + buffer),uniform,descending,13,262144,4096,1,512,2048,"1,1,1",1,selection,0.050479315
+bits (sort-in-registers + buffer),uniform,descending,14,262144,4096,1,512,2048,"1,1,1",1,selection,0.050483151
+bits (sort-in-registers + buffer),uniform,descending,15,262144,4096,1,512,2048,"1,1,1",1,selection,0.050480126
+bits (sort-in-registers + buffer),uniform,descending,16,262144,4096,1,512,2048,"1,1,1",1,selection,0.050465964
+bits (sort-in-registers + buffer),uniform,descending,17,262144,4096,1,512,2048,"1,1,1",1,selection,0.050470301
+bits (sort-in-registers + buffer),uniform,descending,18,262144,4096,1,512,2048,"1,1,1",1,selection,0.05046975
+bits (sort-in-registers + buffer),uniform,descending,19,262144,4096,1,512,2048,"1,1,1",1,selection,0.05048234

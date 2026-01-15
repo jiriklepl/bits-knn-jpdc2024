@@ -107,6 +107,8 @@ scripts/plot-all.sh analyze-opt
 scripts/plot-all.sh analyze-dist
 ```
 
+The two files also produce files `scripts/mean-time[-dist]-fixed-max_slowdown.csv` and `scripts/optima[-dist]-fixed-max_slowdown.csv` with the tuning results used to choose one fixed set of parameters for each algorithm (filtered to knn configurations of sufficient query counts) that performs the best across all problem configurations. Each line also shows the slowdown of the run with fixed parameters compared to the best-performing parameters for the given problem configuration (a slowdown of 1.5 would represent a 50% runtime overhead compared to the best-performing run on the given problem configuration). The data in these files are reported in Section 5 in discussions comparing per-configuration tuning to choosing a single fixed configuration for each algorithm.
+
 
 #### Running the benchmarks
 
@@ -162,7 +164,7 @@ scripts/plot-all.sh distances
 scripts/plot-all.sh kselection
 ```
 
-The plots are stored in the `plots/` directory; the names of the plots correspond to the names of the data files in the `data/` directory (they share the same `EXPERIMENT-NAME-TIMESTAMP`). The only exception to this rule is the plots produced by the `multibuffer` command, which are stored in the `plots/multibuffer-NAME.pdf` files as it merges all results sharing the same `NAME` prefix.
+The plots are stored in the `plots/` directory; the names of the plots correspond to the names of the data files in the `data/` directory (they share the same `EXPERIMENT-NAME-TIMESTAMP`). The only exception to this rule is the plots produced by the `multibuffer` command, which are stored in the `plots/multibuffer-NAME.pdf` files as it merges all results sharing the same `NAME` prefix. All plots are accompanied by a `plots/EXPERIMENT-NAME-TIMESTAMP.csv` file that contains the data being visualized.
 
 The `data/kselection-stats.csv` file contains the statistics for the `kselection` experiment that show the speedup of the proposed algorithm over the state-of-the-art algorithms (maximum, minimum, and average speedup) for each sub-plot and the whole experiment and the relative throughput as a fraction of the throughput limit deduced from the memory bandwidth of the given GPU (the maximum memory throughput divided by the size of one input item in bytes). These reported statistics are used in Section 5.2 of the paper and the Abstract.
 

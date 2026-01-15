@@ -338,6 +338,9 @@ def drawFigInner(file: str, hostname: str, jobid: str, doing_fused: bool, data: 
     else:
         fig.savefig(file.replace("data/", "plots/extra-").replace(".csv", f"-{dataset}.pdf"))
 
+    with open(file.replace("data/", "plots/"), "w") as f:
+        data.to_csv(f, index=False)
+
     plt.close(fig)
 
 
