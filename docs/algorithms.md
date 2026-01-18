@@ -57,13 +57,6 @@ Distance computation algorithms evaluated in the paper (state-of-the-art and a n
   - in the paper and plots, referred to as `MAGMA-distance`
   - in the benchmarking binary `knn`, the algorithm is run with the `-a magma-part-dist` argument
 
-Fused distance computation and top-k selection algorithms evaluated in the paper:
-
-- `fusedL2Knn` from the RAFT library, based on the `WarpSelect` algorithm
-  - called in [src/topk/singlepass/rapidsai_fused.cu](../src/topk/singlepass/rapidsai_fused.cu)
-  - in the paper and plots, referred to as `raftL2-fused`
-  - in the benchmarking binary `knn`, the algorithm is run with the `-a rapidsai-fused` argument
-
 Top-k selection algorithms that are not shown in the paper (superseded by the previously mentioned algorithms):
 
 - `RadiK` proposed by Li et al. (2024)

@@ -4,8 +4,6 @@
 #include <raft/core/device_resources.hpp>
 #include <raft/matrix/detail/select_radix.cuh>
 
-#include <rmm/logger_impl/logger_impl.hpp>
-
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
 #include "bits/topk/multipass/air_topk.hpp"

@@ -8,14 +8,15 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/external)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/tests)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas")
+# Silence CCCL deprecated stream_ref header warning in deps (treated as error).
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -DCCCL_IGNORE_DEPRECATED_STREAM_REF_HEADER")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 # set the host compiler for CUDA to be the same as the C++ compiler
 set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr -DCCCL_IGNORE_DEPRECATED_STREAM_REF_HEADER")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --extended-lambda")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -Wall,-Wno-unknown-pragmas")

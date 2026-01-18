@@ -50,7 +50,6 @@
 #include "bits/topk/singlepass/partial_bitonic.hpp"
 #include "bits/topk/singlepass/partial_bitonic_buffered.hpp"
 #include "bits/topk/singlepass/raft_warpsort.hpp"
-#include "bits/topk/singlepass/rapidsai_fused.hpp"
 #include "bits/topk/singlepass/warp_select.hpp"
 
 namespace
@@ -141,8 +140,6 @@ try
     algorithms.push_back(std::make_unique<fused_tc_half_knn>());
     algorithms.push_back(std::make_unique<fused_tc_bfloat16_knn>());
     algorithms.push_back(std::make_unique<fused_tc_double_knn>());
-
-    algorithms.push_back(std::make_unique<rapidsai_fused>());
 
     algorithms.push_back(std::make_unique<radik_knn>());
 

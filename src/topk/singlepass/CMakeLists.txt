@@ -7,7 +7,6 @@ set(TOPK_SINGLEPASS_SRC
     partial_bitonic_buffered.cu
     partial_bitonic.cu
     raft_warpsort.cu
-    rapidsai_fused.cu
     warp_select.cu
 )
 
