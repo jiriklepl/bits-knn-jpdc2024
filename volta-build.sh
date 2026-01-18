@@ -19,7 +19,7 @@ run_single() {
     shift
 
     srun -A "$account" -p "$partition" --gres=gpu:1 -w "$runner" -t "$long_time" -c 16 -n 1 -- \
-        "$@"
+        bash -c 'exec "$@"' bash "$@"
 }
 
 . ./scripts/executor.sh

@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 
-export worker=${1:-hopper01}         # NVIDIA H100 PCIe 40 GB
-builder=${builder:-"volta05"}        # NVIDIA Tesla V100 PCIe 32 GB
+export worker=${1:-hopper01}         # NVIDIA H100 PCIe
+builder=${builder:-"hopper01"}        # NVIDIA H100 PCIe
 export CUDA_ARCHITECTURES=${2:-"90"} # H100
 export build_dir=build-hopper
 
@@ -19,7 +19,7 @@ run_single() {
     shift
 
     srun -A "$account" -p "$partition" --gres=gpu:1 -w "$runner" -t "$long_time" -c 16 -n 1 -- \
-        "$@"
+        bash -c 'exec "$@"' bash "$@"
 }
 
 . ./scripts/executor.sh

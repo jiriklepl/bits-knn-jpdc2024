@@ -3,7 +3,7 @@
 export worker=${1:-bw01} # NVIDIA RTX PRO 6000 Blackwell Server Edition
 builder=${builder:-"$worker"}
 export CUDA_ARCHITECTURES=${2:-"native"}
-export build_dir=build-volta
+export build_dir=build-bw
 
 export account=kdss
 partition=gpu-short
@@ -18,7 +18,8 @@ run_single() {
     runner=${1:-"$worker"}
     shift
 
-    srun -A "$account" -p "$partition" --gres=gpu:1 -w "$runner" -t "$long_time" -c 16 -n 1 -- "$@"
+    srun -A "$account" -p "$partition" --gres=gpu:1 -w "$runner" -t "$long_time" -c 16 -n 1 -- \
+        bash -c 'exec "$@"' bash "$@"
 }
 
 . ./scripts/executor.sh
