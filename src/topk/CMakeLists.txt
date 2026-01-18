@@ -32,7 +32,6 @@ set(TOPK_SRC
     detail/block_select256.cu
     detail/block_select512.cu
     detail/block_select1024.cu
-    detail/block_select2048.cu
 )
 
 target_sources(topk PRIVATE ${TOPK_SRC})
