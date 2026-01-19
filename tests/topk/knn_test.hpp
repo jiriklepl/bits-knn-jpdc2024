@@ -10,8 +10,8 @@
 #include "bits/generator/uniform_generator.hpp"
 
 #include "bits/distance/magma_distance.hpp"
-#include "bits/topk/serial_knn.hpp"
 #include "bits/knn_args.hpp"
+#include "bits/topk/serial_knn.hpp"
 
 template <class Algorithm, class Distance = magma_distance, bool TEST_DISTANCES = false>
 struct test_case
