@@ -125,9 +125,9 @@ target_link_directories(knn PRIVATE ${LIBS_DIR}/gpu_topK_benchmark/third_party)
 target_link_directories(knn-minimal PRIVATE ${LIBS_DIR}/gpu_topK_benchmark/third_party)
 target_link_directories(test PRIVATE ${LIBS_DIR}/gpu_topK_benchmark/third_party)
 
-target_link_libraries(knn PUBLIC ${KNN_LIBRARIES} gridselect)
-target_link_libraries(knn-minimal PUBLIC ${KNN_LIBRARIES} gridselect)
-target_link_libraries(test PUBLIC ${KNN_LIBRARIES} Catch2::Catch2WithMain gridselect)
+target_link_libraries(knn PUBLIC ${KNN_LIBRARIES} gridselect raft::raft)
+target_link_libraries(knn-minimal PUBLIC ${KNN_LIBRARIES} gridselect raft::raft)
+target_link_libraries(test PUBLIC ${KNN_LIBRARIES} Catch2::Catch2WithMain gridselect raft::raft)
 
 # set cuda properties
 set_target_properties(knn PROPERTIES CUDA_ARCHITECTURES "${CMAKE_CUDA_ARCHITECTURES}")
