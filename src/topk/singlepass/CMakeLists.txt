@@ -8,6 +8,7 @@ set(TOPK_SINGLEPASS_SRC
     partial_bitonic.cu
     raft_warpsort.cu
     rapidsai_fused.cu
+    rapidsai_fused_workspace.cu
     warp_select.cu
 )
 
@@ -17,7 +18,7 @@ target_sources(topk-singlepass-minimal PRIVATE ${TOPK_SINGLEPASS_SRC})
 target_link_libraries(topk-singlepass-all PRIVATE raft::raft spdlog::spdlog_header_only)
 target_link_libraries(topk-singlepass-minimal PRIVATE raft::raft spdlog::spdlog_header_only)
 
-# The former RAFT fused L2 kernel now lives in cuVS. Only its headers are needed.
+# The former RAFT fused L2 kernel now lives in cuVS. Instantiate the required workspace helper locally.
 foreach(target topk-singlepass-all topk-singlepass-minimal)
     target_include_directories(${target} PRIVATE
         ${LIBS_DIR}/cuvs/cpp/include
