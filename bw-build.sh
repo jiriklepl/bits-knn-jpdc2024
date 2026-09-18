@@ -1,8 +1,8 @@
 #!/bin/bash -ex
 
-export worker=${1:-bw01} # NVIDIA RTX PRO 6000 Blackwell Server Edition
+export worker=${worker:-${1:-bw01}}   # NVIDIA RTX PRO 6000 Blackwell Server Edition
 builder=${builder:-"$worker"}
-export CUDA_ARCHITECTURES=${2:-"native"}
+export CUDA_ARCHITECTURES=${2:-"120"} # Blackwell
 export build_dir=build-bw
 
 export account=kdss

@@ -1,8 +1,8 @@
 #!/bin/bash -ex
 
-export worker=${1:-ampere02} # NVIDIA A100 PCIe 80 GB
+export worker=${worker:-${1:-ampere02}} # NVIDIA A100 PCIe 80 GB
 builder=${builder:-"$worker"}
-export CUDA_ARCHITECTURES=${2:-"80"} # A100
+export CUDA_ARCHITECTURES=${2:-"80"}    # A100
 export build_dir=build-ampere
 
 export account=kdss

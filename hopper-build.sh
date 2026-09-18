@@ -1,8 +1,8 @@
 #!/bin/bash -ex
 
-export worker=${1:-hopper01}         # NVIDIA H100 PCIe
-builder=${builder:-"hopper01"}        # NVIDIA H100 PCIe
-export CUDA_ARCHITECTURES=${2:-"90"} # H100
+export worker=${worker:-${1:-hopper01}} # NVIDIA H100 PCIe
+builder=${builder:-"$worker"}
+export CUDA_ARCHITECTURES=${2:-"90"}    # H100
 export build_dir=build-hopper
 
 export account=kdss

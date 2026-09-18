@@ -1,8 +1,8 @@
 #!/bin/bash -ex
 
-export worker=${1:-volta05} # NVIDIA Tesla V100 32 GB SXM2
+export worker=${worker:-${1:-volta05}} # NVIDIA Tesla V100 32 GB SXM2
 builder=${builder:-"$worker"}
-export CUDA_ARCHITECTURES=${2:-"70"} # V100
+export CUDA_ARCHITECTURES=${2:-"70"}   # V100
 export build_dir=build-volta
 
 export account=kdss
