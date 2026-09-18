@@ -13,6 +13,7 @@ set(TESTS
     distance/magma_dist_test.cpp
     distance/cutlass_dist_test.cpp
     distance/cublas_dist_test.cpp
+    topk/raft_selection_test.cpp
     topk/partial_bitonic_test.cpp
     topk/bits_knn_test.cpp
     topk/fused_knn_test.cpp
@@ -25,3 +26,6 @@ set(TESTS
 )
 
 target_sources(test PRIVATE ${TESTS})
+
+# Compile the AIR wrapper directly without pulling in the other multipass algorithms.
+target_sources(test PRIVATE ${SRC_DIR}/topk/multipass/air_topk.cu)
