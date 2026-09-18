@@ -1,4 +1,5 @@
 #include <memory>
+#include <stdexcept>
 #include <utility>
 
 #include "bits/cuda_stream.hpp"
@@ -10,6 +11,11 @@
 
 void knn::initialize(const knn_args& args)
 {
+    if (args.point_count == 0 || args.query_count == 0 || args.k == 0 || args.k > args.point_count)
+    {
+        throw std::invalid_argument{
+            "kNN requires positive point/query counts and 0 < k <= point_count"};
+    }
     args_ = args;
     // enforce row major layout, implementations can change this
     args_.dist_layout = matrix_layout::row_major;

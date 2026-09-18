@@ -340,6 +340,11 @@ __global__ void buffered_partial_bitonic_aos(array_view<float, 2> input,
 
 void buffered_partial_bitonic::selection()
 {
+    if (k() == 0 || (k() & (k() - 1)) != 0 || k() < 32 || selection_block_size() % 32 != 0)
+    {
+        throw std::invalid_argument{"buffered_partial_bitonic requires power-of-two k >= 32 and a "
+                                    "block size divisible by 32"};
+    }
     cuda_knn::selection();
 
     const auto block_count = query_count();

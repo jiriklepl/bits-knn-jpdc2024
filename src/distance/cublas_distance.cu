@@ -1,6 +1,7 @@
-#include <cassert>
 #include <cstddef>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
@@ -97,7 +98,14 @@ __global__ void add_norm_kernel(const float* norms, array_view<float, 2> dist)
 
 } // namespace
 
-cublas_distance::cublas_distance() { cublasCreate(&handle_); }
+cublas_distance::cublas_distance()
+{
+    const auto status = cublasCreate(&handle_);
+    if (status != CUBLAS_STATUS_SUCCESS)
+    {
+        throw std::runtime_error{"cublasCreate failed: " + std::to_string(status)};
+    }
+}
 
 cublas_distance::~cublas_distance() { cublasDestroy(handle_); }
 
@@ -148,10 +156,9 @@ void cublas_distance::compute()
                              queries.data(), queries.stride(0), &beta, dist.data(), dist.stride(0));
     }
 
-    assert(status == CUBLAS_STATUS_SUCCESS);
     if (status != CUBLAS_STATUS_SUCCESS)
     {
-        std::cerr << "cuBLAS error\n";
+        throw std::runtime_error{"cublasSgemm failed: " + std::to_string(status)};
     }
 
     // compute the norm

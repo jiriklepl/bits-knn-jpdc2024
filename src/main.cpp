@@ -238,6 +238,30 @@ try
         parse_dim3(params["items-per-thread"].as<std::string>());
 
     // do basic validation
+    if ((layout_points != "row" && layout_points != "column") ||
+        (layout_queries != "row" && layout_queries != "column"))
+    {
+        throw std::invalid_argument{"Layouts must be 'row' or 'column'"};
+    }
+
+    if (params.count("verify") != 0 && verify_alg != "off")
+    {
+        if (params["no-output"].as<bool>())
+        {
+            throw std::invalid_argument{"Verification requires output; remove --no-output"};
+        }
+        if (std::none_of(algorithms.begin(), algorithms.end(),
+                         [&](const auto& alg) { return alg->id() == verify_alg; }))
+        {
+            throw std::invalid_argument{"Unknown verification algorithm: " + verify_alg};
+        }
+    }
+
+    if (k > input_size || repeat_count == 0)
+    {
+        throw std::invalid_argument{"Require k <= number of points and repeat > 0"};
+    }
+
     if (dim <= 0)
     {
         std::cerr << "Dimension must be greater than 0" << '\n';
@@ -417,7 +441,7 @@ try
         }
 
         // verify the results using some other implementation
-        if (params.count("verify") != 0)
+        if (params.count("verify") != 0 && verify_alg != "off")
         {
             for (auto& other_alg : algorithms)
             {
@@ -431,7 +455,10 @@ try
                 other_alg->distances();
                 other_alg->selection();
                 const auto expected_result = other_alg->finish();
-                verify(expected_result, result, k);
+                if (!verify(expected_result, result, k))
+                {
+                    return 1;
+                }
             }
         }
     }

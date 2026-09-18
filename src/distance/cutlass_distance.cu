@@ -1,4 +1,5 @@
-#include <iostream>
+#include <stdexcept>
+#include <string>
 
 #include <cutlass/arch/mma.h>
 #include <cutlass/array.h>
@@ -143,7 +144,7 @@ void call_cutlass(array_view<float, 2> queries, array_view<float, 2> points,
     const auto status = op(gemm_args);
     if (status != cutlass::Status::kSuccess)
     {
-        std::cerr << "CUTLASS error: " << cutlassGetStatusString(status) << std::endl;
+        throw std::runtime_error{std::string{"CUTLASS error: "} + cutlassGetStatusString(status)};
     }
 }
 

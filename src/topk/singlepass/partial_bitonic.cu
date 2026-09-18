@@ -360,6 +360,10 @@ void partial_bitonic_regs_run(array_view<float, 2> input, array_view<float, 2> o
 
 void partial_bitonic::selection()
 {
+    if (k() == 0 || (k() & (k() - 1)) != 0)
+    {
+        throw std::invalid_argument{"partial_bitonic requires power-of-two k"};
+    }
     cuda_knn::selection();
 
     const auto block_count = query_count();
@@ -375,6 +379,11 @@ void partial_bitonic::selection()
 
 void partial_bitonic_warp::selection()
 {
+    if (k() == 0 || (k() & (k() - 1)) != 0 || k() < 32 || selection_block_size() % 32 != 0)
+    {
+        throw std::invalid_argument{
+            "partial_bitonic_warp requires power-of-two k >= 32 and a block size divisible by 32"};
+    }
     cuda_knn::selection();
 
     const auto block_count = query_count();

@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 
 #include <neighbors/detail/fused_l2_knn.cuh>
 
@@ -9,6 +10,11 @@
 
 void rapidsai_fused::initialize(const knn_args& args)
 {
+    if (args.points_layout != matrix_layout::row_major ||
+        args.queries_layout != matrix_layout::row_major)
+    {
+        throw std::invalid_argument{"This fused algorithm requires row-major points and queries"};
+    }
     // skip allocation in cuda_knn::initialize()
     knn::initialize(args);
 

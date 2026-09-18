@@ -115,6 +115,10 @@ void bits_prefetch_knn::selection()
 
 void single_query_bits::initialize(const knn_args& args)
 {
+    if (args.deg == 0 || args.point_count % args.deg != 0)
+    {
+        throw std::invalid_argument{"bits-sq requires a positive degree dividing point_count"};
+    }
     cuda_knn::initialize(args);
 
     if (args_.deg > 1)

@@ -3,8 +3,10 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstddef>
-#include <cstdlib>
+#include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -21,7 +23,7 @@ inline std::size_t parse_number(std::string number)
 {
     if (number.empty())
     {
-        return 0;
+        throw std::invalid_argument{"Empty numeric argument"};
     }
 
     std::size_t multiplier = 1;
@@ -42,7 +44,14 @@ inline std::size_t parse_number(std::string number)
         number.pop_back();
     }
 
-    return std::atol(number.c_str()) * multiplier;
+    std::size_t value = 0;
+    const auto [end, error] = std::from_chars(number.data(), number.data() + number.size(), value);
+    if (error != std::errc{} || end != number.data() + number.size() ||
+        value > std::numeric_limits<std::size_t>::max() / multiplier)
+    {
+        throw std::invalid_argument{"Invalid or overflowing numeric argument: " + number};
+    }
+    return value * multiplier;
 }
 
 inline std::array<std::size_t, 3> parse_dim3(std::string number)
@@ -65,7 +74,11 @@ inline std::array<std::size_t, 3> parse_dim3(std::string number)
         }
     }
 
-    for (std::size_t i = 0; i < std::min<std::size_t>(3, parts.size()); ++i)
+    if (parts.size() > result.size())
+    {
+        throw std::invalid_argument{"Expected at most three items-per-thread values"};
+    }
+    for (std::size_t i = 0; i < parts.size(); ++i)
     {
         result[i] = parse_number(parts[i]);
     }
