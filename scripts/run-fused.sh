@@ -39,7 +39,10 @@ for q_power in 10 11 12 13; do
             items_per_thread=${configs[2]:-1}
             "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a bits-prefetch --items-per-thread "$items_per_thread" --block-size "$block_size" --deg "$deg"
 
-            "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a rapidsai-fused
+            # RAPIDS fused L2 kNN supports at most 64 neighbors.
+            if [ "$k" -le 64 ]; then
+                "$knn" -r "$repeat_count" -n "$n" -q "$q" -k "$k" -d "$dim" --seed 24 -a rapidsai-fused
+            fi
 
             config=$(config_algorithm fused-regs-tunable $q $k $dim)
             read -r -a configs <<<"$config"

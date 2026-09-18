@@ -111,6 +111,19 @@ config_generic() {
             items_per_thread = 1
             items_per_thread2 = 1
             items_per_thread3 = 1
+
+            # Fused kernels interpret block_size as the query dimension,
+            # and do not instantiate the generic one-item register layout.
+            # Keep these full-build fallbacks small for GPUs with less shared memory.
+            if (algorithm == "fused-regs-tunable") {
+                block_size = 4
+                items_per_thread = 2
+                items_per_thread2 = 4
+            } else if (algorithm == "fused-cache") {
+                block_size = 1
+                items_per_thread = 2
+                items_per_thread2 = 4
+            }
         }
         NR == 1 {
             for (i = 1; i <= NF; i++) {
