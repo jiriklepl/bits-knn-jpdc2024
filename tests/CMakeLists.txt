@@ -7,6 +7,7 @@ target_include_directories(test PRIVATE
 )
 
 set(TESTS
+    config_parse_test.cpp
     distance/baseline_dist_test.cpp
     distance/eigen_dist_test.cpp
     distance/tiled_distance_test.cpp
