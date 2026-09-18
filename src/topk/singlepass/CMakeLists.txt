@@ -16,3 +16,11 @@ target_sources(topk-singlepass-minimal PRIVATE ${TOPK_SINGLEPASS_SRC})
 
 target_link_libraries(topk-singlepass-all PRIVATE raft::raft spdlog::spdlog_header_only)
 target_link_libraries(topk-singlepass-minimal PRIVATE raft::raft spdlog::spdlog_header_only)
+
+# The former RAFT fused L2 kernel now lives in cuVS. Only its headers are needed.
+foreach(target topk-singlepass-all topk-singlepass-minimal)
+    target_include_directories(${target} PRIVATE
+        ${LIBS_DIR}/cuvs/cpp/include
+        ${LIBS_DIR}/cuvs/cpp/src
+    )
+endforeach()

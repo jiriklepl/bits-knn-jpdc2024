@@ -13,10 +13,7 @@ struct aos_layout
 {
     knn::pair_t* values;
 
-    __host__ __device__ aos_layout offset(std::size_t i) const
-    {
-        return aos_layout{values + i};
-    }
+    __host__ __device__ aos_layout offset(std::size_t i) const { return aos_layout{values + i}; }
 
     __host__ __device__ float dist(std::size_t i) const { return values[i].distance; }
 

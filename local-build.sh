@@ -2,7 +2,7 @@
 
 export worker=${1:-$(hostname)}
 builder=${builder:-"$worker"}
-export CUDA_ARCHITECTURES=${2:-"80"}
+export CUDA_ARCHITECTURES=${2:-"native"}
 export build_dir="build-$worker"
 
 run_batch() {

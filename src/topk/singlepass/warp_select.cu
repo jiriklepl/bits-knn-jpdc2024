@@ -172,14 +172,6 @@ void block_select::selection()
         run.thread_queue_size = THREAD_QUEUE_SIZE;
         run.template operator()<BLOCK_SIZE, THREAD_QUEUE_SIZE, 1024>();
     }
-    else if (k() == 2048)
-    {
-        constexpr int BLOCK_SIZE = 64;
-        constexpr int THREAD_QUEUE_SIZE = 8;
-
-        run.thread_queue_size = THREAD_QUEUE_SIZE;
-        run.template operator()<BLOCK_SIZE, THREAD_QUEUE_SIZE, 2048>();
-    }
     else
     {
         throw std::runtime_error{"Unsupported k value: " + std::to_string(k())};
@@ -242,7 +234,16 @@ void block_select_tunable::selection()
                         run.thread_queue_size, [=, &run]<std::size_t ThreadQueueSize>() {
                             if (!dynamic_switch<TOPK_SINGLEPASS_K_VALUES>(
                                     run.k, [=, &run]<std::size_t K>() {
-                                        run.template operator()<BlockSize, ThreadQueueSize, K>();
+                                        if constexpr (K <= 1024)
+                                        {
+                                            run.template
+                                            operator()<BlockSize, ThreadQueueSize, K>();
+                                        }
+                                        else
+                                        {
+                                            throw std::runtime_error{"Unsupported k value: " +
+                                                                     std::to_string(run.k)};
+                                        }
                                     }))
                             {
                                 throw std::runtime_error{"Unsupported k value: " +

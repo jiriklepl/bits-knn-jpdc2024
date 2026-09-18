@@ -13,13 +13,13 @@ if [ "$3" == "build" ] || [ "$3" == "minimal-build" ] || [ "$3" == "all" ] || [ 
     run_single "$builder" cmake -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCHITECTURES" -S .
 
     if [ "$3" == "minimal-build" ]; then
-        run_single "$builder" cmake --build "$build_dir" --config Release --parallel 16 -t knn-minimal
-        run_single "$builder" cmake --build "$build_dir" --config Release --parallel 16 -t test
+        run_single "$builder" cmake --build "$build_dir" --config Release --parallel 8 -t knn-minimal
+        run_single "$builder" cmake --build "$build_dir" --config Release --parallel 8 -t test
         exit 0
     fi
 
-    run_single "$builder" cmake --build "$build_dir" --config Release --parallel 16 -t knn
-    run_single "$builder" cmake --build "$build_dir" --config Release --parallel 16 -t test
+    run_single "$builder" cmake --build "$build_dir" --config Release --parallel 8 -t knn
+    run_single "$builder" cmake --build "$build_dir" --config Release --parallel 8 -t test
 
     run_single "$worker" "$build_dir"/test
 

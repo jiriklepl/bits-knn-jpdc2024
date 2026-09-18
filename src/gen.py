@@ -325,6 +325,9 @@ with open("topk/CMakeLists.txt", "w") as cmake:
 
     # block-select
     for k in K_VALUES:
+        if k > 1024:
+            continue
+
         name = f"detail/block_select{k}.cu"
         path = f"topk/{name}"
 

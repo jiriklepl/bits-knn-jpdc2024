@@ -1,11 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 
-// #include <raft/core/device_resources.hpp>
-#include <raft/distance/detail/distance.cuh>
-#include <raft/distance/detail/distance_ops/l2_exp.cuh>
-#include <raft/distance/detail/distance_ops/l2_unexp.cuh>
-#include <raft/spatial/knn/detail/fused_l2_knn-inl.cuh>
+#include <neighbors/detail/fused_l2_knn.cuh>
 
 #include "bits/cuda_knn.hpp"
 #include "bits/cuda_stream.hpp"
@@ -84,9 +80,9 @@ void rapidsai_fused::selection()
 
     auto stream = cuda_stream::make_default();
 
-    const auto metric = raft::distance::DistanceType::L2Expanded;
+    const auto metric = cuvs::distance::DistanceType::L2Expanded;
 
-    raft::spatial::knn::detail::fusedL2Knn<std::int32_t, float>(
+    cuvs::neighbors::detail::fusedL2Knn<std::int32_t, float>(
         dim(), out_label.data(), out_dist.data(), points.data(), queries.data(), point_count(),
         query_count(), k(), row_major_index_, row_major_query_, stream.get(), metric);
 

@@ -22,3 +22,6 @@
 [submodule "external/cutlass"]
 	path = external/cutlass
 	url = https://github.com/NVIDIA/cutlass.git
+[submodule "external/cuvs"]
+	path = external/cuvs
+	url = https://github.com/rapidsai/cuvs.git

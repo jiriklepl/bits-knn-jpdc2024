@@ -1,9 +1,9 @@
 #!/bin/bash -ex
 
-export worker=${1:-volta05} # NVIDIA Tesla V100 32 GB SXM2
+export worker=${1:-bw01} # NVIDIA RTX PRO 6000 Blackwell Server Edition
 builder=${builder:-"$worker"}
-export CUDA_ARCHITECTURES=${2:-"70"} # V100
-export build_dir=build-volta
+export CUDA_ARCHITECTURES=${2:-"native"}
+export build_dir=build-bw
 
 export account=kdss
 partition=gpu-short

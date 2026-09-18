@@ -1,8 +1,8 @@
-# Replication package for the paper *Towards Optimal GPU-accelerated K-Nearest Neighbors Search*
+# Replication package for the paper *Accelerating k-Nearest Neighbors Search with GPU-Based Top-k Selection*
 
 [![DOI](https://zenodo.org/badge/869231733.svg)](https://doi.org/10.5281/zenodo.14212691)
 
-This is the replication package for the paper *Towards Optimal GPU-accelerated K-Nearest Neighbors Search* submitted to the [Journal of Parallel and Distributed Computing](https://www.sciencedirect.com/journal/journal-of-parallel-and-distributed-computing) (JPDC).
+This is the replication package for the paper *Accelerating k-Nearest Neighbors Search with GPU-Based Top-k Selection* submitted to the [Journal of Parallel and Distributed Computing](https://www.sciencedirect.com/journal/journal-of-parallel-and-distributed-computing) (JPDC).
 
 The paper presents a study of state-of-the-art algorithms for top-k selection and distance computation (used in k-NN search) on (NVIDIA) GPUs. It proposes two novel algorithms, `bits` and `bits-fused`, outperforming the state-of-the-art algorithms. The proposed algorithms are based on the partial Bitonic sort algorithm by Kruliš et al. (2015) and are enhanced with novel optimizations. All algorithms are implemented in CUDA ([CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit)) and evaluated on NVIDIA GPUs (Tesla V100, A100, H100, and L40).
 
