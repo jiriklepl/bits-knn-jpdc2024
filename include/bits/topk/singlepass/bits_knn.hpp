@@ -39,6 +39,10 @@ public:
     std::string id() const override { return "bits-sq"; }
 
 private:
+    // Allocated once per initialization; padding is refreshed during selection.
+    cuda_array<float, 2> padded_dist_;
+    std::size_t partition_size_ = 0;
+
     // partial top k results
     cuda_array<float, 2> tmp_dist_;
     cuda_array<std::int32_t, 2> tmp_label_;

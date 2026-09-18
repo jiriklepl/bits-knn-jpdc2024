@@ -7,6 +7,7 @@ target_include_directories(test PRIVATE
 )
 
 set(TESTS
+    score_validation_test.cpp
     config_parse_test.cpp
     distance/baseline_dist_test.cpp
     distance/eigen_dist_test.cpp
@@ -14,6 +15,7 @@ set(TESTS
     distance/magma_dist_test.cpp
     distance/cutlass_dist_test.cpp
     distance/cublas_dist_test.cpp
+    topk/precomputed_scores_test.cpp
     topk/raft_selection_test.cpp
     topk/partial_bitonic_test.cpp
     topk/bits_knn_test.cpp
