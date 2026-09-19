@@ -10,7 +10,7 @@ partition=gpu-short
 long_time=2:00:00
 
 run_batch() {
-    sbatch -w "$worker" --export=worker,CUDA_ARCHITECTURES,build_dir,account "$@"
+    sbatch -A "$account" -w "$worker" --export=worker,CUDA_ARCHITECTURES,build_dir,account "$@"
 }
 
 # $1 == runner
