@@ -5,12 +5,15 @@ builder=${builder:-"$worker"}
 export CUDA_ARCHITECTURES=${2:-"native"}
 export build_dir=build-hopper
 
+export PATH
+export LD_LIBRARY_PATH
+
 export account=kdss
 partition=gpu-short
 long_time=2:00:00
 
 run_batch() {
-    sbatch -A "$account" -w "$worker" --export=worker,CUDA_ARCHITECTURES,build_dir,account "$@"
+    sbatch -A "$account" -w "$worker" --export=worker,CUDA_ARCHITECTURES,build_dir,account,PATH,LD_LIBRARY_PATH "$@"
 }
 
 # $1 == runner
