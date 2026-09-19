@@ -30,3 +30,6 @@ doc/**/*.fls
 
 external/libs
 examples/a.out
+
+# Generated database input arrays; retain benchmark CSVs and plots separately.
+/data/application-inputs/

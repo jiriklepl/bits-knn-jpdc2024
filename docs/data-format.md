@@ -9,9 +9,9 @@ The files are named `EXPERIMENT-NAME-TIMESTAMP.csv` and `EXPERIMENT-NAME-TIMESTA
   - given the name `NAME`, the `./local-build.sh` script either builds or uses the `build-NAME/knn` binary
 - `TIMESTAMP` is the timestamp of the experiment to distinguish between multiple runs of the same experiment; in our cluster, we use Slurm to schedule the experiments, and the timestamp is replaced by the Slurm job ID
 
-The `.err` files contain checksums (sums of the indices of the database points for each query, `mod 2^32`) for the generated data and report incorrect parameters and parameters that are not supported by the given algorithm/hardware configuration. Note that since some of the distances may be equal, the checksums are not guaranteed to be fully reliable for rigorous verification; however, these situations are quite rare, and even in such cases, the checksums give a close result (usually differing by a few points). For verification, the `-v GOLDEN_IMPLEMENTATION` option can be used to compare the results of one implementation to a "golden" implementation (e.g., the serial implementation).
+For kNN benchmarks, the `.err` files contain checksums (sums of the indices of the database points for each query, `mod 2^32`) for the generated data and report incorrect parameters and parameters that are not supported by the given algorithm/hardware configuration. Note that since some of the distances may be equal, the checksums are not guaranteed to be fully reliable for rigorous verification; however, these situations are quite rare, and even in such cases, the checksums give a close result (usually differing by a few points). For verification, the `-v GOLDEN_IMPLEMENTATION` option can be used to compare the results of one implementation to a "golden" implementation (e.g., the serial implementation).
 
-All the `.csv` files report runtimes in seconds for each phase of the computation and the parameters of the experiments. They follow a uniform format:
+The kNN `.csv` files report runtimes in seconds for each phase of the computation and the parameters of the experiments. They follow a uniform format:
 
 ```csv
 algorithm,generator,preprocessor,iteration,point_count,query_count,dim,block_size,k,items_per_thread,deg,phase,time
@@ -45,3 +45,17 @@ partial-bitonic,uniform,identity,0,16777216,64,1,64,32,"1,1,1",1,transfer-out,5.
   - `distances` is the computation of the distances (used when evaluating the distance computation algorithms; when evaluating the fused distance computation and top-k selection algorithms, it is used to compare the combined time of the distance computation and the selection phase of the un-fused algorithms to the time of the fused algorithm)
   - `selection` is the top-k selection phase (used when evaluating the top-k selection algorithms, which includes all the experiments except the distance computation algorithms; fused algorithms report their time as `selection` time)
 - `time` is the time in seconds spent in the given phase
+
+## Database top-N
+
+`scripts/run-database-topn.sh` uses the same file naming convention: `data/database-topn-NAME-JOB.csv` and `.err`. Its columns describe a single table query rather than a kNN distance matrix:
+
+```csv
+dataset_id,backend,rows,k,retention_ratio,degree,block_size,items_per_thread,iteration,phase,seconds
+```
+
+`dataset_id` is the input manifest's SHA-256, `rows` is the table size, and `retention_ratio` is `k / rows`. The configuration fields record the effective selector parameters. GridSelect uses zero for the block size and items per thread because its library selects them internally.
+
+`operator` measures the full GPU transform, selection, required sorting and row gathering through the existing wrappers. `download` measures result transfer. `transform_isolated`, `selection_isolated`, and `output_isolated` measure a separate profiling invocation; adding them does not reconstruct `operator` latency. `upload_shared` occurs once, at iteration -1, and is repeated under each backend label. Every iteration starting at zero is measured: database warmups are not written to the CSV, so the kNN plotting warmup filter must not be applied.
+
+The `.err` log records the input provenance, command, executable digest, GPU and CUDA versions, and any verification failure. The batch script emits timing CSV only after all requested k values pass verification. Analysis produces median, 25th/75th percentile latency in milliseconds and sample counts for each dataset, configuration and phase.

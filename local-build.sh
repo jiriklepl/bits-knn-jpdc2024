@@ -16,7 +16,7 @@ run_batch() {
     dirname "$out_file" | xargs mkdir -p
     dirname "$err_file" | xargs mkdir -p
 
-    "$@" >"$out_file" 2>"$err_file" || true
+    "$@" >"$out_file" 2>"$err_file"
 }
 
 # $1 == runner

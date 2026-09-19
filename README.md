@@ -181,6 +181,11 @@ The figures in the paper show the following plots:
 For more information about the setup used to collect the benchmarking results, see the [used-setup.md](docs/used-setup.md) file.
 
 
+## Database top-N benchmark
+
+The GPU database operator ranks exported TPC-H rows using FP32 discounted price and compares BITS, split BITS, AIR Top-K, GridSelect and BlockSelect. Its `database-build` / `database-test` commands work with the same `*-build.sh` wrappers, and `scripts/run-database-topn.sh` produces the usual per-job data files. Analyze them with `scripts/plot-all.sh database-topn`.
+
+
 ## Demonstration and testing
 
 If you want to quickly demonstrate the proposed algorithms and run the tests validating the correctness of the algorithms, run the following commands (replace `CUDA_ARCHITECTURES` with the compute capability of your GPU, e.g., `90` for NVIDIA H100, and `NAME` with the chosen name that distinguishes your build from others):

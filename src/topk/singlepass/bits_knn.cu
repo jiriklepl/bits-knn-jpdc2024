@@ -15,7 +15,9 @@
 #include "bits/topk/singlepass/bits_knn.hpp"
 #include "bits/topk/singlepass/detail/definitions_common.hpp"
 
-#ifdef TOPK_SINGLEPASS_USE_MINIMAL
+#if defined(TOPK_SINGLEPASS_USE_APPLICATIONS)
+#include "bits/topk/singlepass/detail/definitions_application.hpp"
+#elif defined(TOPK_SINGLEPASS_USE_MINIMAL)
 #include "bits/topk/singlepass/detail/definitions_minimal.hpp"
 #else
 #ifndef TOPK_SINGLEPASS_USE_ALL

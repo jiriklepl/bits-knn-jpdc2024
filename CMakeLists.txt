@@ -153,3 +153,6 @@ add_subdirectory(${TEST_DIR})
 target_sources(knn PRIVATE ${SRC_DIR}/main.cpp  $<TARGET_OBJECTS:knn-static> $<TARGET_OBJECTS:dist-all> $<TARGET_OBJECTS:topk> $<TARGET_OBJECTS:topk-multipass-all> $<TARGET_OBJECTS:topk-singlepass-all>)
 target_sources(knn-minimal PRIVATE ${SRC_DIR}/main.cpp  $<TARGET_OBJECTS:knn-static> $<TARGET_OBJECTS:dist-minimal> $<TARGET_OBJECTS:topk> $<TARGET_OBJECTS:topk-multipass-minimal> $<TARGET_OBJECTS:topk-singlepass-minimal>)
 target_sources(test PRIVATE $<TARGET_OBJECTS:knn-static> $<TARGET_OBJECTS:dist-all> $<TARGET_OBJECTS:topk> $<TARGET_OBJECTS:topk-singlepass-minimal>)
+
+# GPU application operators use the existing selection backends.
+add_subdirectory(${SRC_DIR}/applications)
