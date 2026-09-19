@@ -14,7 +14,7 @@ if [ -z "$build_dir" ]; then
 fi
 
 if [ "$3" == "build" ] || [ "$3" == "minimal-build" ] || [ "$3" == "all" ] || [ -z "$3" ]; then
-    run_single "$builder" cmake -B "$build_dir" -D CMAKE_BUILD_TYPE=Release -D CMAKE_CUDA_ARCHITECTURES="$CUDA_ARCHITECTURES" -S .
+    run_single "$builder" cmake  -S . -B "$build_dir" -D CMAKE_BUILD_TYPE=Release -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D CMAKE_CUDA_ARCHITECTURES="$CUDA_ARCHITECTURES"
 
     if [ "$3" == "minimal-build" ]; then
         run_single "$builder" cmake --build "$build_dir" --config Release --parallel "$NPROC" -t knn-minimal
