@@ -19,6 +19,7 @@ DEFAULT_MODEL = "distilbert/distilgpt2"
 # https://huggingface.co/distilbert/distilgpt2/tree/2290a62682d06624634c1f46a6ad5be0f47f38aa
 DEFAULT_REVISION = "2290a62682d06624634c1f46a6ad5be0f47f38aa"
 DEFAULT_PARAMETER = "transformer.h.0.mlp.c_fc.weight"
+GRADIENT_LOSS = "mean causal next-token cross entropy; padding labels ignored (-100)"
 DEFAULT_PROMPTS = [
     "The morning train arrived at the station just as the rain began.",
     "To prepare the vegetable soup, first wash and chop the carrots.",
@@ -66,6 +67,9 @@ def export_model_input(
     seed=42,
     threads=1,
     cache_directory=None,
+    microbatch_size=8,
+    prompt_origin=None,
+    local_files_only=False,
 ):
     """Export last-token logits or the unsliced gradient of one named parameter."""
     if operator not in {"token-sampling", "gradient-compression"}:
@@ -75,6 +79,16 @@ def export_model_input(
         raise ValueError("The export destination must not already exist")
     prompts = list(DEFAULT_PROMPTS) if prompts is None else prompts
     revision = validate_capture_options(model, revision, prompts, seed, threads)
+    if (
+        isinstance(microbatch_size, bool)
+        or not isinstance(microbatch_size, int)
+        or microbatch_size <= 0
+    ):
+        raise ValueError("microbatch_size must be a positive integer")
+    if prompt_origin is not None and (
+        not isinstance(prompt_origin, str) or not prompt_origin.strip()
+    ):
+        raise ValueError("prompt_origin must be a nonempty string")
     if operator == "token-sampling" and parameter is not None:
         raise ValueError("parameter only applies to gradient-compression")
     parameter = DEFAULT_PARAMETER if parameter is None else parameter
@@ -96,6 +110,7 @@ def export_model_input(
             repo_id=model,
             revision=revision,
             cache_dir=cache_directory,
+            local_files_only=local_files_only,
             allow_patterns=[
                 "config.json",
                 "generation_config.json",
@@ -165,9 +180,12 @@ def export_model_input(
             if path.is_file()
         },
         "prompts": prompts,
-        "prompt_origin": "fixed benchmark sentences"
-        if prompts == DEFAULT_PROMPTS
-        else "user-supplied",
+        "prompt_origin": prompt_origin
+        or (
+            "fixed benchmark sentences"
+            if prompts == DEFAULT_PROMPTS
+            else "user-supplied"
+        ),
         **token_data,
         "input_tokens_sha256": hashlib.sha256(
             json.dumps(token_data, sort_keys=True, separators=(",", ":")).encode(
@@ -214,12 +232,26 @@ def export_model_input(
     }
     manifest = {"version": 1, "operator": operator, "source": source, "columns": {}}
     if operator == "token-sampling":
+        values = np.empty((len(prompts), network.config.vocab_size), dtype="<f4")
         with torch.no_grad():
-            logits = network(
-                input_ids=input_ids, attention_mask=attention_mask, use_cache=False
-            ).logits
-        values = logits[torch.arange(len(prompts)), lengths - 1, :].contiguous().numpy()
-        source["capture"]["position"] = "last nonpadding token of each prompt"
+            for begin in range(0, len(prompts), microbatch_size):
+                end = min(begin + microbatch_size, len(prompts))
+                logits = network(
+                    input_ids=input_ids[begin:end],
+                    attention_mask=attention_mask[begin:end],
+                    use_cache=False,
+                ).logits
+                values[begin:end] = (
+                    logits[torch.arange(end - begin), lengths[begin:end] - 1, :]
+                    .contiguous()
+                    .numpy()
+                )
+                del logits
+        source["capture"].update(
+            position="last nonpadding token of each prompt",
+            microbatch_size=min(microbatch_size, len(prompts)),
+            forward_passes=(len(prompts) + microbatch_size - 1) // microbatch_size,
+        )
         manifest.update(
             batch_size=values.shape[0],
             vocabulary_size=values.shape[1],
@@ -255,7 +287,7 @@ def export_model_input(
         values = chosen.grad.detach().contiguous().numpy()
         source.update(
             parameter=parameter,
-            loss="mean causal next-token cross entropy; padding labels ignored (-100)",
+            loss=GRADIENT_LOSS,
             loss_value=float(loss.detach()),
             loss_target_tokens=int((lengths - 1).sum()),
         )

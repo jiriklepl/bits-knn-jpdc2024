@@ -29,7 +29,7 @@ class AnalysisTests(unittest.TestCase):
     def measurements(
         self,
         digest="a" * 64,
-        degree=32,
+        degree=None,
         multiplier=1,
         backend="bits-sq",
         k=32,
@@ -43,7 +43,9 @@ class AnalysisTests(unittest.TestCase):
                 rows=4096,
                 k=k,
                 retention_ratio=k / 4096,
-                degree=degree,
+                degree=(32 if backend == "bits-sq" else 1)
+                if degree is None
+                else degree,
                 block_size=512,
                 items_per_thread=4,
             )
@@ -130,10 +132,10 @@ class AnalysisTests(unittest.TestCase):
                 ):
                     analysis.validate_plot_summary(summary, self.path, paper)
 
-    def test_paper_rejects_duplicate_backend_k_and_disjoint_configuration_sweeps(self):
+    def test_paper_rejects_baseline_configuration_sweeps_at_same_or_different_k(self):
         for extra in [
-            self.measurements(degree=16),
-            self.measurements(degree=16, k=64)
+            self.measurements(backend="grid-select", block_size=256),
+            self.measurements(backend="grid-select", block_size=256, k=64)
             + self.measurements(backend="air-topk", k=64),
         ]:
             summary = self.summarize(self.comparison() + extra)
@@ -335,7 +337,7 @@ class AnalysisTests(unittest.TestCase):
         axes.set_ylim.assert_not_called()
         self.assertEqual(len(labels), len(analysis.BACKENDS))
         self.assertTrue(all("degree=" in label for label in labels))
-        self.assertTrue(all("batch=" in label for label in labels))
+        self.assertTrue(all("items=" in label for label in labels))
         self.assertTrue(any(label.startswith("BlockSelect") for label in labels))
         axes.set_title.assert_called_once()
 
@@ -356,7 +358,9 @@ class AnalysisTests(unittest.TestCase):
         self.assertTrue(all("speedup_vs_air" in row for row in summary))
 
     def test_cli_prevalidates_paper_before_creating_outputs(self):
-        self.summarize(self.comparison() + self.measurements(degree=16))
+        self.summarize(
+            self.comparison() + self.measurements(backend="grid-select", block_size=256)
+        )
         output = self.path.parent / "plots"
         with patch.object(
             sys, "argv", [str(SCRIPT), str(self.path), "--output-dir", str(output)]

@@ -67,6 +67,18 @@ elif [ "$3" == "database-test" ]; then
 elif [ "$3" == "applications-test" ]; then
     test_applications
     exit 0
+elif [ "$3" == "applications-prepare" ]; then
+    shift 3
+    # Input capture runs on the submitting host, without allocating a GPU.
+    exec python3 scripts/prepare-application-scaling.py \
+        --database-python .venv/bin/python --model-python .venv-model/bin/python "$@"
+elif [ "$3" == "applications-run" ]; then
+    shift 3
+    if [ "${1:-}" == "--help" ] || [ "${1:-}" == "-h" ]; then
+        exec bash scripts/run-application-scaling.sh "$@"
+    fi
+    run_batch scripts/run-application-scaling.sh "$@"
+    exit 0
 elif [ -n "$3" ]; then
     shift 2
     run_batch "$@"

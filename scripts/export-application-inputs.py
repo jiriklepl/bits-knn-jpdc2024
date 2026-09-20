@@ -4,6 +4,7 @@
 import argparse
 import json
 import math
+import tempfile
 from pathlib import Path
 
 from application_inputs import (
@@ -30,79 +31,115 @@ def export_database(destination, scale_factor, extension_directory=None):
     destination = Path(destination)
     if destination.exists():
         raise ValueError("The export destination must not already exist")
-    config = {"threads": "1"}
-    if extension_directory is not None:
-        Path(extension_directory).mkdir(parents=True, exist_ok=True)
-        config["extension_directory"] = str(Path(extension_directory).resolve())
-    with duckdb.connect(config=config) as connection:
-        connection.execute("INSTALL tpch")
-        connection.execute("LOAD tpch")
-        connection.execute("CALL dbgen(sf=?)", [scale_factor])
-        extension_version = connection.execute(
-            "SELECT extension_version FROM duckdb_extensions() "
-            "WHERE extension_name = 'tpch'"
-        ).fetchone()[0]
-        arrays = connection.execute(QUERY).fetchnumpy()
-    rows = len(arrays["price"])
-    if not 0 < rows <= 2**31 - 1:
-        raise ValueError("Generated table must have a positive int32 row count")
-    # Convert exported SQL FLOAT columns, never SQL DECIMAL ranking expressions.
-    for name, (dtype, _) in COLUMN_TYPES.items():
-        value = arrays[name]
-        if np.ma.isMaskedArray(value) and np.any(value.mask):
-            raise ValueError(f"NULL values in {name}")
-        arrays[name] = np.ascontiguousarray(
-            value, dtype="<f4" if dtype == "float32" else "<u8"
-        )
-        if dtype == "float32" and not np.isfinite(arrays[name]).all():
-            raise ValueError(f"Nonfinite values in {name}")
-    with np.errstate(over="ignore", invalid="ignore"):
-        scores = arrays["price"] * (np.float32(1) - arrays["discount"])
-    if not np.isfinite(scores).all():
-        raise ValueError("Nonfinite FP32 ranking scores")
-    manifest = {
-        "version": 1,
-        "operator": "database-topn",
-        "rows": rows,
-        "semantics": SEMANTICS,
-        "source": {
-            "kind": "generated-tpch",
-            "table": "lineitem",
-            "duckdb_version": duckdb.__version__,
-            "tpch_extension_version": extension_version,
-            "numpy_version": np.__version__,
-            "scale_factor": scale_factor,
-            "generation": "CALL dbgen(sf=?)",
-            "threads": 1,
-            "seed": "DuckDB dbgen defaults; no seed override",
-            "export_query": QUERY,
-            "row_identity": "l_orderkey * 8 + l_linenumber",
-            "payload": "l_quantity cast to FLOAT",
-            "filter": "none",
-            "preprocessing": (
-                "Cast raw numeric columns to FP32; order by orderkey, linenumber"
-            ),
-        },
-        "columns": {},
-    }
-    destination.mkdir(parents=True)
-    for name, (dtype, _) in COLUMN_TYPES.items():
-        filename = name + (".f32" if dtype == "float32" else ".u64")
-        output = destination / filename
-        arrays[name].tofile(output)
-        manifest["columns"][name] = {
-            "file": filename,
-            "dtype": dtype,
-            "shape": [rows],
-            "byte_order": "little",
-            "sha256": sha256_file(output),
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    # A disk-backed database and bounded result chunks let SF10 run on modest RAM.
+    # DuckDB's TPC-H extension generates all tables; only lineitem is exported.
+    with tempfile.TemporaryDirectory(
+        prefix=".tpch-export-", dir=destination.parent
+    ) as temporary:
+        temporary = Path(temporary)
+        output_directory = temporary / "output"
+        output_directory.mkdir()
+        config = {
+            "threads": "1",
+            "memory_limit": "3GB",
+            "temp_directory": str(temporary / "spill"),
         }
-    manifest_path = destination / "manifest.json"
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    load_database_manifest(manifest_path)
-    return manifest_path
+        if extension_directory is not None:
+            Path(extension_directory).mkdir(parents=True, exist_ok=True)
+            config["extension_directory"] = str(Path(extension_directory).resolve())
+        with duckdb.connect(
+            str(temporary / "tpch.duckdb"), config=config
+        ) as connection:
+            connection.execute("INSTALL tpch")
+            connection.execute("LOAD tpch")
+            connection.execute("CALL dbgen(sf=?)", [scale_factor])
+            extension_version = connection.execute(
+                "SELECT extension_version FROM duckdb_extensions() "
+                "WHERE extension_name = 'tpch'"
+            ).fetchone()[0]
+            rows = connection.execute("SELECT count(*) FROM lineitem").fetchone()[0]
+            if not 0 < rows <= 2**31 - 1:
+                raise ValueError("Generated table must have a positive int32 row count")
+            files = {
+                name: output_directory
+                / (name + (".f32" if dtype == "float32" else ".u64"))
+                for name, (dtype, _) in COLUMN_TYPES.items()
+            }
+            from contextlib import ExitStack
+
+            with ExitStack() as stack:
+                streams = {
+                    name: stack.enter_context(path.open("wb"))
+                    for name, path in files.items()
+                }
+                connection.execute(QUERY)
+                written = 0
+                while chunk := connection.fetchmany(65536):
+                    arrays = {}
+                    for index, (name, (dtype, _)) in enumerate(COLUMN_TYPES.items()):
+                        if any(row[index] is None for row in chunk):
+                            raise ValueError(f"NULL values in {name}")
+                        arrays[name] = np.fromiter(
+                            (row[index] for row in chunk),
+                            dtype="<f4" if dtype == "float32" else "<u8",
+                            count=len(chunk),
+                        )
+                        if dtype == "float32" and not np.isfinite(arrays[name]).all():
+                            raise ValueError(f"Nonfinite values in {name}")
+                    with np.errstate(over="ignore", invalid="ignore"):
+                        scores = arrays["price"] * (np.float32(1) - arrays["discount"])
+                    if not np.isfinite(scores).all():
+                        raise ValueError("Nonfinite FP32 ranking scores")
+                    for name in COLUMN_TYPES:
+                        arrays[name].tofile(streams[name])
+                    written += len(chunk)
+                if written != rows:
+                    raise ValueError("Export row count differs from generated table")
+        manifest = {
+            "version": 1,
+            "operator": "database-topn",
+            "rows": rows,
+            "semantics": SEMANTICS,
+            "source": {
+                "kind": "generated-tpch",
+                "table": "lineitem",
+                "duckdb_version": duckdb.__version__,
+                "tpch_extension_version": extension_version,
+                "numpy_version": np.__version__,
+                "scale_factor": scale_factor,
+                "generation": "CALL dbgen(sf=?)",
+                "threads": 1,
+                "seed": "DuckDB dbgen defaults; no seed override",
+                "export_query": QUERY,
+                "row_identity": "l_orderkey * 8 + l_linenumber",
+                "payload": "l_quantity cast to FLOAT",
+                "filter": "none",
+                "preprocessing": (
+                    "Cast raw numeric columns to FP32; order by orderkey, linenumber"
+                ),
+                "export_storage": "temporary disk-backed DuckDB database",
+                "database_memory_limit": "3GB",
+                "export_chunk_rows": 65536,
+            },
+            "columns": {
+                name: {
+                    "file": files[name].name,
+                    "dtype": dtype,
+                    "shape": [rows],
+                    "byte_order": "little",
+                    "sha256": sha256_file(files[name]),
+                }
+                for name, (dtype, _) in COLUMN_TYPES.items()
+            },
+        }
+        manifest_path = output_directory / "manifest.json"
+        manifest_path.write_text(
+            json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        load_database_manifest(manifest_path)
+        output_directory.rename(destination)
+    return destination / "manifest.json"
 
 
 def main():
@@ -147,6 +184,21 @@ def main():
         model_parser.add_argument(
             "--cache-directory", type=Path, help="Optional Hugging Face model cache"
         )
+        model_parser.add_argument(
+            "--local-files-only",
+            action="store_true",
+            help="Use only cached model files",
+        )
+        model_parser.add_argument(
+            "--prompt-origin", help="Description of the reproducible prompt source"
+        )
+        if operator == "token-sampling":
+            model_parser.add_argument(
+                "--microbatch-size",
+                type=int,
+                default=8,
+                help="Prompts per CPU forward pass; limits intermediate logits memory",
+            )
         if operator == "gradient-compression":
             model_parser.add_argument(
                 "--parameter",
@@ -179,6 +231,9 @@ def main():
                 seed=args.seed,
                 threads=args.threads,
                 cache_directory=args.cache_directory,
+                microbatch_size=getattr(args, "microbatch_size", 8),
+                prompt_origin=args.prompt_origin,
+                local_files_only=args.local_files_only,
             )
     except (ValueError, OSError, ImportError, RuntimeError) as error:
         parser.exit(1, f"{error}\n")

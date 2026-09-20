@@ -293,6 +293,23 @@ class ModelExportValidationTests(unittest.TestCase):
                 export_model_input("token-sampling", root)
             self.assertEqual(marker.read_text(), "keep")
 
+    def test_microbatch_and_prompt_origin_validation_precedes_dependencies(self):
+        with tempfile.TemporaryDirectory() as root:
+            destination = Path(root) / "new"
+            for value in [0, -1, True, 1.5, "8"]:
+                with self.subTest(microbatch_size=value):
+                    with self.assertRaisesRegex(ValueError, "microbatch_size"):
+                        export_model_input(
+                            "token-sampling", destination, microbatch_size=value
+                        )
+            for value in ["", "  ", 1]:
+                with self.subTest(prompt_origin=value):
+                    with self.assertRaisesRegex(ValueError, "prompt_origin"):
+                        export_model_input(
+                            "token-sampling", destination, prompt_origin=value
+                        )
+            self.assertFalse(destination.exists())
+
     def test_exporter_rejects_options_for_wrong_operator(self):
         for args in [
             ["database-topn", "--temperature", "1"],

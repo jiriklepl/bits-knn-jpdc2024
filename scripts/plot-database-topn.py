@@ -12,7 +12,9 @@ import sys
 from application_plotting import (
     add_speedup_series,
     annotate_paper_selection,
+    configuration_pages,
     fit_speedup_axes,
+    global_configuration_label,
     select_paper_rows,
 )
 
@@ -204,7 +206,9 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
     markers = tuple(dict.fromkeys(utils.SHAPES))
     suffix = ("-paper-global" if selection == "global" else "-paper") if paper else ""
     with PdfPages(output_dir / f"{path.stem}{suffix}.pdf") as pdf:
-        for (digest, rows), values in sorted(datasets.items()):
+        for (digest, rows), degree_page, values in configuration_pages(
+            datasets, paper=paper
+        ):
             series = defaultdict(list)
             for row in values:
                 key = (
@@ -224,7 +228,7 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
             # Preserve the plotting area as sweep legends gain more rows.
             legend_rows = math.ceil(len(series) / 2)
             height = 5 + (0 if paper else 0.18 * max(0, legend_rows - 5))
-            fig, ax = plt.subplots(figsize=(7, height))
+            fig, ax = plt.subplots(figsize=(7 if paper else 8, height))
             ordered = sorted(
                 series.items(),
                 key=lambda pair: (BACKENDS.index(pair[0][0]), pair[0][1:]),
@@ -240,16 +244,9 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
                 label = LABELS[index]
                 if not paper:
                     _, degree, block, items = config
-                    label += f" (degree={degree}, block={block}, batch={items})"
-                elif selection == "global" and backend in (
-                    "bits",
-                    "bits-prefetch",
-                    "bits-sq",
-                ):
-                    label += (
-                        f" [block={points[0]['block_size']}, "
-                        f"items={points[0]['items_per_thread']}]"
-                    )
+                    label += f" (degree={degree}, block={block}, items={items})"
+                elif selection == "global":
+                    label += global_configuration_label(backend, points[0])
                 handle = add_speedup_series(
                     ax,
                     points,
@@ -266,8 +263,11 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
             ax.set_xlabel("Selected rows (k)")
             ax.set_ylabel("Full operator\nspeedup vs AIR Top-K [×]")
             if not paper:
+                split_detail = (
+                    f"; split degree={degree_page}" if degree_page is not None else ""
+                )
                 ax.set_title(
-                    f"{rows:,} rows; input {digest[:10]}\n"
+                    f"{rows:,} rows; input {digest[:10]}{split_detail}\n"
                     "AIR median / backend median; >1 is faster\n"
                     "Bars: backend IQR; AIR median fixed",
                     fontsize=11,

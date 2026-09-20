@@ -66,6 +66,8 @@ class PaperSelectionTests(unittest.TestCase):
             )
             | settings
         )
+        if "degree" not in settings and config["backend"] in ("bits", "bits-prefetch"):
+            config["degree"] = 1
         return [
             config | dict(phase="operator", median_ms=operator_ms),
             config | dict(phase="selection_isolated", median_ms=selection_ms),
@@ -83,22 +85,23 @@ class PaperSelectionTests(unittest.TestCase):
         self.assertEqual([row["items_per_thread"] for row in chosen], [13, 13])
         self.assertEqual([row["median_ms"] for row in chosen], [2, 0.5])
 
-    def test_exact_ties_use_smaller_blocks_then_fewer_items(self):
+    def test_exact_ties_use_smaller_blocks_then_fewer_items_then_degree(self):
         rows = (
             self.rows(512, 2, 0.1, items_per_thread=4)
             + self.rows(128, 2, 0.5, items_per_thread=13)
             + self.rows(128, 2, 0.5, items_per_thread=7)
+            + self.rows(128, 2, 0.5, items_per_thread=7, degree=8)
         )
         for selection in ("per-k", "global"):
             for values in (rows, list(reversed(rows))):
                 self.assertEqual(
                     {
-                        (r["block_size"], r["items_per_thread"])
+                        (r["block_size"], r["items_per_thread"], r["degree"])
                         for r in select_paper_rows(
                             values, "test.csv", selection=selection
                         )
                     },
-                    {(128, 7)},
+                    {(128, 7, 8)},
                 )
 
     def test_annotations_keep_workloads_k_and_backend_ids_separate(self):
@@ -178,6 +181,82 @@ class PaperSelectionTests(unittest.TestCase):
         self.assertEqual({r["items_per_thread"] for r in chosen}, {8})
         with self.assertRaisesRegex(ValueError, "measured at every k"):
             select_paper_rows(partial, "test.csv", selection="global")
+
+    def test_degree_sweep_selects_operator_winner_and_marks_each_phase(self):
+        rows = (
+            self.rows(128, 1, 9, k=32, degree=8)
+            + self.rows(128, 9, 1, k=64, degree=8)
+            + self.rows(128, 4, 0.1, k=32, degree=32)
+            + self.rows(128, 4, 0.1, k=64, degree=32)
+        )
+        annotated = annotate_paper_selection(rows, ("dataset_id",), "test.csv")
+        for row in annotated:
+            expected = 8 if row["k"] == 32 else 32
+            self.assertEqual(row["paper_selected"], row["degree"] == expected)
+            self.assertEqual(row["paper_global_selected"], row["degree"] == 8)
+
+    def test_global_never_combines_incomplete_degrees_at_one_block_item_pair(self):
+        partial = self.rows(128, 0.1, 1, k=32, degree=8) + self.rows(
+            128, 0.1, 1, k=64, degree=32
+        )
+        complete = self.rows(128, 2, 1, k=32, degree=128) + self.rows(
+            128, 2, 1, k=64, degree=128
+        )
+        chosen = select_paper_rows(partial + complete, "test.csv", selection="global")
+        self.assertEqual({row["degree"] for row in chosen}, {128})
+        with self.assertRaisesRegex(ValueError, "measured at every k"):
+            select_paper_rows(partial, "test.csv", selection="global")
+
+    def test_custom_points_select_one_configuration_across_sizes_and_retention_ratios(
+        self
+    ):
+        rows = []
+        for dataset, k in (("small", 32), ("large", 128)):
+            for ratio in (0.01, 0.1):
+                for degree in (8, 32):
+                    latency = {
+                        ("small", 8): 1,
+                        ("small", 32): 4,
+                        ("large", 8): 9,
+                        ("large", 32): 4,
+                    }[dataset, degree]
+                    rows += self.rows(
+                        128,
+                        latency,
+                        10 / latency,
+                        k=k,
+                        degree=degree,
+                        workload_id=dataset,
+                        scenario=ratio,
+                    )
+        fields = ("workload_id", "scenario")
+        per_point = select_paper_rows(rows, "test.csv", point_fields=fields)
+        for row in per_point:
+            self.assertEqual(row["degree"], 8 if row["workload_id"] == "small" else 32)
+        global_rows = select_paper_rows(
+            rows, "test.csv", point_fields=fields, selection="global"
+        )
+        self.assertEqual(len(global_rows), 8)
+        self.assertEqual({row["degree"] for row in global_rows}, {8})
+        self.assertEqual({row["k"] for row in global_rows}, {32, 128})
+
+    def test_ordinary_bits_requires_degree_one_and_baselines_remain_fixed(self):
+        for backend in ("bits", "bits-prefetch"):
+            for selection in ("per-k", "global"):
+                with self.subTest(backend=backend, selection=selection):
+                    with self.assertRaisesRegex(ValueError, "degree=1"):
+                        select_paper_rows(
+                            self.rows(128, 1, 1, backend=backend, degree=8),
+                            "test.csv",
+                            selection=selection,
+                        )
+        for backend in ("air-topk", "grid-select"):
+            for dimension in ("degree", "block_size", "items_per_thread"):
+                rows = self.rows(128, 1, 1, backend=backend)
+                rows += [row | {dimension: row[dimension] * 2, "k": 64} for row in rows]
+                with self.subTest(backend=backend, dimension=dimension):
+                    with self.assertRaisesRegex(ValueError, "fixed configuration"):
+                        select_paper_rows(rows, "test.csv")
 
     def test_global_ties_and_large_values_are_deterministic(self):
         rows = (
@@ -333,7 +412,8 @@ class ApplicationRenderTests(unittest.TestCase):
             else:
                 self.tensor.plot_pages(summary, path)
                 self.tensor.plot(summary, path, self.root)
-        self.assertEqual(len(captured), 3)
+        degrees = {row["degree"] for row in summary if row["backend"] == "bits-sq"}
+        self.assertEqual(len(captured), max(1, len(degrees)) + 2)
         self.assertEqual(
             {filename.name for filename, _ in captured},
             {
@@ -427,11 +507,17 @@ class ApplicationRenderTests(unittest.TestCase):
         self.assertIn("s", [handle.get_marker() for handle in handles])
         labels = [text.get_text() for text in legend.get_texts()]
         self.assertEqual(any("BlockSelect" in label for label in labels), not paper)
-        for label in labels:
-            self.assertEqual("degree=" in label, not paper)
+        for label, backend in zip(labels, visible):
+            self.assertEqual(
+                "degree=" in label,
+                not paper
+                or (filename.stem.endswith("-paper-global") and backend == "bits-sq"),
+            )
         if filename.stem.endswith("-paper-global"):
             for label, backend in zip(labels, visible):
-                if backend in ("bits-prefetch", "bits-sq"):
+                if backend == "bits-sq":
+                    self.assertTrue(label.endswith("[degree=32, block=512, items=4]"))
+                elif backend == "bits-prefetch":
                     self.assertTrue(label.endswith("[block=512, items=4]"))
                 else:
                     self.assertNotIn("block=", label)
@@ -484,25 +570,43 @@ class ApplicationRenderTests(unittest.TestCase):
                         continue
                     for block in (128, 256, 512):
                         for items in (4, 7, 8, 13, 16):
-                            winner = (128, 13) if row["k"] == 32 else (512, 7)
-                            # Reverse the isolated-selection ranking to ensure the
-                            # paper's second panel carries the operator winner.
-                            factor = 0.5 if (block, items) == winner else 2
-                            if (block, items) == winner and row["k"] == 32:
-                                factor = 0.25  # Unique global winner: (128, 13).
-                            if row["phase"] == "selection_isolated":
-                                factor = 1 / factor
-                            variants.append(
-                                row
-                                | {
-                                    "block_size": block,
-                                    "items_per_thread": items,
-                                    "median_ms": row["median_ms"] * factor,
-                                    "p25_ms": row["p25_ms"] * factor,
-                                    "p75_ms": row["p75_ms"] * factor,
-                                    "speedup_vs_air": row["speedup_vs_air"] / factor,
-                                }
+                            degrees = (
+                                (8, 32, 128, 512)
+                                if row["backend"] == "bits-sq"
+                                else (1,)
                             )
+                            for degree in degrees:
+                                best_degree = (
+                                    (8 if row["k"] == 32 else 32)
+                                    if row["backend"] == "bits-sq"
+                                    else 1
+                                )
+                                winner = (
+                                    (128, 13, best_degree)
+                                    if row["k"] == 32
+                                    else (512, 7, best_degree)
+                                )
+                                # Reverse the isolated-selection ranking to ensure the
+                                # paper's second panel carries the operator winner.
+                                factor = 0.5 if (block, items, degree) == winner else 2
+                                if (block, items, degree) == winner and row["k"] == 32:
+                                    factor = 0.25  # Unique global winner at k=32.
+                                if row["phase"] == "selection_isolated":
+                                    factor = 1 / factor
+                                variants.append(
+                                    row
+                                    | {
+                                        "degree": degree,
+                                        "block_size": block,
+                                        "items_per_thread": items,
+                                        "median_ms": row["median_ms"] * factor,
+                                        "p25_ms": row["p25_ms"] * factor,
+                                        "p75_ms": row["p75_ms"] * factor,
+                                        "speedup_vs_air": row["speedup_vs_air"]
+                                        / factor,
+                                    }
+                                )
+                plotted_split_degrees = []
                 for filename, figure in self.render(operator, variants):
                     paper = filename.stem.endswith(("-paper", "-paper-global"))
                     global_choice = filename.stem.endswith("-paper-global")
@@ -537,11 +641,19 @@ class ApplicationRenderTests(unittest.TestCase):
                                     and row["backend"] == backend
                                     and (
                                         backend not in ("bits-prefetch", "bits-sq")
-                                        or (row["block_size"], row["items_per_thread"])
+                                        or (
+                                            row["block_size"],
+                                            row["items_per_thread"],
+                                            row["degree"],
+                                        )
                                         == (
-                                            (128, 13)
+                                            (128, 13, 8 if backend == "bits-sq" else 1)
                                             if global_choice or row["k"] == 32
-                                            else (512, 7)
+                                            else (
+                                                512,
+                                                7,
+                                                32 if backend == "bits-sq" else 1,
+                                            )
                                         )
                                     )
                                 ]
@@ -560,10 +672,27 @@ class ApplicationRenderTests(unittest.TestCase):
                             labels[:2],
                             [
                                 "BITS [block=128, items=13]",
-                                "BITS (split) [block=128, items=13]",
+                                "BITS (split) [degree=8, block=128, items=13]",
                             ],
                         )
                     if not paper:
+                        split_labels = [
+                            label
+                            for label in labels
+                            if label.startswith("BITS (split)")
+                        ]
+                        degree = int(split_labels[0].split("degree=")[1].split(",")[0])
+                        plotted_split_degrees.append(degree)
+                        self.assertEqual(len(split_labels), 15)
+                        self.assertTrue(
+                            all(f"degree={degree}," in label for label in split_labels)
+                        )
+                        title = (
+                            figure._suptitle.get_text()
+                            if figure._suptitle
+                            else figure.axes[0].get_title()
+                        )
+                        self.assertIn(f"split degree={degree}", title)
                         for block in (128, 256, 512):
                             self.assertEqual(
                                 sum(
@@ -581,6 +710,7 @@ class ApplicationRenderTests(unittest.TestCase):
                     )
                     self.assertGreaterEqual(bounds.x0, figure.bbox.x0)
                     self.assertLessEqual(bounds.x1, figure.bbox.x1)
+                self.assertEqual(plotted_split_degrees, [8, 32, 128, 512])
 
 
 if __name__ == "__main__":

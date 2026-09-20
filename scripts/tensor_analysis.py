@@ -8,7 +8,12 @@ from pathlib import Path
 from statistics import median, quantiles
 import sys
 
-from application_plotting import annotate_paper_selection, select_paper_rows
+from application_plotting import (
+    annotate_paper_selection,
+    configuration_pages,
+    global_configuration_label,
+    select_paper_rows,
+)
 
 OPERATORS = ("token-sampling", "gradient-compression")
 BACKENDS = (
@@ -239,9 +244,10 @@ def plot(summary, path, output_dir):
         ("-paper-global", True, global_paper_pages),
     ):
         with PdfPages(output_dir / f"{path.stem}{suffix}.pdf") as pdf:
-            for (operator, digest, rows, batch, temperature, seed), points in sorted(
-                selected_pages.items()
+            for key, degree_page, points in configuration_pages(
+                selected_pages, paper=paper
             ):
+                operator, digest, rows, batch, temperature, seed = key
                 visible = [
                     row
                     for row in points
@@ -301,16 +307,9 @@ def plot(summary, path, output_dir):
                         label = LABELS[index]
                         if not paper:
                             _, degree, block, items = key
-                            label += f" (degree={degree}, block={block}, batch={items})"
-                        elif suffix == "-paper-global" and backend in (
-                            "bits",
-                            "bits-prefetch",
-                            "bits-sq",
-                        ):
-                            label += (
-                                f" [block={values[0]['block_size']}, "
-                                f"items={values[0]['items_per_thread']}]"
-                            )
+                            label += f" (degree={degree}, block={block}, items={items})"
+                        elif suffix == "-paper-global":
+                            label += global_configuration_label(backend, values[0])
                         handle = add_speedup_series(
                             ax,
                             values,
@@ -336,6 +335,8 @@ def plot(summary, path, output_dir):
                 if not paper:
                     axes[0].set_ylabel("Speedup vs AIR Top-K [×]")
                     detail = f"{rows:,} candidates; batch={batch}; input {digest[:10]}"
+                    if degree_page is not None:
+                        detail += f"; split degree={degree_page}"
                     if operator == "token-sampling":
                         detail += f"; temperature={temperature!r}; seed={seed}"
                     fig.suptitle(

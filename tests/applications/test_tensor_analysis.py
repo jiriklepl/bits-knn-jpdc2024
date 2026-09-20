@@ -227,10 +227,10 @@ class TensorAnalysisTests(unittest.TestCase):
             )
         self.assertEqual(summary, original)
 
-    def test_paper_rejects_configuration_changes_even_at_different_k(self):
+    def test_paper_rejects_baseline_configuration_changes_even_at_different_k(self):
         for k in (32, 64):
-            rows = self.measurements(degree=16)
-            rows += self.measurements(degree=32, k=k)
+            rows = self.measurements(backend="grid-select", block_size=128)
+            rows += self.measurements(backend="grid-select", block_size=256, k=k)
             for air_k in {32, k}:
                 rows += self.measurements(backend="air-topk", k=air_k)
             with self.subTest(k=k), self.assertRaisesRegex(

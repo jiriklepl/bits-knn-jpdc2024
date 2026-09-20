@@ -4,11 +4,12 @@ from collections import defaultdict
 import math
 
 
-def select_paper_rows(rows, path, *, selection="per-k"):
-    """Choose BITS block/item pairs per k or across all k within one workload.
+def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
+    """Choose BITS configurations per k or across all k within one workload.
 
     Carry that configuration into every phase, including isolated selection.
-    Keep degree fixed so a block/item sweep has a single interpretation.
+    Only split BITS may vary degree. Ties prefer block, items, then degree.
+    ``point_fields`` can include workload identity for a shared cross-size choice.
     """
     if selection not in ("per-k", "global"):
         raise ValueError(f"Unknown paper selection mode: {selection}")
@@ -21,25 +22,23 @@ def select_paper_rows(rows, path, *, selection="per-k"):
         config = tuple(
             row[name] for name in ("degree", "block_size", "items_per_thread")
         )
-        point = (row["backend"], row["k"])
+        point = (row["backend"],) + tuple(row[name] for name in point_fields)
         key = point + (row["phase"],) + config
         if key in seen:
             raise ValueError(
                 f"{path}: duplicate configuration for the same backend+k+phase point"
             )
         seen.add(key)
-        fixed = (
-            (row["degree"],)
-            if row["backend"] in ("bits", "bits-prefetch", "bits-sq")
-            else config
-        )
+        if row["backend"] in ("bits", "bits-prefetch") and row["degree"] != 1:
+            raise ValueError(f"{path}: ordinary BITS requires degree=1")
+        fixed = () if row["backend"] in ("bits", "bits-prefetch", "bits-sq") else config
         configurations[row["backend"]].add(fixed)
         if row["phase"] == "operator":
             operators[point].append(row)
     if any(len(values) > 1 for values in configurations.values()):
         raise ValueError(
             f"{path}: paper plots require one fixed configuration per backend "
-            "apart from BITS block size and items per thread; keep degree fixed"
+            "apart from BITS block size/items and split BITS degree"
         )
     if selection == "per-k":
         winners = {
@@ -49,16 +48,17 @@ def select_paper_rows(rows, path, *, selection="per-k"):
                     row["median_ms"],
                     row["block_size"],
                     row["items_per_thread"],
+                    row["degree"],
                 ),
             )
             for point, values in operators.items()
         }
     else:
         candidates = defaultdict(lambda: defaultdict(dict))
-        for (backend, k), values in operators.items():
+        for (backend, *coordinates), values in operators.items():
             for row in values:
-                config = (row["block_size"], row["items_per_thread"])
-                candidates[backend][config][k] = row
+                config = (row["block_size"], row["items_per_thread"], row["degree"])
+                candidates[backend][config][tuple(coordinates)] = row
         winners = {}
         for backend, configs in candidates.items():
             ks = {k for values in configs.values() for k in values}
@@ -68,11 +68,13 @@ def select_paper_rows(rows, path, *, selection="per-k"):
                 if set(values) == ks
             }
             if not complete:
+                coverage = "k" if point_fields == ("k",) else "workload point"
                 raise ValueError(
-                    f"{path}: global paper selection requires a block/item pair "
-                    f"measured at every k for {backend}"
+                    f"{path}: global paper selection requires a "
+                    "block/item/degree configuration "
+                    f"measured at every {coverage} for {backend}"
                 )
-            # All eligible pairs share the same k values and AIR baselines.
+            # All eligible configurations share the same k values and AIR baselines.
             # Minimizing mean log latency therefore maximizes geometric-mean
             # AIR speedup, with equal weight per k and no product overflow.
             config = min(
@@ -85,12 +87,13 @@ def select_paper_rows(rows, path, *, selection="per-k"):
                     config,
                 ),
             )
-            winners.update({(backend, k): row for k, row in complete[config].items()})
+            winners.update({(backend,) + k: row for k, row in complete[config].items()})
     selected = []
     for row in rows:
         if row["backend"] == "block-select":
             continue
-        winner = winners.get((row["backend"], row["k"]))
+        point = (row["backend"],) + tuple(row[name] for name in point_fields)
+        winner = winners.get(point)
         if winner is None:
             raise ValueError(f"{path}: paper selection requires full-operator timings")
         if all(
@@ -99,6 +102,37 @@ def select_paper_rows(rows, path, *, selection="per-k"):
         ):
             selected.append(row)
     return selected
+
+
+def configuration_pages(pages, *, paper):
+    """Bound detailed page size by showing one split degree with all comparisons.
+
+    Repeat every ordinary BITS variant and baseline for each split-degree page.
+    Single-degree inputs retain their existing one-page layout.
+    """
+    for key, rows in sorted(pages.items()):
+        degrees = sorted({r["degree"] for r in rows if r["backend"] == "bits-sq"})
+        if paper or len(degrees) <= 1:
+            yield key, None, rows
+        else:
+            for degree in degrees:
+                yield (
+                    key,
+                    degree,
+                    [
+                        row
+                        for row in rows
+                        if row["backend"] != "bits-sq" or row["degree"] == degree
+                    ],
+                )
+
+
+def global_configuration_label(backend, row):
+    """Describe the one configuration shared by all points of a global curve."""
+    if backend not in ("bits", "bits-prefetch", "bits-sq"):
+        return ""
+    degree = f"degree={row['degree']}, " if backend == "bits-sq" else ""
+    return f" [{degree}block={row['block_size']}, items={row['items_per_thread']}]"
 
 
 def annotate_paper_selection(summary, workload, path):
