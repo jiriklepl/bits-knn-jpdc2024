@@ -141,6 +141,116 @@ class AnalysisTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "paper"):
                 analysis.validate_plot_summary(summary, self.path, paper=True)
 
+    def test_paper_selects_block_sizes_per_backend_and_k(self):
+        rows = []
+        winners = {
+            ("bits-prefetch", 32): 128,
+            ("bits-prefetch", 64): 512,
+            ("bits-sq", 32): 256,
+            ("bits-sq", 64): 128,
+        }
+        for k in (32, 64):
+            rows += self.measurements(backend="air-topk", k=k, multiplier=3)
+            rows += self.measurements(backend="block-select", k=k)
+            for backend in ("bits-prefetch", "bits-sq"):
+                for block in (128, 256, 512):
+                    rows += self.measurements(
+                        backend=backend,
+                        k=k,
+                        block_size=block,
+                        multiplier=1 if block == winners[backend, k] else 2,
+                    )
+        summary = self.summarize(rows)
+        original = copy.deepcopy(summary)
+        detailed = analysis.validate_plot_summary(summary, self.path)
+        paper = analysis.validate_plot_summary(summary, self.path, paper=True)
+        self.assertEqual(sum(map(len, detailed.values())), 16)
+        self.assertEqual(sum(map(len, paper.values())), 6)
+        for values in paper.values():
+            for row in values:
+                if row["backend"] != "air-topk":
+                    self.assertEqual(
+                        row["block_size"], winners[row["backend"], row["k"]]
+                    )
+                    self.assertAlmostEqual(row["median_ms"], 3)
+                    self.assertAlmostEqual(row["speedup_vs_air"], 3)
+        self.assertEqual(summary, original)
+
+        output = self.path.parent / "plots"
+        with patch.object(
+            sys, "argv", [str(SCRIPT), str(self.path), "--output-dir", str(output)]
+        ), patch.object(analysis, "plot"):
+            analysis.main()
+        with (output / self.path.name).open() as source:
+            exported = list(csv.DictReader(source))
+        self.assertEqual(len(exported), len(summary))
+        for row in exported:
+            expected = row["backend"] == "air-topk" or (
+                row["backend"] != "block-select"
+                and int(row["block_size"]) == winners[row["backend"], int(row["k"])]
+            )
+            self.assertEqual(row["paper_selected"], str(expected))
+            self.assertIn("paper_global_selected", row)
+
+    def test_global_paper_uses_one_block_for_all_k_and_exports_its_choice(self):
+        rows = []
+        for k in (32, 64):
+            rows += self.measurements(backend="air-topk", k=k, multiplier=10)
+            for backend in ("bits-prefetch", "bits-sq"):
+                for block in (128, 256):
+                    # Geometric means sqrt(100) and sqrt(160), respectively.
+                    multiplier = {
+                        (128, 32): 1,
+                        (128, 64): 100,
+                        (256, 32): 4,
+                        (256, 64): 40,
+                    }[block, k]
+                    if backend == "bits-prefetch":
+                        multiplier = 1 / multiplier
+                    rows += self.measurements(
+                        backend=backend, k=k, block_size=block, multiplier=multiplier
+                    )
+        summary = self.summarize(rows)
+        pages = analysis.validate_plot_summary(
+            summary, self.path, paper=True, selection="global"
+        )
+        winners = {"bits-prefetch": 256, "bits-sq": 128, "air-topk": 512}
+        for values in pages.values():
+            self.assertEqual(len(values), 6)
+            for row in values:
+                self.assertEqual(row["block_size"], winners[row["backend"]])
+        output = self.path.parent / "plots"
+        with patch.object(
+            sys, "argv", [str(SCRIPT), str(self.path), "--output-dir", str(output)]
+        ), patch.object(analysis, "plot"):
+            analysis.main()
+        with (output / self.path.name).open() as source:
+            exported = list(csv.DictReader(source))
+        self.assertEqual(len(exported), len(summary))
+        for row in exported:
+            self.assertEqual(
+                row["paper_global_selected"],
+                str(int(row["block_size"]) == winners[row["backend"]]),
+            )
+
+    def test_cli_rejects_global_curves_without_a_complete_block_before_output(self):
+        rows = self.measurements(block_size=128, k=32) + self.measurements(
+            block_size=256, k=64
+        )
+        rows += self.measurements(backend="air-topk", k=32) + self.measurements(
+            backend="air-topk", k=64
+        )
+        self.summarize(rows)
+        output = self.path.parent / "plots"
+        with patch.object(
+            sys, "argv", [str(SCRIPT), str(self.path), "--output-dir", str(output)]
+        ), patch.object(analysis, "plot") as plot, patch.object(
+            sys, "stderr"
+        ), self.assertRaises(SystemExit):
+            analysis.main()
+        plot.assert_not_called()
+        self.assertFalse(output.exists())
+
     def test_paper_render_has_short_names_no_titles_and_no_block_select(self):
         summary = self.summarize(self.comparison())
         plt = types.ModuleType("matplotlib.pyplot")
@@ -201,7 +311,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertTrue(any(label.startswith("BlockSelect") for label in labels))
         axes.set_title.assert_called_once()
 
-    def test_cli_automatically_requests_both_versions_and_one_summary(self):
+    def test_cli_automatically_requests_three_versions_and_one_summary(self):
         self.summarize(self.comparison())
         output = self.path.parent / "plots"
         with patch.object(
@@ -209,8 +319,9 @@ class AnalysisTests(unittest.TestCase):
         ), patch.object(analysis, "plot") as plot:
             analysis.main()
         self.assertEqual(
-            [call.kwargs["paper"] for call in plot.call_args_list], [False, True]
+            [call.kwargs["paper"] for call in plot.call_args_list], [False, True, True]
         )
+        self.assertEqual(plot.call_args_list[-1].kwargs["selection"], "global")
         with (output / self.path.name).open() as source:
             summary = list(csv.DictReader(source))
         self.assertEqual({row["backend"] for row in summary}, set(analysis.BACKENDS))
@@ -240,17 +351,18 @@ class AnalysisTests(unittest.TestCase):
         self.assertNotEqual(run.returncode, 0)
         self.assertIn("overwrite an input timing file", run.stderr)
         self.assertEqual(self.path.read_bytes(), original)
-        other = self.path.with_stem(self.path.stem + "-paper")
-        other.write_bytes(original)
         output = self.path.parent / "plots"
-        run = subprocess.run(
-            command + [str(other), "--output-dir", str(output)],
-            capture_output=True,
-            text=True,
-        )
-        self.assertNotEqual(run.returncode, 0)
-        self.assertIn("output paths collide", run.stderr)
-        self.assertFalse(output.exists())
+        for suffix in ("-paper", "-paper-global"):
+            other = self.path.with_stem(self.path.stem + suffix)
+            other.write_bytes(original)
+            run = subprocess.run(
+                command + [str(other), "--output-dir", str(output)],
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(run.returncode, 0)
+            self.assertIn("output paths collide", run.stderr)
+            self.assertFalse(output.exists())
 
     def test_rejects_truncated_duplicate_and_invalid_measurements(self):
         cases = [self.rows[:-1], self.rows + [self.rows[1]], self.rows[1:]]

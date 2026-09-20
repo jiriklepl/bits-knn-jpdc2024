@@ -38,18 +38,25 @@ for k in "$@"; do
     seen[$k]=1
 done
 
+# Publish the CSV only after every k and block size has passed verification.
 temporary=$(mktemp -d)
 trap 'rm -rf "$temporary"' EXIT
 for k in "$@"; do
-    python3 "$root_dir/scripts/run-applications.py" "$manifest" \
-        --binary "$build_dir/$application" \
-        --backends bits-prefetch,bits-sq,air-topk,grid-select,block-select \
-        --degree 32 --bits-block-size 512 --k "$k" --warmup 10 --repeat 30 \
-        > "$temporary/current.csv"
-    if [ -s "$temporary/timings.csv" ]; then
-        sed '1d' "$temporary/current.csv" >> "$temporary/timings.csv"
-    else
-        cat "$temporary/current.csv" > "$temporary/timings.csv"
-    fi
+    for block_size in 128 256 512; do
+        backends=bits-prefetch,bits-sq
+        # The comparison backends do not use the BITS block-size option.
+        if [ "$block_size" -eq 512 ]; then
+            backends+=,air-topk,grid-select,block-select
+        fi
+        python3 "$root_dir/scripts/run-applications.py" "$manifest" \
+            --binary "$build_dir/$application" --backends "$backends" \
+            --degree 32 --bits-block-size "$block_size" --k "$k" --warmup 10 --repeat 30 \
+            > "$temporary/current.csv"
+        if [ -s "$temporary/timings.csv" ]; then
+            sed '1d' "$temporary/current.csv" >> "$temporary/timings.csv"
+        else
+            cat "$temporary/current.csv" > "$temporary/timings.csv"
+        fi
+    done
 done
 cat "$temporary/timings.csv"

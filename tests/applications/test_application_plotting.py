@@ -12,7 +12,11 @@ from unittest.mock import patch
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
-from application_plotting import speedup_errors  # noqa: E402
+from application_plotting import (  # noqa: E402
+    annotate_paper_selection,
+    select_paper_rows,
+    speedup_errors,
+)
 
 
 PLOTTING_AVAILABLE = all(
@@ -47,6 +51,142 @@ class SpeedupErrorTests(unittest.TestCase):
         )
         self.assertEqual(centers, [2])
         self.assertEqual(errors, [[1], [6]])
+
+
+class PaperSelectionTests(unittest.TestCase):
+    def rows(self, block, operator_ms, selection_ms, **settings):
+        config = (
+            dict(
+                dataset_id="a",
+                backend="bits-sq",
+                k=32,
+                degree=32,
+                block_size=block,
+                items_per_thread=4,
+            )
+            | settings
+        )
+        return [
+            config | dict(phase="operator", median_ms=operator_ms),
+            config | dict(phase="selection_isolated", median_ms=selection_ms),
+        ]
+
+    def test_operator_winner_carries_its_own_selection_measurements(self):
+        rows = self.rows(128, 3, 0.1) + self.rows(256, 2, 0.5) + self.rows(512, 4, 0.2)
+        chosen = select_paper_rows(rows, "test.csv")
+        self.assertEqual([row["block_size"] for row in chosen], [256, 256])
+        self.assertEqual([row["median_ms"] for row in chosen], [2, 0.5])
+
+    def test_exact_ties_use_smaller_blocks_regardless_of_input_order(self):
+        rows = self.rows(512, 2, 0.1) + self.rows(128, 2, 0.5)
+        for values in (rows, list(reversed(rows))):
+            self.assertEqual(
+                {row["block_size"] for row in select_paper_rows(values, "test.csv")},
+                {128},
+            )
+
+    def test_annotations_keep_workloads_k_and_backend_ids_separate(self):
+        rows = []
+        expected = {}
+        for dataset in ("a", "b"):
+            for k in (32, 64):
+                for backend in ("bits", "bits-prefetch", "bits-sq"):
+                    winner = 128 if (dataset == "a") == (k == 32) else 512
+                    if backend == "bits":
+                        winner = 512 if winner == 128 else 128
+                    expected[dataset, k, backend] = winner
+                    for block in (128, 512):
+                        rows += self.rows(
+                            block,
+                            1 if block == winner else 2,
+                            0.5,
+                            dataset_id=dataset,
+                            k=k,
+                            backend=backend,
+                        )
+        rows += self.rows(128, 0.01, 0.01, backend="block-select")
+        annotated = annotate_paper_selection(rows, ("dataset_id",), "test.csv")
+        self.assertEqual(len(annotated), len(rows))
+        self.assertTrue(all("paper_selected" not in row for row in rows))
+        for row in annotated:
+            chosen = (
+                row["backend"] != "block-select"
+                and row["block_size"]
+                == expected[row["dataset_id"], row["k"], row["backend"]]
+            )
+            self.assertEqual(row["paper_selected"], chosen)
+
+    def test_duplicate_points_and_missing_operator_are_rejected(self):
+        rows = self.rows(128, 2, 1)
+        with self.assertRaisesRegex(ValueError, "duplicate configuration"):
+            select_paper_rows(rows + rows, "test.csv")
+        with self.assertRaisesRegex(ValueError, "full-operator timings"):
+            select_paper_rows(rows[1:], "test.csv")
+
+    def test_global_uses_geometric_mean_instead_of_total_time_or_per_k_winners(self):
+        # 128 has geometric mean 10; 256 has sqrt(160), but a smaller total.
+        rows = (
+            self.rows(128, 1, 0.9, k=32)
+            + self.rows(128, 100, 90, k=64)
+            + self.rows(256, 4, 0.1, k=32)
+            + self.rows(256, 40, 0.1, k=64)
+        )
+        per_k = select_paper_rows(rows, "test.csv")
+        global_rows = select_paper_rows(rows, "test.csv", selection="global")
+        self.assertEqual(
+            {(r["k"], r["block_size"]) for r in per_k}, {(32, 128), (64, 256)}
+        )
+        self.assertEqual({r["block_size"] for r in global_rows}, {128})
+        self.assertEqual(
+            {r["median_ms"] for r in global_rows if r["phase"] == "selection_isolated"},
+            {0.9, 90},
+        )
+
+    def test_global_candidates_must_cover_every_k(self):
+        partial = self.rows(128, 0.01, 0.01, k=32)
+        complete = self.rows(256, 2, 1, k=32) + self.rows(256, 2, 1, k=64)
+        chosen = select_paper_rows(partial + complete, "test.csv", selection="global")
+        self.assertEqual({row["block_size"] for row in chosen}, {256})
+        with self.assertRaisesRegex(ValueError, "measured at every k"):
+            select_paper_rows(partial + complete[2:], "test.csv", selection="global")
+
+    def test_global_ties_and_large_values_are_deterministic(self):
+        rows = (
+            self.rows(512, 2e200, 1, k=32)
+            + self.rows(512, 8e200, 1, k=64)
+            + self.rows(128, 8e200, 1, k=32)
+            + self.rows(128, 2e200, 1, k=64)
+        )
+        for values in (rows, list(reversed(rows))):
+            chosen = select_paper_rows(values, "test.csv", selection="global")
+            self.assertEqual({row["block_size"] for row in chosen}, {128})
+
+    def test_global_annotations_keep_workloads_and_backends_separate(self):
+        rows = []
+        for dataset in ("a", "b"):
+            for backend in ("bits-prefetch", "bits-sq"):
+                winner = (
+                    128 if (dataset == "a") == (backend == "bits-prefetch") else 512
+                )
+                for block in (128, 512):
+                    for k in (32, 64):
+                        rows += self.rows(
+                            block,
+                            1 if block == winner else 2,
+                            1,
+                            dataset_id=dataset,
+                            backend=backend,
+                            k=k,
+                        )
+        annotated = annotate_paper_selection(rows, ("dataset_id",), "test.csv")
+        for row in annotated:
+            winner = (
+                128
+                if (row["dataset_id"] == "a") == (row["backend"] == "bits-prefetch")
+                else 512
+            )
+            self.assertEqual(row["paper_global_selected"], row["block_size"] == winner)
+        self.assertTrue(all("paper_global_selected" not in row for row in rows))
 
 
 @unittest.skipUnless(
@@ -145,7 +285,7 @@ class ApplicationRenderTests(unittest.TestCase):
             def __exit__(self, *_args):
                 return False
 
-            def savefig(self, figure):
+            def savefig(self, figure, **kwargs):
                 # Execute the actual Agg renderer and layout, not mocked axes.
                 figure.canvas.draw()
                 captured.append((self.filename, figure))
@@ -153,21 +293,30 @@ class ApplicationRenderTests(unittest.TestCase):
         path = self.root / f"{operator}-test-1.csv"
         with patch("matplotlib.backends.backend_pdf.PdfPages", CapturePdf):
             if operator == "database-topn":
-                for paper in (False, True):
-                    self.database.validate_plot_summary(summary, path, paper)
-                    self.database.plot(summary, path, self.root, paper=paper)
+                for paper, selection in (
+                    (False, "per-k"),
+                    (True, "per-k"),
+                    (True, "global"),
+                ):
+                    self.database.plot(
+                        summary, path, self.root, paper=paper, selection=selection
+                    )
             else:
                 self.tensor.plot_pages(summary, path)
                 self.tensor.plot(summary, path, self.root)
-        self.assertEqual(len(captured), 2)
+        self.assertEqual(len(captured), 3)
         self.assertEqual(
             {filename.name for filename, _ in captured},
-            {f"{path.stem}.pdf", f"{path.stem}-paper.pdf"},
+            {
+                f"{path.stem}.pdf",
+                f"{path.stem}-paper.pdf",
+                f"{path.stem}-paper-global.pdf",
+            },
         )
         return captured
 
     def assert_render(self, operator, summary, filename, figure):
-        paper = filename.stem.endswith("-paper")
+        paper = filename.stem.endswith(("-paper", "-paper-global"))
         phases = ("operator",) if operator == "database-topn" else PHASES
         visible = BACKENDS[:-1] if paper else BACKENDS
         self.assertEqual(len(figure.axes), len(phases))
@@ -251,6 +400,14 @@ class ApplicationRenderTests(unittest.TestCase):
         self.assertEqual(any("BlockSelect" in label for label in labels), not paper)
         for label in labels:
             self.assertEqual("degree=" in label, not paper)
+        if filename.stem.endswith("-paper-global"):
+            for label, backend in zip(labels, visible):
+                if backend in ("bits-prefetch", "bits-sq"):
+                    self.assertTrue(label.endswith("[block=512]"))
+                else:
+                    self.assertNotIn("block=", label)
+        elif paper:
+            self.assertTrue(all("block=" not in label for label in labels))
         title = figure._suptitle.get_text() if figure._suptitle is not None else ""
         if paper:
             self.assertEqual(title, "")
@@ -275,7 +432,7 @@ class ApplicationRenderTests(unittest.TestCase):
                         maxima[PHASES[1] if peak == PHASES[0] else PHASES[0]],
                     )
                 for filename, figure in self.render(operator, summary):
-                    with self.subTest(paper=filename.stem.endswith("-paper")):
+                    with self.subTest(plot=filename.stem):
                         self.assert_render(operator, summary, filename, figure)
 
     def test_database_render_has_unclipped_errors_and_clean_legend(self):
@@ -286,6 +443,89 @@ class ApplicationRenderTests(unittest.TestCase):
 
     def test_gradient_shared_limits_include_both_panels_and_errors(self):
         self.check_operator("gradient-compression")
+
+    def test_block_sweeps_render_all_variants_and_only_operator_winners(self):
+        for operator in ("database-topn", "token-sampling", "gradient-compression"):
+            with self.subTest(operator=operator):
+                summary = self.summary(operator, "operator")
+                variants = []
+                for row in summary:
+                    if row["backend"] not in ("bits-prefetch", "bits-sq"):
+                        variants.append(row)
+                        continue
+                    for block in (128, 256, 512):
+                        winner = 128 if row["k"] == 32 else 512
+                        # Reverse the isolated-selection ranking to ensure the
+                        # paper's second panel carries the operator winner.
+                        factor = 0.5 if block == winner else 2
+                        if block == winner and row["k"] == 32:
+                            factor = 0.25  # Make 128 the unique global winner.
+                        if row["phase"] == "selection_isolated":
+                            factor = 1 / factor
+                        variants.append(
+                            row
+                            | {
+                                "block_size": block,
+                                "median_ms": row["median_ms"] * factor,
+                                "p25_ms": row["p25_ms"] * factor,
+                                "p75_ms": row["p75_ms"] * factor,
+                                "speedup_vs_air": row["speedup_vs_air"] / factor,
+                            }
+                        )
+                for filename, figure in self.render(operator, variants):
+                    paper = filename.stem.endswith(("-paper", "-paper-global"))
+                    global_choice = filename.stem.endswith("-paper-global")
+                    for axis, phase in zip(
+                        figure.axes,
+                        ("operator",) if operator == "database-topn" else PHASES,
+                    ):
+                        containers = [
+                            c
+                            for c in axis.containers
+                            if isinstance(c, self.ErrorbarContainer)
+                        ]
+                        self.assertEqual(len(containers), 4 if paper else 9)
+                        if paper:
+                            for container, backend in zip(containers, BACKENDS[:-1]):
+                                expected = [
+                                    row
+                                    for row in variants
+                                    if row["phase"] == phase
+                                    and row["backend"] == backend
+                                    and (
+                                        backend not in ("bits-prefetch", "bits-sq")
+                                        or row["block_size"]
+                                        == (
+                                            128
+                                            if global_choice or row["k"] == 32
+                                            else 512
+                                        )
+                                    )
+                                ]
+                                self.np.testing.assert_allclose(
+                                    container.lines[0].get_ydata(orig=False),
+                                    [row["speedup_vs_air"] for row in expected],
+                                )
+                    legend = (
+                        figure.legends[0]
+                        if figure.legends
+                        else figure.axes[0].get_legend()
+                    )
+                    labels = [text.get_text() for text in legend.get_texts()]
+                    if global_choice:
+                        self.assertEqual(
+                            labels[:2], ["BITS [block=128]", "BITS (split) [block=128]"]
+                        )
+                    if not paper:
+                        for block in (128, 256, 512):
+                            self.assertEqual(
+                                sum(
+                                    f"block={block}," in label
+                                    and label.startswith("BITS")
+                                    for label in labels
+                                ),
+                                2,
+                            )
 
 
 if __name__ == "__main__":

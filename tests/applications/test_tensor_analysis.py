@@ -13,6 +13,7 @@ import unittest
 
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
+sys.path.insert(0, str(SCRIPTS))
 SPEC = importlib.util.spec_from_file_location(
     "tensor_analysis", SCRIPTS / "tensor_analysis.py"
 )
@@ -201,7 +202,7 @@ class TensorAnalysisTests(unittest.TestCase):
             with self.subTest(rows=rows), self.assertRaisesRegex(
                 ValueError, "unique AIR Top-K baseline"
             ):
-                analysis.plot_pages(self.summarize(rows), self.path)
+                analysis.plot_pages(self.summarize(rows), self.path, paper=True)
 
     def test_plot_preparation_retains_block_select_and_separate_workloads(self):
         rows = []
@@ -234,7 +235,118 @@ class TensorAnalysisTests(unittest.TestCase):
             with self.subTest(k=k), self.assertRaisesRegex(
                 ValueError, "one fixed configuration per backend"
             ):
-                analysis.plot_pages(self.summarize(rows), self.path)
+                analysis.plot_pages(self.summarize(rows), self.path, paper=True)
+
+    def test_paper_block_choice_uses_operator_medians_for_both_panels(self):
+        for operator in analysis.OPERATORS:
+            rows = []
+            for k in (32, 64):
+                rows += self.measurements(
+                    operator, backend="air-topk", k=k, multiplier=4
+                )
+                rows += self.measurements(operator, backend="block-select", k=k)
+                for block in (128, 256, 512):
+                    winner = block == (128 if k == 32 else 512)
+                    rows += self.measurements(
+                        operator,
+                        block_size=block,
+                        k=k,
+                        phase_factors={
+                            "operator": 1 if winner else 2,
+                            "selection_isolated": 3 if winner else 1,
+                        },
+                    )
+            summary = self.summarize(rows, operator)
+            original = copy.deepcopy(summary)
+            detailed = analysis.plot_pages(summary, self.path)
+            paper = analysis.plot_pages(summary, self.path, paper=True)
+            self.assertEqual(sum(map(len, detailed.values())), 20)
+            self.assertEqual(sum(map(len, paper.values())), 8)
+            for values in paper.values():
+                for row in values:
+                    if row["backend"] == "bits-sq":
+                        self.assertEqual(
+                            row["block_size"], 128 if row["k"] == 32 else 512
+                        )
+                        self.assertAlmostEqual(
+                            row["median_ms"], 3 if row["phase"] == "operator" else 9
+                        )
+            self.assertEqual(summary, original)
+
+    def test_global_paper_uses_one_block_per_backend_and_operator_geometric_mean(self):
+        for operator in analysis.OPERATORS:
+            with self.subTest(operator=operator):
+                rows = []
+                factors = {
+                    "bits-sq": {128: (1, 9), 256: (4, 4), 512: (2, 6)},
+                    "bits-prefetch": {128: (4, 4), 256: (1, 9), 512: (2, 6)},
+                }
+                for position, k in enumerate((32, 64)):
+                    rows += self.measurements(
+                        operator, backend="air-topk", k=k, multiplier=12
+                    )
+                    for backend, blocks in factors.items():
+                        for block, operator_factors in blocks.items():
+                            factor = operator_factors[position]
+                            rows += self.measurements(
+                                operator,
+                                backend=backend,
+                                block_size=block,
+                                k=k,
+                                phase_factors={
+                                    "operator": factor,
+                                    "selection_isolated": 12 / factor,
+                                },
+                            )
+                summary = self.summarize(rows, operator)
+                original = copy.deepcopy(summary)
+                per_k = next(
+                    iter(analysis.plot_pages(summary, self.path, paper=True).values())
+                )
+                global_rows = next(
+                    iter(
+                        analysis.plot_pages(
+                            summary, self.path, paper=True, selection="global"
+                        ).values()
+                    )
+                )
+                for backend, winner in (("bits-sq", 128), ("bits-prefetch", 256)):
+                    self.assertEqual(
+                        {
+                            row["block_size"]
+                            for row in per_k
+                            if row["backend"] == backend
+                        },
+                        {128, 256},
+                    )
+                    selected = [
+                        row for row in global_rows if row["backend"] == backend
+                    ]
+                    self.assertEqual(len(selected), 4)
+                    self.assertEqual({row["block_size"] for row in selected}, {winner})
+                    for row in selected:
+                        factor = 1 if row["k"] == 32 else 9
+                        expected = 3 * (
+                            factor if row["phase"] == "operator" else 12 / factor
+                        )
+                        self.assertAlmostEqual(row["median_ms"], expected)
+                self.assertEqual(summary, original)
+
+    def test_global_paper_excludes_blocks_without_complete_k_coverage(self):
+        rows = self.measurements(block_size=128, multiplier=0.1)
+        for k in (32, 64):
+            rows += self.measurements(backend="air-topk", k=k)
+            rows += self.measurements(block_size=256, k=k, multiplier=2)
+        summary = self.summarize(rows)
+        pages = analysis.plot_pages(summary, self.path, paper=True, selection="global")
+        selected = [
+            row
+            for points in pages.values()
+            for row in points
+            if row["backend"] == "bits-sq"
+        ]
+        self.assertEqual({row["block_size"] for row in selected}, {256})
+        self.assertEqual({row["k"] for row in selected}, {32, 64})
 
     def test_rejects_duplicates_missing_phases_uploads_and_iteration_gaps(self):
         rows = self.measurements()
@@ -404,15 +516,42 @@ class TensorAnalysisTests(unittest.TestCase):
 
     def test_cli_rejects_detailed_and_paper_filename_collisions(self):
         first = self.write(self.measurements())
-        second = self.write(self.measurements(), self.root / f"{first.stem}-paper.csv")
+        output = self.root / "plots"
+        for suffix in ("-paper", "-paper-global"):
+            with self.subTest(suffix=suffix):
+                second = self.write(
+                    self.measurements(), self.root / f"{first.stem}{suffix}.csv"
+                )
+                run = subprocess.run(
+                    [
+                        sys.executable,
+                        "-B",
+                        str(SCRIPTS / "plot-token-sampling.py"),
+                        str(first),
+                        str(second),
+                        "--output-dir",
+                        str(output),
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertNotEqual(run.returncode, 0)
+                self.assertIn("output filenames collide", run.stderr)
+                self.assertFalse(output.exists())
+
+    def test_cli_validates_global_coverage_before_writing_any_outputs(self):
+        rows = self.measurements(block_size=128, k=32)
+        rows += self.measurements(block_size=256, k=64)
+        for k in (32, 64):
+            rows += self.measurements(backend="air-topk", k=k)
+        self.write(rows)
         output = self.root / "plots"
         run = subprocess.run(
             [
                 sys.executable,
                 "-B",
                 str(SCRIPTS / "plot-token-sampling.py"),
-                str(first),
-                str(second),
+                str(self.path),
                 "--output-dir",
                 str(output),
             ],
@@ -420,7 +559,8 @@ class TensorAnalysisTests(unittest.TestCase):
             text=True,
         )
         self.assertNotEqual(run.returncode, 0)
-        self.assertIn("output filenames collide", run.stderr)
+        self.assertIn("global paper selection", run.stderr)
+        self.assertIn("bits-sq", run.stderr)
         self.assertFalse(output.exists())
 
 

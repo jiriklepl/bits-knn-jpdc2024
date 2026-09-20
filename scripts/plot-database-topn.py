@@ -9,7 +9,12 @@ from pathlib import Path
 from statistics import median, quantiles
 import sys
 
-from application_plotting import add_speedup_series, fit_speedup_axes
+from application_plotting import (
+    add_speedup_series,
+    annotate_paper_selection,
+    fit_speedup_axes,
+    select_paper_rows,
+)
 
 
 CONFIG = (
@@ -160,7 +165,7 @@ def summarize(path):
     return summary
 
 
-def validate_plot_summary(summary, path, paper=False):
+def validate_plot_summary(summary, path, paper=False, *, selection="per-k"):
     """Require one AIR baseline and unambiguous plotted points before rendering."""
     datasets = defaultdict(list)
     for row in summary:
@@ -173,13 +178,8 @@ def validate_plot_summary(summary, path, paper=False):
         datasets[row["dataset_id"], row["rows"]].append(row)
     for values in datasets.values():
         seen = set()
-        backend_configs = defaultdict(set)
         for row in values:
-            names = (
-                ("backend", "k")
-                if paper
-                else ("backend", "degree", "block_size", "items_per_thread", "k")
-            )
+            names = ("backend", "degree", "block_size", "items_per_thread", "k")
             key = tuple(row[name] for name in names)
             if key in seen:
                 raise ValueError(
@@ -187,26 +187,21 @@ def validate_plot_summary(summary, path, paper=False):
                     f"{'paper ' if paper else ''}backend+k point"
                 )
             seen.add(key)
-            backend_configs[row["backend"]].add(
-                tuple(
-                    row[name] for name in ("degree", "block_size", "items_per_thread")
-                )
-            )
-        if paper and any(len(configs) > 1 for configs in backend_configs.values()):
-            raise ValueError(
-                f"{path}: paper plots require one fixed configuration per backend; "
-                "separate configuration sweeps before plotting"
-            )
+    if paper:
+        return {
+            key: select_paper_rows(values, path, selection=selection)
+            for key, values in datasets.items()
+        }
     return datasets
 
 
-def plot(summary, path, output_dir, paper=False):
-    datasets = validate_plot_summary(summary, path, paper)
+def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
+    datasets = validate_plot_summary(summary, path, paper, selection=selection)
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     import utils
 
-    suffix = "-paper" if paper else ""
+    suffix = ("-paper-global" if selection == "global" else "-paper") if paper else ""
     with PdfPages(output_dir / f"{path.stem}{suffix}.pdf") as pdf:
         for (digest, rows), values in sorted(datasets.items()):
             fig, ax = plt.subplots(figsize=(7, 5))
@@ -242,6 +237,12 @@ def plot(summary, path, output_dir, paper=False):
                 if not paper:
                     _, degree, block, items = config
                     label += f" (degree={degree}, block={block}, batch={items})"
+                elif selection == "global" and backend in (
+                    "bits",
+                    "bits-prefetch",
+                    "bits-sq",
+                ):
+                    label += f" [block={points[0]['block_size']}]"
                 handle = add_speedup_series(
                     ax,
                     points,
@@ -279,7 +280,7 @@ def plot(summary, path, output_dir, paper=False):
                 bbox_to_anchor=(0.5, -0.22),
             )
             fig.tight_layout()
-            pdf.savefig(fig)
+            pdf.savefig(fig, bbox_inches="tight")
             plt.close(fig)
 
 
@@ -303,7 +304,7 @@ def main():
         inputs = {path.resolve() for path in files}
         destinations = set()
         for path in files:
-            for suffix in (".csv", ".pdf", "-paper.pdf"):
+            for suffix in (".csv", ".pdf", "-paper.pdf", "-paper-global.pdf"):
                 destination = args.output_dir / f"{path.stem}{suffix}"
                 resolved = destination.resolve()
                 if resolved in inputs:
@@ -318,14 +319,19 @@ def main():
         for path, summary in summaries:
             validate_plot_summary(summary, path)
             validate_plot_summary(summary, path, paper=True)
+            validate_plot_summary(summary, path, paper=True, selection="global")
         args.output_dir.mkdir(parents=True, exist_ok=True)
         for path, summary in summaries:
             plot(summary, path, args.output_dir, paper=False)
             plot(summary, path, args.output_dir, paper=True)
+            plot(summary, path, args.output_dir, paper=True, selection="global")
             with (args.output_dir / f"{path.stem}.csv").open("w", newline="") as target:
-                writer = csv.DictWriter(target, fieldnames=list(summary[0]))
+                annotated = annotate_paper_selection(
+                    summary, ("dataset_id", "rows"), path
+                )
+                writer = csv.DictWriter(target, fieldnames=list(annotated[0]))
                 writer.writeheader()
-                writer.writerows(summary)
+                writer.writerows(annotated)
     except (ValueError, OSError) as error:
         parser.exit(1, f"{error}\n")
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from statistics import median, quantiles
 import sys
 
+from application_plotting import annotate_paper_selection, select_paper_rows
 
 OPERATORS = ("token-sampling", "gradient-compression")
 BACKENDS = (
@@ -193,11 +194,10 @@ def discover_files(operator, data_dir=Path("data")):
     return files
 
 
-def plot_pages(summary, path):
+def plot_pages(summary, path, paper=False, *, selection="per-k"):
     """Validate AIR comparisons and unambiguous paper curves before writing files."""
     pages = defaultdict(list)
-    paper_points = set()
-    paper_configurations = {}
+    seen = set()
     for row in summary:
         if row["phase"] not in ("operator", "selection_isolated"):
             continue
@@ -208,39 +208,38 @@ def plot_pages(summary, path):
             )
         key = tuple(row[name] for name in WORKLOAD if name != "k")
         pages[key].append(row)
-        if row["backend"] != "block-select":
-            backend = key + (row["backend"],)
-            configuration = tuple(
-                row[name] for name in ("degree", "block_size", "items_per_thread")
+        point = tuple(row[name] for name in CONFIG) + (row["phase"],)
+        if point in seen:
+            raise ValueError(
+                f"{path}: duplicate configuration for the same backend+k+phase point"
             )
-            if paper_configurations.setdefault(backend, configuration) != configuration:
-                raise ValueError(
-                    f"{path}: paper plots require one fixed configuration per backend "
-                    "across k; analyze configuration sweeps separately"
-                )
-            point = key + (row["phase"], row["backend"], row["k"])
-            if point in paper_points:
-                raise ValueError(
-                    f"{path}: paper plots require one configuration per backend "
-                    "and k; analyze configuration sweeps separately"
-                )
-            paper_points.add(point)
+        seen.add(point)
+    if paper:
+        return {
+            key: select_paper_rows(rows, path, selection=selection)
+            for key, rows in pages.items()
+        }
     return pages
 
 
 def plot(summary, path, output_dir):
-    """Write detailed and paper PDFs, with separate pages for input/settings groups."""
+    """Write detailed, per-k and global paper PDFs for each input/settings group."""
     pages = plot_pages(summary, path)
+    paper_pages = plot_pages(summary, path, paper=True)
+    global_paper_pages = plot_pages(summary, path, paper=True, selection="global")
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
     from application_plotting import add_speedup_series, fit_speedup_axes
     import utils
 
-    for paper in (False, True):
-        suffix = "-paper" if paper else ""
+    for suffix, paper, selected_pages in (
+        ("", False, pages),
+        ("-paper", True, paper_pages),
+        ("-paper-global", True, global_paper_pages),
+    ):
         with PdfPages(output_dir / f"{path.stem}{suffix}.pdf") as pdf:
             for (operator, digest, rows, batch, temperature, seed), points in sorted(
-                pages.items()
+                selected_pages.items()
             ):
                 visible = [
                     row
@@ -286,6 +285,12 @@ def plot(summary, path, output_dir):
                         if not paper:
                             _, degree, block, items = key
                             label += f" (degree={degree}, block={block}, batch={items})"
+                        elif suffix == "-paper-global" and backend in (
+                            "bits",
+                            "bits-prefetch",
+                            "bits-sq",
+                        ):
+                            label += f" [block={values[0]['block_size']}]"
                         handle = add_speedup_series(
                             ax,
                             values,
@@ -344,7 +349,10 @@ def plot(summary, path, output_dir):
 
 def main(operator):
     parser = argparse.ArgumentParser(
-        description=(f"Write detailed and paper AIR Top-K comparisons for {operator}.")
+        description=(
+            f"Write detailed, per-k paper and global paper AIR Top-K comparisons "
+            f"for {operator}."
+        )
     )
     parser.add_argument("files", nargs="*", type=Path)
     parser.add_argument("--output-dir", type=Path, default=Path("plots"))
@@ -362,7 +370,7 @@ def main(operator):
         inputs = {path.resolve() for path in files}
         destinations = set()
         for path in files:
-            for suffix in (".csv", ".pdf", "-paper.pdf"):
+            for suffix in (".csv", ".pdf", "-paper.pdf", "-paper-global.pdf"):
                 destination = args.output_dir / f"{path.stem}{suffix}"
                 if destination.resolve() in inputs:
                     raise ValueError(
@@ -378,12 +386,17 @@ def main(operator):
         summaries = [(path, summarize(path, operator)) for path in files]
         for path, summary in summaries:
             plot_pages(summary, path)
+            plot_pages(summary, path, paper=True)
+            plot_pages(summary, path, paper=True, selection="global")
         args.output_dir.mkdir(parents=True, exist_ok=True)
         for path, summary in summaries:
             plot(summary, path, args.output_dir)
             with (args.output_dir / f"{path.stem}.csv").open("w", newline="") as target:
-                writer = csv.DictWriter(target, fieldnames=list(summary[0]))
+                annotated = annotate_paper_selection(
+                    summary, tuple(name for name in WORKLOAD if name != "k"), path
+                )
+                writer = csv.DictWriter(target, fieldnames=list(annotated[0]))
                 writer.writeheader()
-                writer.writerows(summary)
+                writer.writerows(annotated)
     except (ValueError, OSError) as error:
         parser.exit(1, f"{error}\n")
