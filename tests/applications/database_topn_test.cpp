@@ -158,7 +158,7 @@ TEMPLATE_TEST_CASE("Database BITS configurations handle partial blocks and maxim
         applications::database_topn query(columns.size(), k);
         query.upload(columns);
         for (std::size_t block : {128u, 256u, 512u})
-            for (std::size_t batch : {1u, 4u, 7u, 16u})
+            for (std::size_t batch : {1u, 4u, 7u, 8u, 13u, 16u})
             {
                 CAPTURE(k, block, batch);
                 TestType selector;

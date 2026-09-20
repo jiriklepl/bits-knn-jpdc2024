@@ -5,10 +5,10 @@ import math
 
 
 def select_paper_rows(rows, path, *, selection="per-k"):
-    """Choose BITS blocks per k or across all k within one workload.
+    """Choose BITS block/item pairs per k or across all k within one workload.
 
     Carry that configuration into every phase, including isolated selection.
-    Keep degree/items fixed so a block-size sweep has a single interpretation.
+    Keep degree fixed so a block/item sweep has a single interpretation.
     """
     if selection not in ("per-k", "global"):
         raise ValueError(f"Unknown paper selection mode: {selection}")
@@ -29,7 +29,7 @@ def select_paper_rows(rows, path, *, selection="per-k"):
             )
         seen.add(key)
         fixed = (
-            (row["degree"], row["items_per_thread"])
+            (row["degree"],)
             if row["backend"] in ("bits", "bits-prefetch", "bits-sq")
             else config
         )
@@ -39,43 +39,53 @@ def select_paper_rows(rows, path, *, selection="per-k"):
     if any(len(values) > 1 for values in configurations.values()):
         raise ValueError(
             f"{path}: paper plots require one fixed configuration per backend "
-            "apart from BITS block size; keep degree and items per thread fixed"
+            "apart from BITS block size and items per thread; keep degree fixed"
         )
     if selection == "per-k":
         winners = {
-            point: min(values, key=lambda row: (row["median_ms"], row["block_size"]))
+            point: min(
+                values,
+                key=lambda row: (
+                    row["median_ms"],
+                    row["block_size"],
+                    row["items_per_thread"],
+                ),
+            )
             for point, values in operators.items()
         }
     else:
         candidates = defaultdict(lambda: defaultdict(dict))
         for (backend, k), values in operators.items():
             for row in values:
-                candidates[backend][row["block_size"]][k] = row
+                config = (row["block_size"], row["items_per_thread"])
+                candidates[backend][config][k] = row
         winners = {}
-        for backend, blocks in candidates.items():
-            ks = {k for values in blocks.values() for k in values}
+        for backend, configs in candidates.items():
+            ks = {k for values in configs.values() for k in values}
             complete = {
-                block: values for block, values in blocks.items() if set(values) == ks
+                config: values
+                for config, values in configs.items()
+                if set(values) == ks
             }
             if not complete:
                 raise ValueError(
-                    f"{path}: global paper selection requires a block size "
+                    f"{path}: global paper selection requires a block/item pair "
                     f"measured at every k for {backend}"
                 )
-            # All eligible blocks share the same k values and AIR baselines.
+            # All eligible pairs share the same k values and AIR baselines.
             # Minimizing mean log latency therefore maximizes geometric-mean
             # AIR speedup, with equal weight per k and no product overflow.
-            block = min(
+            config = min(
                 complete,
-                key=lambda block: (
+                key=lambda config: (
                     math.fsum(
-                        math.log(complete[block][k]["median_ms"]) for k in sorted(ks)
+                        math.log(complete[config][k]["median_ms"]) for k in sorted(ks)
                     )
                     / len(ks),
-                    block,
+                    config,
                 ),
             )
-            winners.update({(backend, k): row for k, row in complete[block].items()})
+            winners.update({(backend, k): row for k, row in complete[config].items()})
     selected = []
     for row in rows:
         if row["backend"] == "block-select":

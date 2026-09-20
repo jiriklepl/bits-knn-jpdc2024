@@ -43,7 +43,7 @@ try
         "bits-block-size", "BITS thread block size: 128,256,512",
         cxxopts::value<std::string>()->default_value("512"))(
         "items-per-thread",
-        "BITS batch override: 1,4,7,16 (default: bits/bits-prefetch=7, bits-sq=4)",
+        "BITS batch override: 1,4,7,8,13,16 (default: bits/bits-prefetch=7, bits-sq=4)",
         cxxopts::value<std::string>())("repeat", "Measured repetitions",
                                        cxxopts::value<std::string>()->default_value("20"))(
         "warmup", "Untimed warmup repetitions", cxxopts::value<std::string>()->default_value("3"))(

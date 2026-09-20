@@ -201,10 +201,10 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
     from matplotlib.backends.backend_pdf import PdfPages
     import utils
 
+    markers = tuple(dict.fromkeys(utils.SHAPES))
     suffix = ("-paper-global" if selection == "global" else "-paper") if paper else ""
     with PdfPages(output_dir / f"{path.stem}{suffix}.pdf") as pdf:
         for (digest, rows), values in sorted(datasets.items()):
-            fig, ax = plt.subplots(figsize=(7, 5))
             series = defaultdict(list)
             for row in values:
                 key = (
@@ -221,6 +221,10 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
                     )
                 )
                 series[key].append(row)
+            # Preserve the plotting area as sweep legends gain more rows.
+            legend_rows = math.ceil(len(series) / 2)
+            height = 5 + (0 if paper else 0.18 * max(0, legend_rows - 5))
+            fig, ax = plt.subplots(figsize=(7, height))
             ordered = sorted(
                 series.items(),
                 key=lambda pair: (BACKENDS.index(pair[0][0]), pair[0][1:]),
@@ -242,15 +246,16 @@ def plot(summary, path, output_dir, paper=False, *, selection="per-k"):
                     "bits-prefetch",
                     "bits-sq",
                 ):
-                    label += f" [block={points[0]['block_size']}]"
+                    label += (
+                        f" [block={points[0]['block_size']}, "
+                        f"items={points[0]['items_per_thread']}]"
+                    )
                 handle = add_speedup_series(
                     ax,
                     points,
                     label=label,
                     color=utils.COLORS[index],
-                    marker=utils.SHAPES[
-                        (index + variant * len(BACKENDS)) % len(utils.SHAPES)
-                    ],
+                    marker=markers[(index + variant // 4) % len(markers)],
                     linestyle=("-", "--", "-.", ":")[variant % 4],
                 )
                 handles.append(handle)

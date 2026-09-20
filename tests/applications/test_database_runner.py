@@ -156,7 +156,7 @@ class NativeRunnerTests(unittest.TestCase):
                 self.assertEqual(float(row["payload"]), self.columns["payload"][index])
 
     def test_explicit_bits_configuration_is_preserved(self):
-        for block, batch in [(128, 1), (256, 4), (512, 16)]:
+        for block, batch in [(128, 1), (256, 4), (512, 16), (128, 8), (256, 13)]:
             with self.subTest(block=block, batch=batch):
                 run = subprocess.run(
                     [

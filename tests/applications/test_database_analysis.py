@@ -141,36 +141,40 @@ class AnalysisTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "paper"):
                 analysis.validate_plot_summary(summary, self.path, paper=True)
 
-    def test_paper_selects_block_sizes_per_backend_and_k(self):
+    def test_paper_selects_block_item_pairs_per_backend_and_k(self):
         rows = []
         winners = {
-            ("bits-prefetch", 32): 128,
-            ("bits-prefetch", 64): 512,
-            ("bits-sq", 32): 256,
-            ("bits-sq", 64): 128,
+            ("bits-prefetch", 32): (128, 13),
+            ("bits-prefetch", 64): (512, 4),
+            ("bits-sq", 32): (256, 4),
+            ("bits-sq", 64): (128, 13),
         }
         for k in (32, 64):
             rows += self.measurements(backend="air-topk", k=k, multiplier=3)
             rows += self.measurements(backend="block-select", k=k)
             for backend in ("bits-prefetch", "bits-sq"):
                 for block in (128, 256, 512):
-                    rows += self.measurements(
-                        backend=backend,
-                        k=k,
-                        block_size=block,
-                        multiplier=1 if block == winners[backend, k] else 2,
-                    )
+                    for items in (4, 13):
+                        winner = (block, items) == winners[backend, k]
+                        rows += self.measurements(
+                            backend=backend,
+                            k=k,
+                            block_size=block,
+                            items_per_thread=items,
+                            multiplier=1 if winner else 2,
+                        )
         summary = self.summarize(rows)
         original = copy.deepcopy(summary)
         detailed = analysis.validate_plot_summary(summary, self.path)
         paper = analysis.validate_plot_summary(summary, self.path, paper=True)
-        self.assertEqual(sum(map(len, detailed.values())), 16)
+        self.assertEqual(sum(map(len, detailed.values())), 28)
         self.assertEqual(sum(map(len, paper.values())), 6)
         for values in paper.values():
             for row in values:
                 if row["backend"] != "air-topk":
                     self.assertEqual(
-                        row["block_size"], winners[row["backend"], row["k"]]
+                        (row["block_size"], row["items_per_thread"]),
+                        winners[row["backend"], row["k"]],
                     )
                     self.assertAlmostEqual(row["median_ms"], 3)
                     self.assertAlmostEqual(row["speedup_vs_air"], 3)
@@ -187,38 +191,53 @@ class AnalysisTests(unittest.TestCase):
         for row in exported:
             expected = row["backend"] == "air-topk" or (
                 row["backend"] != "block-select"
-                and int(row["block_size"]) == winners[row["backend"], int(row["k"])]
+                and (int(row["block_size"]), int(row["items_per_thread"]))
+                == winners[row["backend"], int(row["k"])]
             )
             self.assertEqual(row["paper_selected"], str(expected))
             self.assertIn("paper_global_selected", row)
 
-    def test_global_paper_uses_one_block_for_all_k_and_exports_its_choice(self):
+    def test_global_paper_uses_one_pair_for_all_k_and_exports_both_choices(self):
         rows = []
-        for k in (32, 64):
+        factors = {
+            "bits-sq": {(128, 4): (1, 9), (128, 13): (4, 4), (256, 7): (2, 6)},
+            "bits-prefetch": {(128, 4): (4, 4), (128, 13): (1, 9), (256, 7): (2, 6)},
+        }
+        for position, k in enumerate((32, 64)):
             rows += self.measurements(backend="air-topk", k=k, multiplier=10)
-            for backend in ("bits-prefetch", "bits-sq"):
-                for block in (128, 256):
-                    # Geometric means sqrt(100) and sqrt(160), respectively.
-                    multiplier = {
-                        (128, 32): 1,
-                        (128, 64): 100,
-                        (256, 32): 4,
-                        (256, 64): 40,
-                    }[block, k]
-                    if backend == "bits-prefetch":
-                        multiplier = 1 / multiplier
+            rows += self.measurements(backend="block-select", k=k)
+            for backend, pairs in factors.items():
+                for (block, items), operator_factors in pairs.items():
+                    factor = operator_factors[position]
                     rows += self.measurements(
-                        backend=backend, k=k, block_size=block, multiplier=multiplier
+                        backend=backend,
+                        k=k,
+                        block_size=block,
+                        items_per_thread=items,
+                        phase_factors={
+                            "operator": factor,
+                            "selection_isolated": 12 / factor,
+                        },
                     )
         summary = self.summarize(rows)
         pages = analysis.validate_plot_summary(
             summary, self.path, paper=True, selection="global"
         )
-        winners = {"bits-prefetch": 256, "bits-sq": 128, "air-topk": 512}
+        winners = {"bits-prefetch": (128, 13), "bits-sq": (128, 4)}
+        per_k_winners = {
+            ("bits-prefetch", 32): (128, 13),
+            ("bits-prefetch", 64): (128, 4),
+            ("bits-sq", 32): (128, 4),
+            ("bits-sq", 64): (128, 13),
+        }
         for values in pages.values():
             self.assertEqual(len(values), 6)
             for row in values:
-                self.assertEqual(row["block_size"], winners[row["backend"]])
+                if row["backend"] in winners:
+                    self.assertEqual(
+                        (row["block_size"], row["items_per_thread"]),
+                        winners[row["backend"]],
+                    )
         output = self.path.parent / "plots"
         with patch.object(
             sys, "argv", [str(SCRIPT), str(self.path), "--output-dir", str(output)]
@@ -228,15 +247,24 @@ class AnalysisTests(unittest.TestCase):
             exported = list(csv.DictReader(source))
         self.assertEqual(len(exported), len(summary))
         for row in exported:
+            backend = row["backend"]
+            pair = (int(row["block_size"]), int(row["items_per_thread"]))
             self.assertEqual(
                 row["paper_global_selected"],
-                str(int(row["block_size"]) == winners[row["backend"]]),
+                str(backend == "air-topk" or pair == winners.get(backend)),
+            )
+            self.assertEqual(
+                row["paper_selected"],
+                str(
+                    backend == "air-topk"
+                    or pair == per_k_winners.get((backend, int(row["k"])))
+                ),
             )
 
-    def test_cli_rejects_global_curves_without_a_complete_block_before_output(self):
-        rows = self.measurements(block_size=128, k=32) + self.measurements(
-            block_size=256, k=64
-        )
+    def test_cli_rejects_global_curves_without_a_complete_pair_before_output(self):
+        rows = self.measurements(
+            block_size=128, items_per_thread=4, k=32
+        ) + self.measurements(block_size=128, items_per_thread=13, k=64)
         rows += self.measurements(backend="air-topk", k=32) + self.measurements(
             backend="air-topk", k=64
         )

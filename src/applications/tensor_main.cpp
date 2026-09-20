@@ -259,7 +259,8 @@ try
         cxxopts::value<std::string>()->default_value("bits-sq,air-topk,grid-select,block-select"))(
         "degree", "BITS split degree", cxxopts::value<std::string>()->default_value("32"))(
         "bits-block-size", "BITS block size", cxxopts::value<std::string>()->default_value("512"))(
-        "items-per-thread", "BITS batch override (default: bits/bits-prefetch=7, bits-sq=4)",
+        "items-per-thread",
+        "BITS batch override: 1,4,7,8,13,16 (default: bits/bits-prefetch=7, bits-sq=4)",
         cxxopts::value<std::string>())("repeat", "Measured repetitions",
                                        cxxopts::value<std::string>()->default_value("20"))(
         "warmup", "Untimed warmups", cxxopts::value<std::string>()->default_value("3"))(

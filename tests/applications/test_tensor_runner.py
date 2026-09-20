@@ -271,7 +271,7 @@ class TensorNativeChecks:
             {r["backend"] for r in csv.DictReader(io.StringIO(run.stdout))},
             BACKENDS - {"bits-prefetch"},
         )
-        for block, batch in [(128, 1), (256, 4), (512, 16)]:
+        for block, batch in [(128, 1), (256, 4), (512, 16), (128, 8), (256, 13)]:
             with self.subTest(block=block, batch=batch):
                 run = self.run_native(
                     [

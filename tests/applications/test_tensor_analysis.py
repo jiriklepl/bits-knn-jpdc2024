@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
@@ -237,7 +238,7 @@ class TensorAnalysisTests(unittest.TestCase):
             ):
                 analysis.plot_pages(self.summarize(rows), self.path, paper=True)
 
-    def test_paper_block_choice_uses_operator_medians_for_both_panels(self):
+    def test_paper_pair_choice_uses_operator_medians_for_both_panels(self):
         for operator in analysis.OPERATORS:
             rows = []
             for k in (32, 64):
@@ -246,52 +247,65 @@ class TensorAnalysisTests(unittest.TestCase):
                 )
                 rows += self.measurements(operator, backend="block-select", k=k)
                 for block in (128, 256, 512):
-                    winner = block == (128 if k == 32 else 512)
-                    rows += self.measurements(
-                        operator,
-                        block_size=block,
-                        k=k,
-                        phase_factors={
-                            "operator": 1 if winner else 2,
-                            "selection_isolated": 3 if winner else 1,
-                        },
-                    )
+                    for items in (4, 13):
+                        winner = (block, items) == ((128, 13) if k == 32 else (512, 4))
+                        rows += self.measurements(
+                            operator,
+                            block_size=block,
+                            items_per_thread=items,
+                            k=k,
+                            phase_factors={
+                                "operator": 1 if winner else 2,
+                                "selection_isolated": 3 if winner else 1,
+                            },
+                        )
             summary = self.summarize(rows, operator)
             original = copy.deepcopy(summary)
             detailed = analysis.plot_pages(summary, self.path)
             paper = analysis.plot_pages(summary, self.path, paper=True)
-            self.assertEqual(sum(map(len, detailed.values())), 20)
+            self.assertEqual(sum(map(len, detailed.values())), 32)
             self.assertEqual(sum(map(len, paper.values())), 8)
             for values in paper.values():
                 for row in values:
                     if row["backend"] == "bits-sq":
                         self.assertEqual(
-                            row["block_size"], 128 if row["k"] == 32 else 512
+                            (row["block_size"], row["items_per_thread"]),
+                            (128, 13) if row["k"] == 32 else (512, 4),
                         )
                         self.assertAlmostEqual(
                             row["median_ms"], 3 if row["phase"] == "operator" else 9
                         )
             self.assertEqual(summary, original)
 
-    def test_global_paper_uses_one_block_per_backend_and_operator_geometric_mean(self):
+    def test_global_paper_uses_one_pair_per_backend_and_operator_geometric_mean(self):
         for operator in analysis.OPERATORS:
             with self.subTest(operator=operator):
                 rows = []
                 factors = {
-                    "bits-sq": {128: (1, 9), 256: (4, 4), 512: (2, 6)},
-                    "bits-prefetch": {128: (4, 4), 256: (1, 9), 512: (2, 6)},
+                    "bits-sq": {
+                        (128, 4): (1, 9),
+                        (128, 13): (4, 4),
+                        (256, 7): (2, 6),
+                    },
+                    "bits-prefetch": {
+                        (128, 4): (4, 4),
+                        (128, 13): (1, 9),
+                        (256, 7): (2, 6),
+                    },
                 }
                 for position, k in enumerate((32, 64)):
                     rows += self.measurements(
                         operator, backend="air-topk", k=k, multiplier=12
                     )
-                    for backend, blocks in factors.items():
-                        for block, operator_factors in blocks.items():
+                    rows += self.measurements(operator, backend="block-select", k=k)
+                    for backend, pairs in factors.items():
+                        for (block, items), operator_factors in pairs.items():
                             factor = operator_factors[position]
                             rows += self.measurements(
                                 operator,
                                 backend=backend,
                                 block_size=block,
+                                items_per_thread=items,
                                 k=k,
                                 phase_factors={
                                     "operator": factor,
@@ -310,20 +324,31 @@ class TensorAnalysisTests(unittest.TestCase):
                         ).values()
                     )
                 )
-                for backend, winner in (("bits-sq", 128), ("bits-prefetch", 256)):
+                winners = {"bits-sq": (128, 4), "bits-prefetch": (128, 13)}
+                per_k_winners = {
+                    ("bits-sq", 32): (128, 4),
+                    ("bits-sq", 64): (128, 13),
+                    ("bits-prefetch", 32): (128, 13),
+                    ("bits-prefetch", 64): (128, 4),
+                }
+                for backend, winner in winners.items():
                     self.assertEqual(
                         {
-                            row["block_size"]
+                            (row["block_size"], row["items_per_thread"])
                             for row in per_k
                             if row["backend"] == backend
                         },
-                        {128, 256},
+                        {(128, 4), (128, 13)},
                     )
-                    selected = [
-                        row for row in global_rows if row["backend"] == backend
-                    ]
+                    selected = [row for row in global_rows if row["backend"] == backend]
                     self.assertEqual(len(selected), 4)
-                    self.assertEqual({row["block_size"] for row in selected}, {winner})
+                    self.assertEqual(
+                        {
+                            (row["block_size"], row["items_per_thread"])
+                            for row in selected
+                        },
+                        {winner},
+                    )
                     for row in selected:
                         factor = 1 if row["k"] == 32 else 9
                         expected = 3 * (
@@ -331,12 +356,41 @@ class TensorAnalysisTests(unittest.TestCase):
                         )
                         self.assertAlmostEqual(row["median_ms"], expected)
                 self.assertEqual(summary, original)
+                output = self.root / "plots" / operator
+                with patch.object(
+                    sys,
+                    "argv",
+                    ["plot", str(self.path), "--output-dir", str(output)],
+                ), patch.object(analysis, "plot"):
+                    analysis.main(operator)
+                with (output / self.path.name).open() as source:
+                    exported = list(csv.DictReader(source))
+                self.assertEqual(len(exported), len(summary))
+                for row in exported:
+                    backend = row["backend"]
+                    pair = (int(row["block_size"]), int(row["items_per_thread"]))
+                    self.assertEqual(
+                        row["paper_global_selected"],
+                        str(backend == "air-topk" or pair == winners.get(backend)),
+                    )
+                    self.assertEqual(
+                        row["paper_selected"],
+                        str(
+                            backend == "air-topk"
+                            or pair == per_k_winners.get((backend, int(row["k"])))
+                        ),
+                    )
 
-    def test_global_paper_excludes_blocks_without_complete_k_coverage(self):
-        rows = self.measurements(block_size=128, multiplier=0.1)
+    def test_global_paper_excludes_pairs_without_complete_k_coverage(self):
+        rows = self.measurements(block_size=128, items_per_thread=4, multiplier=0.1)
+        rows += self.measurements(
+            block_size=128, items_per_thread=13, k=64, multiplier=0.1
+        )
         for k in (32, 64):
             rows += self.measurements(backend="air-topk", k=k)
-            rows += self.measurements(block_size=256, k=k, multiplier=2)
+            rows += self.measurements(
+                block_size=256, items_per_thread=7, k=k, multiplier=2
+            )
         summary = self.summarize(rows)
         pages = analysis.plot_pages(summary, self.path, paper=True, selection="global")
         selected = [
@@ -345,7 +399,10 @@ class TensorAnalysisTests(unittest.TestCase):
             for row in points
             if row["backend"] == "bits-sq"
         ]
-        self.assertEqual({row["block_size"] for row in selected}, {256})
+        self.assertEqual(
+            {(row["block_size"], row["items_per_thread"]) for row in selected},
+            {(256, 7)},
+        )
         self.assertEqual({row["k"] for row in selected}, {32, 64})
 
     def test_rejects_duplicates_missing_phases_uploads_and_iteration_gaps(self):
@@ -540,8 +597,8 @@ class TensorAnalysisTests(unittest.TestCase):
                 self.assertFalse(output.exists())
 
     def test_cli_validates_global_coverage_before_writing_any_outputs(self):
-        rows = self.measurements(block_size=128, k=32)
-        rows += self.measurements(block_size=256, k=64)
+        rows = self.measurements(block_size=128, items_per_thread=4, k=32)
+        rows += self.measurements(block_size=128, items_per_thread=13, k=64)
         for k in (32, 64):
             rows += self.measurements(backend="air-topk", k=k)
         self.write(rows)

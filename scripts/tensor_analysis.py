@@ -232,6 +232,7 @@ def plot(summary, path, output_dir):
     from application_plotting import add_speedup_series, fit_speedup_axes
     import utils
 
+    markers = tuple(dict.fromkeys(utils.SHAPES))
     for suffix, paper, selected_pages in (
         ("", False, pages),
         ("-paper", True, paper_pages),
@@ -246,7 +247,23 @@ def plot(summary, path, output_dir):
                     for row in points
                     if not paper or row["backend"] != "block-select"
                 ]
-                fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
+                configurations = {
+                    tuple(
+                        row[name]
+                        for name in (
+                            "backend",
+                            "degree",
+                            "block_size",
+                            "items_per_thread",
+                        )
+                    )
+                    for row in visible
+                    if row["phase"] == "operator"
+                }
+                legend_rows = math.ceil(len(configurations) / 2)
+                legend_height = 0.18 * legend_rows + 0.15
+                height = 5 if paper else 5 + legend_height
+                fig, axes = plt.subplots(1, 2, figsize=(12, height), sharey=True)
                 handles, labels = [], []
                 for ax, phase, title in zip(
                     axes,
@@ -290,15 +307,16 @@ def plot(summary, path, output_dir):
                             "bits-prefetch",
                             "bits-sq",
                         ):
-                            label += f" [block={values[0]['block_size']}]"
+                            label += (
+                                f" [block={values[0]['block_size']}, "
+                                f"items={values[0]['items_per_thread']}]"
+                            )
                         handle = add_speedup_series(
                             ax,
                             values,
                             label=label,
                             color=utils.COLORS[index],
-                            marker=utils.SHAPES[
-                                (index + variant * len(BACKENDS)) % len(utils.SHAPES)
-                            ],
+                            marker=markers[(index + variant // 4) % len(markers)],
                             linestyle=("-", "--", "-.", ":")[variant % 4],
                         )
                         if phase == "operator":
@@ -326,7 +344,7 @@ def plot(summary, path, output_dir):
                         "Bars: backend IQR; AIR median fixed",
                         fontsize=11,
                     )
-                columns = 4 if paper else 2
+                columns = 2 if suffix == "-paper-global" or not paper else 4
                 fig.legend(
                     handles,
                     labels,
@@ -338,9 +356,11 @@ def plot(summary, path, output_dir):
                 fig.tight_layout(
                     rect=(
                         0,
-                        min(0.4, 0.045 * math.ceil(len(labels) / columns)),
+                        0.045 * math.ceil(len(labels) / columns)
+                        if paper
+                        else legend_height / height,
                         1,
-                        1 if paper else 0.89,
+                        1,
                     )
                 )
                 pdf.savefig(fig)

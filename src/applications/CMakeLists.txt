@@ -12,7 +12,7 @@ add_library(application-selectors STATIC EXCLUDE_FROM_ALL
     ${SRC_DIR}/topk/multipass/air_topk.cu)
 foreach(k 16 32 64 128 256 512 1024 2048)
     foreach(block 128 256 512)
-        foreach(batch 1 4 7 16)
+        foreach(batch 1 4 7 8 13 16)
             target_sources(application-selectors PRIVATE
                 ${SRC_DIR}/topk/singlepass/detail/bts_${k}_${batch}_${block}.cu)
         endforeach()

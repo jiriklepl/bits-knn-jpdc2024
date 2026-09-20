@@ -16,6 +16,8 @@ SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 APPLICATIONS = ("database-topn", "token-sampling", "gradient-compression")
 BITS = ("bits-prefetch", "bits-sq")
 BASELINES = ("air-topk", "grid-select", "block-select")
+BLOCK_SIZES = ("128", "256", "512")
+ITEMS_PER_THREAD = ("4", "7", "8", "13", "16")
 
 FAKE_RUNNER = """import csv
 import json
@@ -27,10 +29,13 @@ options = dict(zip(arguments[1::2], arguments[2::2]))
 with open(os.environ['SWEEP_CALLS'], 'a') as output:
     output.write(json.dumps(arguments) + '\\n')
 writer = csv.writer(sys.stdout)
-writer.writerow(['backend', 'k', 'block_size'])
+writer.writerow(['backend', 'k', 'block_size', 'items_per_thread'])
 for backend in options['--backends'].split(','):
-    writer.writerow([backend, options['--k'], options['--bits-block-size']])
-if (options['--k'], options['--bits-block-size']) == ('64', '256'):
+    writer.writerow([backend, options['--k'], options['--bits-block-size'],
+                     options['--items-per-thread']])
+configuration = (options['--k'], options['--bits-block-size'],
+                 options['--items-per-thread'])
+if configuration == ('64', '256', '8'):
     if os.environ.get('SWEEP_FAIL'):
         print('simulated verification failure', file=sys.stderr)
         sys.exit(7)
@@ -78,7 +83,7 @@ class ApplicationSweepTests(unittest.TestCase):
             with self.subTest(application=application):
                 run, calls = self.run_batch(application, "32", "64")
                 self.assertEqual(run.returncode, 0, run.stderr)
-                self.assertEqual(len(calls), 6)
+                self.assertEqual(len(calls), 30)
                 configurations = []
                 for arguments in calls:
                     self.assertEqual(arguments[0], str(self.manifest))
@@ -89,22 +94,36 @@ class ApplicationSweepTests(unittest.TestCase):
                     self.assertEqual(options["--warmup"], "10")
                     self.assertEqual(options["--repeat"], "30")
                     self.assertEqual(options["--degree"], "32")
-                    self.assertNotIn("--items-per-thread", options)
                     configurations.extend(
-                        (backend, options["--k"], options["--bits-block-size"])
+                        (
+                            backend,
+                            options["--k"],
+                            options["--bits-block-size"],
+                            options["--items-per-thread"],
+                        )
                         for backend in options["--backends"].split(",")
                     )
                 expected = [
-                    (backend, k, block)
+                    (backend, k, block, items)
                     for k in ("32", "64")
                     for backend in BITS
-                    for block in ("128", "256", "512")
-                ] + [(backend, k, "512") for k in ("32", "64") for backend in BASELINES]
+                    for block in BLOCK_SIZES
+                    for items in ITEMS_PER_THREAD
+                ] + [
+                    (backend, k, "512", "16")
+                    for k in ("32", "64")
+                    for backend in BASELINES
+                ]
                 self.assertEqual(Counter(configurations), Counter(expected))
-                self.assertEqual(run.stdout.count("backend,k,block_size"), 1)
+                self.assertEqual(
+                    run.stdout.count("backend,k,block_size,items_per_thread"), 1
+                )
                 rows = csv.DictReader(io.StringIO(run.stdout))
                 self.assertEqual(
-                    Counter((r["backend"], r["k"], r["block_size"]) for r in rows),
+                    Counter(
+                        (r["backend"], r["k"], r["block_size"], r["items_per_thread"])
+                        for r in rows
+                    ),
                     Counter(expected),
                 )
 
@@ -113,7 +132,7 @@ class ApplicationSweepTests(unittest.TestCase):
             with self.subTest(application=application):
                 run, calls = self.run_batch(application, "32", "64", fail=True)
                 self.assertEqual(run.returncode, 7, run.stderr)
-                self.assertEqual(len(calls), 5)
+                self.assertEqual(len(calls), 23)
                 self.assertEqual(run.stdout, "")
                 self.assertIn("simulated verification failure", run.stderr)
 

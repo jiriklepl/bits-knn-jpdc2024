@@ -72,18 +72,34 @@ class PaperSelectionTests(unittest.TestCase):
         ]
 
     def test_operator_winner_carries_its_own_selection_measurements(self):
-        rows = self.rows(128, 3, 0.1) + self.rows(256, 2, 0.5) + self.rows(512, 4, 0.2)
+        rows = (
+            self.rows(128, 3, 0.1)
+            + self.rows(256, 2, 0.5, items_per_thread=13)
+            + self.rows(256, 3, 0.01, items_per_thread=7)
+            + self.rows(512, 4, 0.2)
+        )
         chosen = select_paper_rows(rows, "test.csv")
         self.assertEqual([row["block_size"] for row in chosen], [256, 256])
+        self.assertEqual([row["items_per_thread"] for row in chosen], [13, 13])
         self.assertEqual([row["median_ms"] for row in chosen], [2, 0.5])
 
-    def test_exact_ties_use_smaller_blocks_regardless_of_input_order(self):
-        rows = self.rows(512, 2, 0.1) + self.rows(128, 2, 0.5)
-        for values in (rows, list(reversed(rows))):
-            self.assertEqual(
-                {row["block_size"] for row in select_paper_rows(values, "test.csv")},
-                {128},
-            )
+    def test_exact_ties_use_smaller_blocks_then_fewer_items(self):
+        rows = (
+            self.rows(512, 2, 0.1, items_per_thread=4)
+            + self.rows(128, 2, 0.5, items_per_thread=13)
+            + self.rows(128, 2, 0.5, items_per_thread=7)
+        )
+        for selection in ("per-k", "global"):
+            for values in (rows, list(reversed(rows))):
+                self.assertEqual(
+                    {
+                        (r["block_size"], r["items_per_thread"])
+                        for r in select_paper_rows(
+                            values, "test.csv", selection=selection
+                        )
+                    },
+                    {(128, 7)},
+                )
 
     def test_annotations_keep_workloads_k_and_backend_ids_separate(self):
         rows = []
@@ -149,6 +165,19 @@ class PaperSelectionTests(unittest.TestCase):
         self.assertEqual({row["block_size"] for row in chosen}, {256})
         with self.assertRaisesRegex(ValueError, "measured at every k"):
             select_paper_rows(partial + complete[2:], "test.csv", selection="global")
+
+    def test_global_keeps_items_fixed_and_does_not_combine_partial_pairs(self):
+        # The same block's different item counts are separate candidates.
+        partial = self.rows(128, 0.01, 0.01, k=32, items_per_thread=7) + self.rows(
+            128, 0.01, 0.01, k=64, items_per_thread=13
+        )
+        complete = self.rows(128, 2, 1, k=32, items_per_thread=8) + self.rows(
+            128, 2, 1, k=64, items_per_thread=8
+        )
+        chosen = select_paper_rows(partial + complete, "test.csv", selection="global")
+        self.assertEqual({r["items_per_thread"] for r in chosen}, {8})
+        with self.assertRaisesRegex(ValueError, "measured at every k"):
+            select_paper_rows(partial, "test.csv", selection="global")
 
     def test_global_ties_and_large_values_are_deterministic(self):
         rows = (
@@ -403,7 +432,7 @@ class ApplicationRenderTests(unittest.TestCase):
         if filename.stem.endswith("-paper-global"):
             for label, backend in zip(labels, visible):
                 if backend in ("bits-prefetch", "bits-sq"):
-                    self.assertTrue(label.endswith("[block=512]"))
+                    self.assertTrue(label.endswith("[block=512, items=4]"))
                 else:
                     self.assertNotIn("block=", label)
         elif paper:
@@ -444,7 +473,7 @@ class ApplicationRenderTests(unittest.TestCase):
     def test_gradient_shared_limits_include_both_panels_and_errors(self):
         self.check_operator("gradient-compression")
 
-    def test_block_sweeps_render_all_variants_and_only_operator_winners(self):
+    def test_joint_sweeps_render_all_variants_and_only_operator_winners(self):
         for operator in ("database-topn", "token-sampling", "gradient-compression"):
             with self.subTest(operator=operator):
                 summary = self.summary(operator, "operator")
@@ -454,24 +483,26 @@ class ApplicationRenderTests(unittest.TestCase):
                         variants.append(row)
                         continue
                     for block in (128, 256, 512):
-                        winner = 128 if row["k"] == 32 else 512
-                        # Reverse the isolated-selection ranking to ensure the
-                        # paper's second panel carries the operator winner.
-                        factor = 0.5 if block == winner else 2
-                        if block == winner and row["k"] == 32:
-                            factor = 0.25  # Make 128 the unique global winner.
-                        if row["phase"] == "selection_isolated":
-                            factor = 1 / factor
-                        variants.append(
-                            row
-                            | {
-                                "block_size": block,
-                                "median_ms": row["median_ms"] * factor,
-                                "p25_ms": row["p25_ms"] * factor,
-                                "p75_ms": row["p75_ms"] * factor,
-                                "speedup_vs_air": row["speedup_vs_air"] / factor,
-                            }
-                        )
+                        for items in (4, 7, 8, 13, 16):
+                            winner = (128, 13) if row["k"] == 32 else (512, 7)
+                            # Reverse the isolated-selection ranking to ensure the
+                            # paper's second panel carries the operator winner.
+                            factor = 0.5 if (block, items) == winner else 2
+                            if (block, items) == winner and row["k"] == 32:
+                                factor = 0.25  # Unique global winner: (128, 13).
+                            if row["phase"] == "selection_isolated":
+                                factor = 1 / factor
+                            variants.append(
+                                row
+                                | {
+                                    "block_size": block,
+                                    "items_per_thread": items,
+                                    "median_ms": row["median_ms"] * factor,
+                                    "p25_ms": row["p25_ms"] * factor,
+                                    "p75_ms": row["p75_ms"] * factor,
+                                    "speedup_vs_air": row["speedup_vs_air"] / factor,
+                                }
+                            )
                 for filename, figure in self.render(operator, variants):
                     paper = filename.stem.endswith(("-paper", "-paper-global"))
                     global_choice = filename.stem.endswith("-paper-global")
@@ -484,7 +515,19 @@ class ApplicationRenderTests(unittest.TestCase):
                             for c in axis.containers
                             if isinstance(c, self.ErrorbarContainer)
                         ]
-                        self.assertEqual(len(containers), 4 if paper else 9)
+                        self.assertEqual(len(containers), 4 if paper else 33)
+                        if not paper:
+                            if operator != "database-topn":
+                                self.assertGreater(axis.bbox.height / figure.dpi, 2.5)
+                            styles = {
+                                (
+                                    c.lines[0].get_color(),
+                                    c.lines[0].get_marker(),
+                                    c.lines[0].get_linestyle(),
+                                )
+                                for c in containers
+                            }
+                            self.assertEqual(len(styles), len(containers))
                         if paper:
                             for container, backend in zip(containers, BACKENDS[:-1]):
                                 expected = [
@@ -494,11 +537,11 @@ class ApplicationRenderTests(unittest.TestCase):
                                     and row["backend"] == backend
                                     and (
                                         backend not in ("bits-prefetch", "bits-sq")
-                                        or row["block_size"]
+                                        or (row["block_size"], row["items_per_thread"])
                                         == (
-                                            128
+                                            (128, 13)
                                             if global_choice or row["k"] == 32
-                                            else 512
+                                            else (512, 7)
                                         )
                                     )
                                 ]
@@ -514,7 +557,11 @@ class ApplicationRenderTests(unittest.TestCase):
                     labels = [text.get_text() for text in legend.get_texts()]
                     if global_choice:
                         self.assertEqual(
-                            labels[:2], ["BITS [block=128]", "BITS (split) [block=128]"]
+                            labels[:2],
+                            [
+                                "BITS [block=128, items=13]",
+                                "BITS (split) [block=128, items=13]",
+                            ],
                         )
                     if not paper:
                         for block in (128, 256, 512):
@@ -524,8 +571,16 @@ class ApplicationRenderTests(unittest.TestCase):
                                     and label.startswith("BITS")
                                     for label in labels
                                 ),
-                                2,
+                                10,
                             )
+                    # All 33 detailed labels fit below the chart without overlap.
+                    bounds = legend.get_window_extent(figure.canvas.get_renderer())
+                    self.assertGreaterEqual(bounds.y0, figure.bbox.y0)
+                    self.assertLessEqual(
+                        bounds.y1, min(ax.bbox.y0 for ax in figure.axes)
+                    )
+                    self.assertGreaterEqual(bounds.x0, figure.bbox.x0)
+                    self.assertLessEqual(bounds.x1, figure.bbox.x1)
 
 
 if __name__ == "__main__":
