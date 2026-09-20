@@ -87,7 +87,7 @@ class NativeRunnerTests(unittest.TestCase):
             "--k",
             "32",
             "--backends",
-            "bits,bits-sq,air-topk,grid-select,block-select",
+            "bits-prefetch,bits-sq,air-topk,grid-select,block-select",
             "--warmup",
             "1",
             "--repeat",
@@ -99,7 +99,13 @@ class NativeRunnerTests(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         timings = list(csv.DictReader(io.StringIO(run.stdout)))
         self.assertEqual(len(timings), 5 * (1 + 2 * 5))
-        backends = {"bits", "bits-sq", "air-topk", "grid-select", "block-select"}
+        backends = {
+            "bits-prefetch",
+            "bits-sq",
+            "air-topk",
+            "grid-select",
+            "block-select",
+        }
         self.assertEqual({r["backend"] for r in timings}, backends)
         self.assertEqual(
             {r["phase"] for r in timings},
@@ -117,7 +123,7 @@ class NativeRunnerTests(unittest.TestCase):
             self.assertGreaterEqual(float(row["seconds"]), 0)
             self.assertAlmostEqual(float(row["retention_ratio"]), 32 / self.n)
             expected_config = {
-                "bits": (1, 512, 7),
+                "bits-prefetch": (1, 512, 7),
                 "bits-sq": (32, 512, 4),
                 "air-topk": (1, 512, 0),
                 "grid-select": (1, 0, 0),
@@ -160,7 +166,7 @@ class NativeRunnerTests(unittest.TestCase):
                         "--binary",
                         str(self.binary),
                         "--backends",
-                        "bits,bits-sq",
+                        "bits-prefetch,bits-sq",
                         "--bits-block-size",
                         str(block),
                         "--items-per-thread",
@@ -196,8 +202,8 @@ class NativeRunnerTests(unittest.TestCase):
             ["--bits-block-size", "129"],
             ["--bits-block-size", "1024"],
             ["--backends", "missing"],
-            ["--backends", "bits,bits"],
-            ["--backends", "bits,"],
+            ["--backends", "bits-prefetch,bits-prefetch"],
+            ["--backends", "bits-prefetch,"],
             ["--repeat", "0"],
             ["-k", "32garbage"],
         ]:

@@ -1,6 +1,8 @@
 .cache
 .vscode
 .venv
+.venv-model
+__pycache__
 
 build-*
 /build
@@ -31,5 +33,5 @@ doc/**/*.fls
 external/libs
 examples/a.out
 
-# Generated database input arrays; retain benchmark CSVs and plots separately.
+# Generated application input arrays; retain benchmark CSVs and plots separately.
 /data/application-inputs/

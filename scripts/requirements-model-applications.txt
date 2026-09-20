@@ -1,0 +1,5 @@
+# CPU capture only. Install torch first from https://download.pytorch.org/whl/cpu
+# to avoid installing CUDA libraries into the exporter environment.
+torch==2.10.0
+transformers==4.57.6
+numpy==2.4.6

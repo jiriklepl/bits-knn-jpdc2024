@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export raw TPC-H lineitem columns for the GPU database top-N operator."""
+"""Export reproducible TPC-H columns or captured model tensors for GPU operators."""
 
 import argparse
 import json
@@ -107,18 +107,80 @@ def export_database(destination, scale_factor, extension_directory=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operator", choices=["database-topn"])
-    parser.add_argument(
+    operators = parser.add_subparsers(dest="operator", required=True)
+    database = operators.add_parser(
+        "database-topn", help="Generate TPC-H lineitem columns"
+    )
+    database.add_argument(
         "--output", type=Path, required=True, help="New export directory"
     )
-    parser.add_argument("--scale-factor", type=float, default=0.1)
-    parser.add_argument(
+    database.add_argument("--scale-factor", type=float, default=0.1)
+    database.add_argument(
         "--extension-directory", type=Path, help="Optional DuckDB extension cache"
     )
+    for operator in ["token-sampling", "gradient-compression"]:
+        model_parser = operators.add_parser(
+            operator, help="Capture a real causal model on CPU"
+        )
+        model_parser.add_argument(
+            "--output", type=Path, required=True, help="New export directory"
+        )
+        model_parser.add_argument("--model", default="distilbert/distilgpt2")
+        model_parser.add_argument(
+            "--revision",
+            help="Immutable full model commit SHA; required for custom models",
+        )
+        model_parser.add_argument(
+            "--prompts-file",
+            type=Path,
+            help="JSON list of prompt strings (default: eight fixed sentences)",
+        )
+        model_parser.add_argument(
+            "--seed",
+            type=int,
+            default=42,
+            help="Capture seed (independent of native sampling seed)",
+        )
+        model_parser.add_argument(
+            "--threads", type=int, default=1, help="CPU capture threads"
+        )
+        model_parser.add_argument(
+            "--cache-directory", type=Path, help="Optional Hugging Face model cache"
+        )
+        if operator == "gradient-compression":
+            model_parser.add_argument(
+                "--parameter",
+                default="transformer.h.0.mlp.c_fc.weight",
+                help="Complete named parameter to differentiate",
+            )
     args = parser.parse_args()
     try:
-        path = export_database(args.output, args.scale_factor, args.extension_directory)
-    except (ValueError, OSError, ImportError) as error:
+        if args.operator == "database-topn":
+            path = export_database(
+                args.output, args.scale_factor, args.extension_directory
+            )
+        else:
+            from model_application_inputs import export_model_input
+
+            prompts = None
+            if args.prompts_file is not None:
+                prompts = json.loads(args.prompts_file.read_text(encoding="utf-8"))
+                if not isinstance(prompts, list):
+                    raise ValueError(
+                        "prompts must be a nonempty JSON list of nonempty strings"
+                    )
+            path = export_model_input(
+                args.operator,
+                args.output,
+                model=args.model,
+                revision=args.revision,
+                prompts=prompts,
+                parameter=getattr(args, "parameter", None),
+                seed=args.seed,
+                threads=args.threads,
+                cache_directory=args.cache_directory,
+            )
+    except (ValueError, OSError, ImportError, RuntimeError) as error:
         parser.exit(1, f"{error}\n")
     print(path)
 

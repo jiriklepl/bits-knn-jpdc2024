@@ -45,8 +45,8 @@ std::vector<applications::database_row> reference_rows(const applications::datab
 } // namespace
 
 TEMPLATE_TEST_CASE("Database operator returns sorted projected rows across repeated updates",
-                   "[applications][database]", bits_knn, single_query_bits, air_topk, grid_select,
-                   block_select)
+                   "[applications][database]", bits_knn, bits_prefetch_knn, single_query_bits,
+                   air_topk, grid_select, block_select)
 {
     struct shape
     {
@@ -67,7 +67,7 @@ TEMPLATE_TEST_CASE("Database operator returns sorted projected rows across repea
         args.deg = s.degree;
         args.selection_block_size = 128;
         args.items_per_thread = {1, 1, 1};
-        if constexpr (std::is_same_v<TestType, bits_knn> ||
+        if constexpr (std::is_base_of_v<bits_knn, TestType> ||
                       std::is_same_v<TestType, single_query_bits>)
         {
             args.selection_block_size = 512;
@@ -149,7 +149,7 @@ TEST_CASE("GridSelect reinitializes workspace and returns sorted arbitrary-k res
 }
 
 TEMPLATE_TEST_CASE("Database BITS configurations handle partial blocks and maximum k",
-                   "[applications][database]", bits_knn, single_query_bits)
+                   "[applications][database]", bits_knn, bits_prefetch_knn, single_query_bits)
 {
     const auto columns = table(2053);
     for (std::size_t k : {7u, 1025u, 2048u})
