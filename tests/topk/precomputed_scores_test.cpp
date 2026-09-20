@@ -215,7 +215,7 @@ TEST_CASE("BITS rejects invalid partition degrees before touching input", "[scor
     REQUIRE_THROWS_AS(algorithm.initialize(score_args(1, 17, 3, 18)), std::invalid_argument);
 }
 
-TEST_CASE("BITS split selection respects pitched input rows", "[scores]")
+TEST_CASE("BITS split selection bounds uneven and pitched input rows", "[scores]")
 {
     class pitched_scores : public cuda_distance
     {
@@ -234,18 +234,52 @@ TEST_CASE("BITS split selection respects pitched input rows", "[scores]")
         array_view<float, 2> scores_;
     };
 
-    // Deliberately use a row stride different from the logical candidate count.
-    cuda_array<float, 2> storage{{3, 128}, {137, 1}};
-    std::vector<float> input(3 * 128);
-    for (std::size_t i = 0; i < input.size(); ++i)
-        input[i] = 100.0f - i;
-    cuda_stream::make_default().copy_to_gpu_async(storage.view(), input.data()).sync();
-    for (std::size_t degree : {1u, 4u})
+    struct shape
     {
-        single_query_bits algorithm;
-        algorithm.set_dist_impl(std::make_unique<pitched_scores>(storage.view()));
-        algorithm.initialize(score_args(3, 128, 32, degree));
-        algorithm.selection();
-        require_topk(input, algorithm.finish(), 3, 128, 32);
+        std::size_t rows, columns, k, degree, padding;
+    };
+
+    // Ceil-sized partitions leave one empty tail partition for 35/8 and five for 133/32.
+    // Their nonempty partitions also contain fewer candidates than k.
+    const shape shapes[] = {{3, 128, 32, 1, 9},
+                            {3, 128, 32, 4, 9},
+                            {3, 35, 32, 8, 0},
+                            {3, 35, 32, 8, 9},
+                            {4, 133, 65, 32, 9},
+                            // More than one register buffer per partition, with unequal row ends.
+                            {3, 4099, 65, 3, 22}};
+    single_query_bits algorithm;
+    for (const auto& shape : shapes)
+    {
+        CAPTURE(shape.rows, shape.columns, shape.k, shape.degree, shape.padding);
+        const auto stride = shape.columns + shape.padding;
+        cuda_array<float, 2> storage{{shape.rows, stride}};
+        const array_view<float, 2> scores{
+            storage.view().data(), {shape.rows, shape.columns}, {stride, 1}};
+        algorithm.set_dist_impl(std::make_unique<pitched_scores>(scores));
+        algorithm.initialize(score_args(shape.rows, shape.columns, shape.k, shape.degree));
+
+        // Padding would outrank every valid candidate if a partition read beyond its row.
+        std::vector<float> physical(shape.rows * stride, std::numeric_limits<float>::lowest());
+        std::vector<float> input(shape.rows * shape.columns);
+        for (bool reverse : {false, true})
+        {
+            CAPTURE(reverse);
+            for (std::size_t row = 0; row < shape.rows; ++row)
+            {
+                for (std::size_t col = 0; col < shape.columns; ++col)
+                {
+                    // Distinct row ranges expose cross-row reads. Reversing both orders makes
+                    // the short final partition essential and detects stale selection inputs.
+                    const float value = reverse ? -10000.0f * (row + 1) + (shape.columns - col)
+                                                : 10000.0f * row + col;
+                    input[row * shape.columns + col] = value;
+                    physical[row * stride + col] = value;
+                }
+            }
+            cuda_stream::make_default().copy_to_gpu_async(storage.view(), physical.data()).sync();
+            algorithm.selection();
+            require_topk(input, algorithm.finish(), shape.rows, shape.columns, shape.k);
+        }
     }
 }

@@ -159,6 +159,7 @@ struct shared_buffer
             const auto idx = i * BLOCK_SIZE + threadIdx.x;
 
             tmp_dist[i] = bits_kernel_max_value<Value>();
+            tmp_label[i] = -1;
             __builtin_assume(idx < BUFFER_SIZE);
             if (idx < limit)
             {
@@ -214,32 +215,28 @@ struct shared_buffer
  implicit indices as labels. Otherwise, the @p in_label matrix of the same size as @p in_dist is
  used.
  * @param i the starting index of the batch to load.
- * @param label_offsets the offsets to add to the labels. This is useful for single-query problems.
- If @p label_offsets is nullptr, the kernel does not add any offset to the labels. Otherwise, size
- of @p label_offsets must be equal to @p in_dist.size(0).
+ * @param label_offset first column of the partition in its original input row; added to implicit
+ labels only.
  */
 template <bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, class Value, class Idx>
 __device__ __forceinline__ void
 bits_kernel_load_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BATCH_SIZE],
                        array_view<Value, 2> in_dist, array_view<Idx, 2> in_label, std::size_t i,
-                       const Idx* label_offsets)
+                       Idx label_offset)
 {
 #pragma unroll
     for (std::size_t j = 0; j < BATCH_SIZE; ++j)
     {
         batch_dist[j] = bits_kernel_max_value<Value>();
+        batch_label[j] = -1;
 
         // read the next value from input
         const auto point_idx = i + j * BLOCK_SIZE;
         if (point_idx < in_dist.size(1))
         {
             batch_dist[j] = in_dist(blockIdx.x, point_idx);
-            batch_label[j] = !in_label.data() ? point_idx : in_label(blockIdx.x, point_idx);
-
-            if (label_offsets != nullptr)
-            {
-                batch_label[j] += label_offsets[blockIdx.x];
-            }
+            batch_label[j] =
+                !in_label.data() ? point_idx + label_offset : in_label(blockIdx.x, point_idx);
         }
     }
 
@@ -311,16 +308,37 @@ bits_kernel_insert_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BAT
  * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
  * @param[out] out_dist top k distances for each query.
  * @param[out] out_label top k indices for each query.
- * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
- * if not needed.
+ * @param[in] degree partitions per original input row.
+ * @param[in] partition_size maximum number of candidates in a partition (ceil(row length/degree)).
  */
 template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
 __global__ void __launch_bounds__(BLOCK_SIZE)
     bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
                 array_view<Value, 2> out_dist, array_view<Idx, 2> out_label, std::size_t k,
-                const Idx* label_offsets)
+                std::size_t degree, std::size_t partition_size)
 {
+    // Rebase to this block's slice once, retaining the original pitch between queries.
+    // A zero row stride lets the load/prefetch code address the slice using blockIdx.x.
+    auto input_row = std::size_t{blockIdx.x};
+    std::size_t start = 0;
+    auto count = in_dist.size(1);
+    if (degree > 1)
+    {
+        input_row /= degree;
+        const auto partition = blockIdx.x % degree;
+        start = partition * partition_size;
+        // Ceil-sized partitions can have empty tails even when degree <= row length.
+        // Clamp before constructing pointers, including for the last input row.
+        start = start < count ? start : count;
+        count -= start;
+        count = count < partition_size ? count : partition_size;
+    }
+    in_dist = array_view<Value, 2>{in_dist.ptr(input_row, start), {1, count}, {0, 1}};
+    if (in_label.data())
+        in_label = array_view<Idx, 2>{in_label.ptr(input_row, start), {1, count}, {0, 1}};
+    const auto label_offset = static_cast<Idx>(start);
+
     // number of items stored in registers of each thread
     constexpr std::size_t ITEMS_PER_THREAD = (K + BLOCK_SIZE - 1) / BLOCK_SIZE;
     constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
@@ -340,20 +358,15 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
 #pragma unroll
     for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
     {
-        topk_label[i] = threadIdx.x + i * BLOCK_SIZE;
+        const auto point_idx = threadIdx.x + i * BLOCK_SIZE;
+        topk_label[i] = -1;
         topk_dist[i] = bits_kernel_max_value<Value>();
 
-        if (topk_label[i] < in_dist.size(1))
+        if (point_idx < in_dist.size(1))
         {
-            topk_dist[i] = in_dist(blockIdx.x, topk_label[i]);
-            topk_label[i] = !in_label.data() ? topk_label[i] : in_label(blockIdx.x, topk_label[i]);
-
-            // add an optional offset to make the label unique across all "queries" in single query
-            // problems
-            if (label_offsets != nullptr)
-            {
-                topk_label[i] += label_offsets[blockIdx.x];
-            }
+            topk_dist[i] = in_dist(blockIdx.x, point_idx);
+            topk_label[i] =
+                !in_label.data() ? point_idx + label_offset : in_label(blockIdx.x, point_idx);
         }
     }
 
@@ -373,7 +386,7 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
 
         // load the next batch into registers
         bits_kernel_load_batch<PREFETCH, BLOCK_SIZE, BATCH_SIZE>(batch_dist, batch_label, in_dist,
-                                                                 in_label, i, label_offsets);
+                                                                 in_label, i, label_offset);
 
         // allocate buffer positions for the loaded values if they are lower than the current radius
         std::int32_t buffer_pos[BATCH_SIZE];
@@ -414,17 +427,19 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
 #define DECL_BITS_KERNEL(Value, Idx, prefetch, block_size, batch_size, k)                          \
     template void run_bits_kernel<Value, Idx, prefetch, block_size, batch_size, k>(                \
         array_view<Value, 2>, array_view<Idx, 2>, array_view<Value, 2>, array_view<Idx, 2>,        \
-        std::size_t, const Idx*, cudaStream_t)
+        std::size_t, std::size_t, cudaStream_t)
 
 template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
 void run_bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
                      array_view<Value, 2> out_dist, array_view<Idx, 2> out_label, std::size_t k,
-                     const Idx* label_offsets, cudaStream_t stream)
+                     std::size_t degree, cudaStream_t stream)
 {
+    assert(degree > 0);
+    const auto partition_size = in_dist.size(1) / degree + (in_dist.size(1) % degree != 0);
     bits_kernel<Value, Idx, PREFETCH, BLOCK_SIZE, BATCH_SIZE, K>
-        <<<in_dist.size(0), BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist, out_label, k,
-                                                     label_offsets);
+        <<<in_dist.size(0) * degree, BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist,
+                                                              out_label, k, degree, partition_size);
     CUCH(cudaGetLastError());
 }
 

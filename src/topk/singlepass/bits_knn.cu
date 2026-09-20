@@ -36,7 +36,7 @@ struct bits
     array_view<std::int32_t, 2> in_label;
     array_view<float, 2> out_dist;
     array_view<std::int32_t, 2> out_label;
-    const std::int32_t* label_offsets;
+    std::size_t degree = 1;
 
     template <bool PREFETCH>
     void run(std::size_t block_size, std::size_t batch_size, std::size_t k)
@@ -50,7 +50,7 @@ struct bits
                                                       run_bits_kernel<float, std::int32_t, PREFETCH,
                                                                       BlockSize, BatchSize, K>(
                                                           in_dist, in_label, out_dist, out_label, k,
-                                                          label_offsets);
+                                                          degree);
                                                   }))
                                 {
                                     throw std::runtime_error("Unsupported k value: " +
@@ -68,31 +68,6 @@ struct bits
     }
 };
 
-__global__ void populate_label_offsets_kernel(std::int32_t* label_offsets, std::size_t query_count,
-                                              std::size_t parallel_count, std::size_t column_count)
-{
-    const std::size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (idx >= query_count * parallel_count)
-        return;
-
-    label_offsets[idx] = idx % parallel_count * column_count;
-}
-
-// Keep each logical row separate when splitting irregular lengths into equal partitions.
-__global__ void pad_score_rows(array_view<float, 2> input, array_view<float, 2> padded)
-{
-    const auto count = padded.size(0) * padded.size(1);
-    for (std::size_t idx = blockIdx.x * std::size_t{blockDim.x} + threadIdx.x; idx < count;
-         idx += std::size_t{blockDim.x} * gridDim.x)
-    {
-        const auto row = idx / padded.size(1);
-        const auto col = idx % padded.size(1);
-        padded(row, col) =
-            col < input.size(1) ? input(row, col) : std::numeric_limits<float>::infinity();
-    }
-}
-
 } // namespace
 
 void bits_knn::selection()
@@ -102,8 +77,7 @@ void bits_knn::selection()
     bits kernel{.in_dist = in_dist_gpu(),
                 .in_label = {}, // implicit (compute indices as labels)
                 .out_dist = out_dist_gpu(),
-                .out_label = out_label_gpu(),
-                .label_offsets = nullptr};
+                .out_label = out_label_gpu()};
     const auto batch_size = args_.items_per_thread[0];
     const auto block_size = args_.selection_block_size;
 
@@ -120,8 +94,7 @@ void bits_prefetch_knn::selection()
     bits kernel{.in_dist = in_dist_gpu(),
                 .in_label = {}, // implicit (compute indices as labels)
                 .out_dist = out_dist_gpu(),
-                .out_label = out_label_gpu(),
-                .label_offsets = nullptr};
+                .out_label = out_label_gpu()};
     const auto batch_size = args_.items_per_thread[0];
     const auto block_size = args_.selection_block_size;
 
@@ -151,10 +124,9 @@ void single_query_bits::initialize(const knn_args& args)
 
     tmp_dist_.release();
     tmp_label_.release();
-    label_offsets_.release();
-    padded_dist_.release();
     cuda_knn::initialize(args);
-    partition_size_ = partition_size;
+    // A partition shorter than k only needs to retain all its candidates.
+    partial_k_ = std::min(k(), partition_size);
 
     const auto input = in_dist_gpu();
     if (input.data() == nullptr || input.size(0) != query_count() ||
@@ -167,19 +139,8 @@ void single_query_bits::initialize(const knn_args& args)
     if (args_.deg > 1)
     {
         const auto rows = query_count() * args_.deg;
-        tmp_dist_ = cuda_array<float, 2>{{rows, k()}};
-        tmp_label_ = cuda_array<std::int32_t, 2>{{rows, k()}};
-        label_offsets_ = cuda_array<std::int32_t, 1>{{rows}};
-
-        populate_label_offsets_kernel<<<(rows + 255) / 256, 256>>>(
-            label_offsets_.view().data(), query_count(), args_.deg, partition_size_);
-        CUCH(cudaGetLastError());
-
-        if (point_count() % args_.deg != 0 || input.stride(0) != point_count())
-        {
-            padded_dist_ = cuda_array<float, 2>{{query_count(), partition_size_ * args_.deg}};
-        }
-        cuda_stream::make_default().sync();
+        tmp_dist_ = cuda_array<float, 2>{{rows, partial_k_}};
+        tmp_label_ = cuda_array<std::int32_t, 2>{{rows, partial_k_}};
     }
 }
 
@@ -188,38 +149,25 @@ void single_query_bits::selection()
     cuda_knn::selection();
     constexpr bool PREFETCH = true;
 
-    auto input = in_dist_gpu();
-    if (padded_dist_.view().data() != nullptr)
-    {
-        const auto count = padded_dist_.view().size();
-        const auto blocks = std::min<std::size_t>((count + 255) / 256, 65535);
-        pad_score_rows<<<blocks, 256>>>(input, padded_dist_.view());
-        CUCH(cudaGetLastError());
-        input = padded_dist_.view();
-    }
-    if (args_.deg > 1)
-    {
-        input = array_view<float, 2>{
-            input.data(), {query_count() * args_.deg, partition_size_}, {partition_size_, 1}};
-    }
-
-    bits kernel{.in_dist = input,
+    bits kernel{.in_dist = in_dist_gpu(),
                 .in_label = {},
                 .out_dist = args_.deg == 1 ? out_dist_gpu() : tmp_dist_.view(),
                 .out_label = args_.deg == 1 ? out_label_gpu() : tmp_label_.view(),
-                .label_offsets = label_offsets_.view().data()};
+                .degree = args_.deg};
     const auto batch_size = args_.items_per_thread[0];
     const auto block_size = args_.selection_block_size;
 
-    kernel.run<PREFETCH>(block_size, batch_size, k());
+    kernel.run<PREFETCH>(block_size, batch_size, args_.deg == 1 ? k() : partial_k_);
 
     if (args_.deg > 1)
     {
-        kernel.in_dist = array_view<float, 2>{
-            kernel.out_dist.data(), {query_count(), k() * args_.deg}, {k() * args_.deg, 1}};
-        kernel.in_label = array_view<std::int32_t, 2>{
-            kernel.out_label.data(), {query_count(), k() * args_.deg}, {k() * args_.deg, 1}};
-        kernel.label_offsets = nullptr;
+        kernel.in_dist = array_view<float, 2>{kernel.out_dist.data(),
+                                              {query_count(), partial_k_ * args_.deg},
+                                              {partial_k_ * args_.deg, 1}};
+        kernel.in_label = array_view<std::int32_t, 2>{kernel.out_label.data(),
+                                                      {query_count(), partial_k_ * args_.deg},
+                                                      {partial_k_ * args_.deg, 1}};
+        kernel.degree = 1;
         kernel.out_dist = out_dist_gpu();
         kernel.out_label = out_label_gpu();
 

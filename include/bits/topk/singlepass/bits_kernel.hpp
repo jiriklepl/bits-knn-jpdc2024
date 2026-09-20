@@ -16,14 +16,14 @@
  * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
  * @param[out] out_dist top k distances for each query.
  * @param[out] out_label top k indices for each query.
- * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
- * if not needed.
+ * @param[in] degree number of contiguous partitions per input row. Each partition writes one
+ * output row; implicit labels remain column indices in the original input row.
  */
 template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
 extern void run_bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
                             array_view<Value, 2> out_dist, array_view<Idx, 2> out_label,
-                            std::size_t k, const Idx* label_offsets = nullptr,
+                            std::size_t k, std::size_t degree = 1,
                             cudaStream_t stream = cuda_stream::make_default().get());
 
 #endif // BITS_TOPK_SINGLEPASS_BITS_KERNEL_HPP
