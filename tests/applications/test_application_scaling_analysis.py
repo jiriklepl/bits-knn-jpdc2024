@@ -5,6 +5,7 @@ import csv
 from decimal import Decimal, ROUND_HALF_UP
 import hashlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -215,6 +216,8 @@ class ScalingAnalysisTests(ScalingFixture):
         output = self.root / "plots"
         args = [cli.__file__, str(self.path), "--output-dir", str(output)]
         with patch.object(sys, "argv", args), patch.object(
+            sys, "stderr", io.StringIO()
+        ), patch.object(
             cli, "write_outputs"
         ) as write, patch.object(cli.subprocess, "run") as execute, patch.object(
             analysis, "annotate_choices"
@@ -276,11 +279,16 @@ class ScalingAnalysisTests(ScalingFixture):
         cli = self.cli()
         with patch.object(
             sys, "argv", [cli.__file__, str(self.path), "--skip-individual-runs"]
-        ), patch.object(cli, "load_study") as load, self.assertRaises(
+        ), patch.object(sys, "stderr", io.StringIO()) as stderr, patch.object(
+            cli, "load_study"
+        ) as load, self.assertRaises(
             SystemExit
         ) as error:
             cli.main()
         self.assertEqual(error.exception.code, 2)
+        self.assertIn(
+            "--skip-individual-runs requires --cross-size", stderr.getvalue()
+        )
         load.assert_not_called()
 
     def test_cross_size_mode_preserves_legacy_outputs_and_individual_opt_out(self):
@@ -297,6 +305,8 @@ class ScalingAnalysisTests(ScalingFixture):
             if skip:
                 args.append("--skip-individual-runs")
             with self.subTest(skip=skip), patch.object(sys, "argv", args), patch.object(
+                sys, "stderr", io.StringIO()
+            ), patch.object(
                 cli, "write_outputs"
             ) as write, patch.object(cli.subprocess, "run") as execute:
                 cli.main()
