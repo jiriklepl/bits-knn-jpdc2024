@@ -183,6 +183,30 @@ TEST_CASE("BITS split-and-merge supports arbitrary k and reinitialization to one
     }
 }
 
+TEMPLATE_TEST_CASE("BITS finds finite tail scores after fully masked partitions", "[scores]",
+                   bits_knn, bits_prefetch_knn, single_query_bits)
+{
+    constexpr std::size_t rows = 3, columns = 1027, k = 65, degree = 8;
+    std::vector<float> input(rows * columns, std::numeric_limits<float>::infinity());
+    for (std::size_t row = 0; row < rows; ++row)
+    {
+        for (std::size_t col = columns - k; col < columns; ++col)
+        {
+            // Only the short final partition has finite scores. Distinct row ranges
+            // expose cross-row reads, while every selected label must come from the tail.
+            input[row * columns + col] = -10000.0f * (row + 1) + (columns - col);
+        }
+    }
+    validate_score_values(input, rows, columns, k);
+    cuda_array<float, 2> storage{{rows, columns}};
+    cuda_stream::make_default().copy_to_gpu_async(storage.view(), input.data()).sync();
+    TestType algorithm;
+    algorithm.set_dist_impl(std::make_unique<precomputed_scores>(storage.view()));
+    algorithm.initialize(score_args(rows, columns, k, degree));
+    algorithm.selection();
+    require_topk(input, algorithm.finish(), rows, columns, k);
+}
+
 TEST_CASE("Score transformations preserve largest values and signed magnitudes", "[scores]")
 {
     const std::vector<float> original{3, -8, 1, 8, -2, 0, -7, 4, -1, 6, 2};

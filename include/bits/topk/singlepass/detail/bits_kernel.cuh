@@ -138,11 +138,12 @@ struct shared_buffer
      * upper halves in parallel. The lower half is a Bitonic sequence so it can be sorted by
      * a logarithmic number of Bitonic separator layers.
      *
+     * @tparam INITIALIZE_LABELS Initialize sentinel labels for materialized partition results.
      * @tparam ITEMS_PER_THREAD Number of values in each thread
      * @param topk_dist Distances in a block-wide register array
      * @param topk_label Labels in a block-wide register array
      */
-    template <std::size_t ITEMS_PER_THREAD,
+    template <bool INITIALIZE_LABELS = false, std::size_t ITEMS_PER_THREAD,
               typename Limit = std::integral_constant<std::size_t, BUFFER_SIZE>>
     __device__ __forceinline__ void merge(Value (&topk_dist)[ITEMS_PER_THREAD],
                                           Idx (&topk_label)[ITEMS_PER_THREAD], Limit limit = {})
@@ -159,7 +160,8 @@ struct shared_buffer
             const auto idx = i * BLOCK_SIZE + threadIdx.x;
 
             tmp_dist[i] = bits_kernel_max_value<Value>();
-            tmp_label[i] = -1;
+            if constexpr (INITIALIZE_LABELS)
+                tmp_label[i] = -1;
             __builtin_assume(idx < BUFFER_SIZE);
             if (idx < limit)
             {
@@ -215,28 +217,32 @@ struct shared_buffer
  implicit indices as labels. Otherwise, the @p in_label matrix of the same size as @p in_dist is
  used.
  * @param i the starting index of the batch to load.
- * @param label_offset first column of the partition in its original input row; added to implicit
- labels only.
+ * @param label_offsets the offsets to add to the labels. This is useful for single-query problems.
+ If @p label_offsets is nullptr, the kernel does not add any offset to the labels. Otherwise, size
+ of @p label_offsets must be equal to @p in_dist.size(0).
  */
 template <bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, class Value, class Idx>
 __device__ __forceinline__ void
 bits_kernel_load_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BATCH_SIZE],
                        array_view<Value, 2> in_dist, array_view<Idx, 2> in_label, std::size_t i,
-                       Idx label_offset)
+                       const Idx* label_offsets)
 {
 #pragma unroll
     for (std::size_t j = 0; j < BATCH_SIZE; ++j)
     {
         batch_dist[j] = bits_kernel_max_value<Value>();
-        batch_label[j] = -1;
 
         // read the next value from input
         const auto point_idx = i + j * BLOCK_SIZE;
         if (point_idx < in_dist.size(1))
         {
             batch_dist[j] = in_dist(blockIdx.x, point_idx);
-            batch_label[j] =
-                !in_label.data() ? point_idx + label_offset : in_label(blockIdx.x, point_idx);
+            batch_label[j] = !in_label.data() ? point_idx : in_label(blockIdx.x, point_idx);
+
+            if (label_offsets != nullptr)
+            {
+                batch_label[j] += label_offsets[blockIdx.x];
+            }
         }
     }
 
@@ -308,15 +314,177 @@ bits_kernel_insert_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BAT
  * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
  * @param[out] out_dist top k distances for each query.
  * @param[out] out_label top k indices for each query.
- * @param[in] degree partitions per original input row.
- * @param[in] partition_size maximum number of candidates in a partition (ceil(row length/degree)).
+ * @param[in] label_offsets offsets to add to the labels (useful for single-query problems). nullptr
+ * if not needed.
  */
 template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
           std::size_t K>
 __global__ void __launch_bounds__(BLOCK_SIZE)
     bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
                 array_view<Value, 2> out_dist, array_view<Idx, 2> out_label, std::size_t k,
-                std::size_t degree, std::size_t partition_size)
+                const Idx* label_offsets)
+{
+    // number of items stored in registers of each thread
+    constexpr std::size_t ITEMS_PER_THREAD = (K + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * ITEMS_PER_THREAD;
+
+    __shared__ shared_buffer<BUFFER_SIZE, BLOCK_SIZE, Value, Idx> shm_buffer;
+
+    shm_buffer.size = 0;
+
+    // the top k queue
+    Value topk_dist[ITEMS_PER_THREAD];
+    Idx topk_label[ITEMS_PER_THREAD];
+
+    assert(k > 0);
+    assert(k <= K);
+
+// load the first block
+#pragma unroll
+    for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
+    {
+        topk_label[i] = threadIdx.x + i * BLOCK_SIZE;
+        topk_dist[i] = bits_kernel_max_value<Value>();
+
+        if (topk_label[i] < in_dist.size(1))
+        {
+            topk_dist[i] = in_dist(blockIdx.x, topk_label[i]);
+            topk_label[i] = !in_label.data() ? topk_label[i] : in_label(blockIdx.x, topk_label[i]);
+
+            // add an optional offset to make the label unique across all "queries" in single query
+            // problems
+            if (label_offsets != nullptr)
+            {
+                topk_label[i] += label_offsets[blockIdx.x];
+            }
+        }
+    }
+
+    // sort the first block
+    block_sort<1, BLOCK_SIZE, BUFFER_SIZE>(topk_dist, topk_label, shm_buffer.dist,
+                                           shm_buffer.label);
+
+    // initialize the radius to the kth element
+    auto radius = broadcast_radius<BLOCK_SIZE>(topk_dist, k);
+
+    // while at least one thread in the block will read a value in the next iteration
+    for (auto i = BUFFER_SIZE + threadIdx.x; i < in_dist.size(1) + threadIdx.x;
+         i += BATCH_SIZE * BLOCK_SIZE)
+    {
+        Value batch_dist[BATCH_SIZE];
+        Idx batch_label[BATCH_SIZE];
+
+        // load the next batch into registers
+        bits_kernel_load_batch<PREFETCH, BLOCK_SIZE, BATCH_SIZE>(batch_dist, batch_label, in_dist,
+                                                                 in_label, i, label_offsets);
+
+        // allocate buffer positions for the loaded values if they are lower than the current radius
+        std::int32_t buffer_pos[BATCH_SIZE];
+        shm_buffer.alloc(buffer_pos, batch_dist, radius);
+
+        // fill the shared buffer with the loaded values and merge into the top-k list if needed
+        while (bits_kernel_insert_batch<BLOCK_SIZE, BATCH_SIZE, BUFFER_SIZE>(
+                   batch_dist, batch_label, shm_buffer, buffer_pos) == shm_buffer.OVERFLOW)
+        {
+            // merge the buffer with the top k list
+            shm_buffer.merge(topk_dist, topk_label);
+
+            // update the radius (the kth smallest value)
+            radius = broadcast_radius<BLOCK_SIZE>(topk_dist, k);
+        }
+    }
+
+    shm_buffer.merge(topk_dist, topk_label, shm_buffer.size);
+
+    // copy the values to the output
+#pragma unroll
+    for (std::size_t i = 0; i < ITEMS_PER_THREAD; ++i)
+    {
+        const std::size_t idx = threadIdx.x * ITEMS_PER_THREAD + i;
+
+        if (idx < k)
+        {
+            out_dist(blockIdx.x, idx) = topk_dist[i];
+            out_label(blockIdx.x, idx) = topk_label[i];
+        }
+    }
+}
+
+// Keep partition addressing and sentinel initialization out of the original kernel.
+/** Load a batch of values from the input distance matrix and labels.
+
+ * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions to prefetch
+ the next batch.
+ * @tparam BLOCK_SIZE number of threads in a thread block.
+ * @tparam BATCH_SIZE number of @p in_dist elements to load for each thread.
+ * @param[out] batch_dist the loaded distances from the @p in_dist matrix for each thread.
+ * @param[out] batch_label the associated labels for the loaded distances. If @p in_label.data() is
+ not nullptr, the kernel loads the labels from the @p in_label matrix.
+ * @param[in] in_dist the input distance matrix of dimensionality @p in_dist.size(0) == gridDim.x
+ (number of queries) and @p in_dist.size(1) equal to the number of database vectors.
+ * @param[in] in_label the input label matrix. If @p in_label.data() is nullptr, the kernel uses
+ implicit indices as labels. Otherwise, the @p in_label matrix of the same size as @p in_dist is
+ used.
+ * @param i the starting index of the batch to load.
+ * @param label_offset first column of the partition in its original input row; added to implicit
+ labels only.
+ */
+template <bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE, class Value, class Idx>
+__device__ __forceinline__ void
+bits_split_kernel_load_batch(Value (&batch_dist)[BATCH_SIZE], Idx (&batch_label)[BATCH_SIZE],
+                             array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
+                             std::size_t i, Idx label_offset)
+{
+#pragma unroll
+    for (std::size_t j = 0; j < BATCH_SIZE; ++j)
+    {
+        batch_dist[j] = bits_kernel_max_value<Value>();
+        batch_label[j] = -1;
+
+        // read the next value from input
+        const auto point_idx = i + j * BLOCK_SIZE;
+        if (point_idx < in_dist.size(1))
+        {
+            batch_dist[j] = in_dist(blockIdx.x, point_idx);
+            batch_label[j] =
+                !in_label.data() ? point_idx + label_offset : in_label(blockIdx.x, point_idx);
+        }
+    }
+
+    // prefetch the next batch
+    if constexpr (PREFETCH)
+    {
+#pragma unroll
+        for (std::size_t j = 0; j < BATCH_SIZE; ++j)
+        {
+            const auto point_idx = i + BATCH_SIZE * BLOCK_SIZE + j * BLOCK_SIZE;
+            if (point_idx < in_dist.size(1))
+            {
+                prefetch(in_dist.ptr(blockIdx.x, point_idx));
+            }
+        }
+    }
+}
+
+/** Partition selection using bounded slices of the original score rows.
+ *
+ * @tparam PREFETCH if true, the kernel will insert prefetch.global.L2 PTX instructions.
+ * @tparam BLOCK_SIZE number of threads in a thread block.
+ * @tparam BATCH_SIZE number of elements to load for each thread in a single iteration.
+ * @tparam K the number of values to find for each query.
+ * @param[in] in_dist distance matrix.
+ * @param[in] in_label label matrix (if it is nullptr, the kernel uses implicit indices as labels).
+ * @param[out] out_dist top k distances for each query.
+ * @param[out] out_label top k indices for each query.
+ * @param[in] degree partitions per original input row.
+ * @param[in] partition_size maximum number of candidates in a partition (ceil(row length/degree)).
+ */
+template <class Value, class Idx, bool PREFETCH, std::size_t BLOCK_SIZE, std::size_t BATCH_SIZE,
+          std::size_t K>
+__global__ void __launch_bounds__(BLOCK_SIZE)
+    bits_split_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
+                      array_view<Value, 2> out_dist, array_view<Idx, 2> out_label, std::size_t k,
+                      std::size_t degree, std::size_t partition_size)
 {
     // Rebase to this block's slice once, retaining the original pitch between queries.
     // A zero row stride lets the load/prefetch code address the slice using blockIdx.x.
@@ -385,8 +553,8 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
         Idx batch_label[BATCH_SIZE];
 
         // load the next batch into registers
-        bits_kernel_load_batch<PREFETCH, BLOCK_SIZE, BATCH_SIZE>(batch_dist, batch_label, in_dist,
-                                                                 in_label, i, label_offset);
+        bits_split_kernel_load_batch<PREFETCH, BLOCK_SIZE, BATCH_SIZE>(
+            batch_dist, batch_label, in_dist, in_label, i, label_offset);
 
         // allocate buffer positions for the loaded values if they are lower than the current radius
         std::int32_t buffer_pos[BATCH_SIZE];
@@ -397,14 +565,14 @@ __global__ void __launch_bounds__(BLOCK_SIZE)
                    batch_dist, batch_label, shm_buffer, buffer_pos) == shm_buffer.OVERFLOW)
         {
             // merge the buffer with the top k list
-            shm_buffer.merge(topk_dist, topk_label);
+            shm_buffer.template merge<true>(topk_dist, topk_label);
 
             // update the radius (the kth smallest value)
             radius = broadcast_radius<BLOCK_SIZE>(topk_dist, k);
         }
     }
 
-    shm_buffer.merge(topk_dist, topk_label, shm_buffer.size);
+    shm_buffer.template merge<true>(topk_dist, topk_label, shm_buffer.size);
 
     // copy the values to the output
 #pragma unroll
@@ -436,10 +604,19 @@ void run_bits_kernel(array_view<Value, 2> in_dist, array_view<Idx, 2> in_label,
                      std::size_t degree, cudaStream_t stream)
 {
     assert(degree > 0);
-    const auto partition_size = in_dist.size(1) / degree + (in_dist.size(1) % degree != 0);
-    bits_kernel<Value, Idx, PREFETCH, BLOCK_SIZE, BATCH_SIZE, K>
-        <<<in_dist.size(0) * degree, BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist,
-                                                              out_label, k, degree, partition_size);
+    if (degree == 1)
+    {
+        bits_kernel<Value, Idx, PREFETCH, BLOCK_SIZE, BATCH_SIZE, K>
+            <<<in_dist.size(0), BLOCK_SIZE, 0, stream>>>(in_dist, in_label, out_dist, out_label, k,
+                                                         nullptr);
+    }
+    else
+    {
+        const auto partition_size = in_dist.size(1) / degree + (in_dist.size(1) % degree != 0);
+        bits_split_kernel<Value, Idx, PREFETCH, BLOCK_SIZE, BATCH_SIZE, K>
+            <<<in_dist.size(0) * degree, BLOCK_SIZE, 0, stream>>>(
+                in_dist, in_label, out_dist, out_label, k, degree, partition_size);
+    }
     CUCH(cudaGetLastError());
 }
 
