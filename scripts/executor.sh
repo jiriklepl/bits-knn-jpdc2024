@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is to be sourced from *-build.sh scripts in the root directory of the project.
+# Sourced by local and Chimera build wrappers invoked from the repository root.
 
 set -e
 

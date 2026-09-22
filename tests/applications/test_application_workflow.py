@@ -67,8 +67,11 @@ class ApplicationWorkflowTests(unittest.TestCase):
         scripts.mkdir()
         for name in ("executor.sh", "config.sh", "run-application-scaling.sh"):
             shutil.copy2(ROOT / "scripts" / name, scripts / name)
-        for name in ("local", *NODE_BUILDS):
-            shutil.copyfile(ROOT / f"{name}-build.sh", self.root / f"{name}-build.sh")
+        shutil.copyfile(ROOT / "local-build.sh", self.root / "local-build.sh")
+        (scripts / "chimera").mkdir()
+        for name in NODE_BUILDS:
+            wrapper = Path("scripts/chimera") / f"{name}-build.sh"
+            shutil.copyfile(ROOT / wrapper, self.root / wrapper)
         for name in (
             "prepare-application-scaling.py",
             "run-application-scaling.py",
@@ -106,8 +109,13 @@ class ApplicationWorkflowTests(unittest.TestCase):
         environment = dict(self.environment)
         if fail_command:
             environment["WORKFLOW_FAIL_COMMAND"] = fail_command
+        script = (
+            "local-build.sh"
+            if wrapper == "local"
+            else f"scripts/chimera/{wrapper}-build.sh"
+        )
         result = subprocess.run(
-            ["bash", f"{wrapper}-build.sh", "selected-node", "90", action, *arguments],
+            ["bash", script, "selected-node", "90", action, *arguments],
             cwd=self.root,
             env=environment,
             text=True,

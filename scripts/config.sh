@@ -72,7 +72,7 @@ gpu_deduce() {
 }
 
 if [ -z "$worker" ] && [ -n "$SLURM_JOB_ID" ]; then
-    print_error "worker is not set; for gpulab, use one of ampere01, ... or volta01, ..."
+    print_error "worker is not set; for Chimera, use ampere01, ampere02, hopper01, bw01, or volta05"
 fi
 
 if [ -z "$root_dir" ]; then
