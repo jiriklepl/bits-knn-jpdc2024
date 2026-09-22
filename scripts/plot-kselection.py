@@ -114,9 +114,9 @@ def drawFigInner(file: str, hostname: str, jobid: str, doing_fused: bool, data: 
         # The two-phase algorithm has to store all distances back to the global memory
         instadist_store = instadist_point_count * instadist_query_count / utils.MEMORY_FLOAT_THROUGHPUT(hostname)
 
-        # The theoretical throughput of distance computation
+        # Match the doubled phase times used by the mean aggregation below.
         instadist["algorithm"] = "bits + zero computation"
-        instadist.loc[loc, "time"] = instadist_load + instadist_store
+        instadist.loc[loc, "time"] = 2 * (instadist_load + instadist_store)
 
         data = pd.concat([data, instadist])
         # data = pd.concat([data, half_dist])
