@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "groups": [
+    {"hostname": "ampere01", "jobs": [108404, 108409, 108415], "output": "multibuffer-ampere01"},
+    {"hostname": "ampere02", "jobs": [108405, 108411, 108413], "output": "multibuffer-ampere02"},
+    {"hostname": "hopper01", "jobs": [108407, 108408, 108412], "output": "multibuffer-hopper01"},
+    {"hostname": "volta05", "jobs": [108406, 108410, 108414], "output": "multibuffer-volta05"}
+  ]
+}
