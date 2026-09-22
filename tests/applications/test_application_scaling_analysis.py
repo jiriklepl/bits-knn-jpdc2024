@@ -1,8 +1,7 @@
-"""Exercise complete scaling studies, provenance checks, and rendered comparisons."""
+"""Exercise nine-case application studies, provenance checks, and original plots."""
 
 import copy
 import csv
-from decimal import Decimal, ROUND_HALF_UP
 import hashlib
 import importlib.util
 import io
@@ -51,7 +50,7 @@ class ScalingFixture(unittest.TestCase):
         with (self.root / run["csv"]).open(newline="") as source:
             return list(csv.DictReader(source))
 
-    def make_study(self, *, tiers=("small", "large"), retention=True):
+    def make_study(self, *, tiers=("small", "middle", "large")):
         settings = dict(
             ks=[32, 64],
             degrees=[8, 32],
@@ -59,14 +58,13 @@ class ScalingFixture(unittest.TestCase):
             items=[4, 8],
             repeat=3,
             warmup=1,
-            retention_ratios=[0.01, 0.02] if retention else [],
         )
         index = dict(version=1, settings=settings, workloads=[], runs=[])
-        for operator in analysis.SIZE_LABELS:
+        for operator in analysis.OPERATORS:
             for position, suffix in enumerate(tiers):
                 identity = f"{operator}-{suffix}"
-                sizes = (512, 1024, 2048) if len(tiers) == 3 else (512, 2048)
-                batches = (2, 4, 8) if len(tiers) == 3 else (2, 8)
+                sizes = (512, 1024, 2048)
+                batches = (2, 4, 8)
                 candidates = 512 if operator == "token-sampling" else sizes[position]
                 batch = batches[position] if operator == "token-sampling" else 1
                 workload = dict(
@@ -87,114 +85,91 @@ class ScalingFixture(unittest.TestCase):
                 else:
                     workload.update(elements=candidates, size_unit="elements")
                 index["workloads"].append(workload)
-                modes = [("fixed-k", None, settings["ks"])]
-                if operator == "gradient-compression":
-                    modes.extend(
-                        (
-                            "retention",
-                            ratio,
-                            [
-                                int(
-                                    (
-                                        Decimal(str(ratio)) * candidates
-                                    ).to_integral_value(rounding=ROUND_HALF_UP)
-                                )
-                            ],
+                ks = settings["ks"]
+                run = dict(
+                    workload_id=identity,
+                    mode="fixed-k",
+                    ks=ks,
+                    csv=f"{identity}.csv",
+                    status="complete",
+                )
+                configurations, rows = [], []
+                for k in ks:
+                    configurations += [
+                        (backend, k, degree, block, items)
+                        for backend, degrees in (
+                            ("bits-prefetch", (1,)),
+                            ("bits-sq", (8, 32)),
                         )
-                        for ratio in settings["retention_ratios"]
+                        for degree in degrees
+                        for block in (128, 512)
+                        for items in (4, 8)
+                    ]
+                    configurations += [
+                        ("air-topk", k, 1, 512, 0),
+                        ("grid-select", k, 1, 0, 0),
+                    ]
+                    if k in (32, 64):
+                        configurations.append(
+                            ("block-select", k, 1, 128, 2 if k == 32 else 3)
+                        )
+                for backend, k, degree, block, items in configurations:
+                    latency = 20.0
+                    if backend == "bits-sq":
+                        if (degree, block, items) == (8, 128, 4):
+                            latency = 1.0 if suffix == "small" else 9.0
+                        elif (degree, block, items) == (32, 512, 8):
+                            latency = 4.0
+                    elif backend == "bits-prefetch":
+                        if (block, items) == (128, 4):
+                            latency = 2.0 if suffix == "small" else 8.0
+                        elif (block, items) == (512, 8):
+                            latency = 5.0
+                    config = dict(
+                        dataset_id=workload["dataset_id"],
+                        backend=backend,
+                        rows=candidates,
+                        k=k,
+                        retention_ratio=k / candidates,
+                        degree=degree,
+                        block_size=block,
+                        items_per_thread=items,
                     )
-                for mode, ratio, ks in modes:
-                    run = dict(
-                        workload_id=identity,
-                        mode=mode,
-                        requested_retention=ratio,
-                        ks=ks,
-                        csv=(
-                            f"{identity}.csv"
-                            if not retention
-                            else f"{identity}-{mode}-{ratio}.csv"
-                        ),
-                        status="complete",
+                    if operator != "database-topn":
+                        config.update(
+                            operator=operator,
+                            batch_size=batch,
+                            temperature=1 if operator == "token-sampling" else 0,
+                            seed=42 if operator == "token-sampling" else 0,
+                        )
+                    rows.append(
+                        config
+                        | dict(iteration=-1, phase="upload_shared", seconds=0.1)
                     )
-                    if ratio is not None:
-                        run["actual_retention"] = ks[0] / candidates
-                    configurations, rows = [], []
-                    for k in ks:
-                        configurations += [
-                            (backend, k, degree, block, items)
-                            for backend, degrees in (
-                                ("bits-prefetch", (1,)),
-                                ("bits-sq", (8, 32)),
+                    for iteration, factor in enumerate((0.8, 1, 1.2)):
+                        for phase in (
+                            "operator",
+                            "selection_isolated",
+                            "transform_isolated",
+                            "output_isolated",
+                            "download",
+                        ):
+                            value = (
+                                20 / latency
+                                if phase == "selection_isolated"
+                                else latency
                             )
-                            for degree in degrees
-                            for block in (128, 512)
-                            for items in (4, 8)
-                        ]
-                        configurations += [
-                            ("air-topk", k, 1, 512, 0),
-                            ("grid-select", k, 1, 0, 0),
-                        ]
-                        if k in (32, 64):
-                            configurations.append(
-                                ("block-select", k, 1, 128, 2 if k == 32 else 3)
-                            )
-                    for backend, k, degree, block, items in configurations:
-                        latency = 20.0
-                        if backend == "bits-sq":
-                            if (degree, block, items) == (8, 128, 4):
-                                latency = 1.0 if suffix == "small" else 9.0
-                            elif (degree, block, items) == (32, 512, 8):
-                                latency = 4.0
-                        elif backend == "bits-prefetch":
-                            if (block, items) == (128, 4):
-                                latency = 2.0 if suffix == "small" else 8.0
-                            elif (block, items) == (512, 8):
-                                latency = 5.0
-                        config = dict(
-                            dataset_id=workload["dataset_id"],
-                            backend=backend,
-                            rows=candidates,
-                            k=k,
-                            retention_ratio=k / candidates,
-                            degree=degree,
-                            block_size=block,
-                            items_per_thread=items,
-                        )
-                        if operator != "database-topn":
-                            config.update(
-                                operator=operator,
-                                batch_size=batch,
-                                temperature=1 if operator == "token-sampling" else 0,
-                                seed=42 if operator == "token-sampling" else 0,
-                            )
-                        rows.append(
-                            config
-                            | dict(iteration=-1, phase="upload_shared", seconds=0.1)
-                        )
-                        for iteration, factor in enumerate((0.8, 1, 1.2)):
-                            for phase in (
-                                "operator",
-                                "selection_isolated",
-                                "transform_isolated",
-                                "output_isolated",
-                                "download",
-                            ):
-                                value = (
-                                    20 / latency
-                                    if phase == "selection_isolated"
-                                    else latency
+                            rows.append(
+                                config
+                                | dict(
+                                    iteration=iteration,
+                                    phase=phase,
+                                    seconds=value * factor / 1000,
                                 )
-                                rows.append(
-                                    config
-                                    | dict(
-                                        iteration=iteration,
-                                        phase=phase,
-                                        seconds=value * factor / 1000,
-                                    )
-                                )
-                    run["configurations"] = len(configurations)
-                    self.write_raw(run, rows)
-                    index["runs"].append(run)
+                            )
+                run["configurations"] = len(configurations)
+                self.write_raw(run, rows)
+                index["runs"].append(run)
         return index
 
 
@@ -208,35 +183,25 @@ class ScalingAnalysisTests(ScalingFixture):
         return cli
 
     def test_default_dispatches_all_nine_cases_to_original_three_version_plotters(self):
-        self.index = self.make_study(
-            tiers=("small", "middle", "large"), retention=False
-        )
-        self.save_index()
         cli = self.cli()
         output = self.root / "plots"
         args = [cli.__file__, str(self.path), "--output-dir", str(output)]
         with patch.object(sys, "argv", args), patch.object(
             sys, "stderr", io.StringIO()
-        ), patch.object(
-            cli, "write_outputs"
-        ) as write, patch.object(cli.subprocess, "run") as execute, patch.object(
-            analysis, "annotate_choices"
-        ) as select_across_sizes:
+        ), patch.object(cli.subprocess, "run") as execute:
             cli.main()
-        write.assert_not_called()
-        select_across_sizes.assert_not_called()
         self.assertEqual(execute.call_count, 9)
         commands = [call.args[0] for call in execute.call_args_list]
         cases = {
             f"{operator}-{tier}"
-            for operator in analysis.SIZE_LABELS
+            for operator in analysis.OPERATORS
             for tier in ("small", "middle", "large")
         }
         self.assertEqual({Path(command[2]).stem for command in commands}, cases)
         for command in commands:
             operator = next(
                 name
-                for name in analysis.SIZE_LABELS
+                for name in analysis.OPERATORS
                 if Path(command[2]).stem.startswith(name)
             )
             self.assertEqual(
@@ -245,19 +210,22 @@ class ScalingAnalysisTests(ScalingFixture):
             self.assertEqual(command[-2:], ["--output-dir", str(output)])
         self.assertTrue(all(call.kwargs["check"] for call in execute.call_args_list))
 
-    def test_default_rejects_legacy_study_before_outputs(self):
-        self.reject_before_outputs("exactly nine fixed-k cases.*--cross-size")
-
     def test_default_requires_every_size_tier_for_each_application(self):
-        self.index = self.make_study(
-            tiers=("small", "middle", "large"), retention=False
-        )
         original = copy.deepcopy(self.index)
-        for failure in ("missing_tier", "duplicate_tier", "unknown_tier", "filename"):
+        for failure in (
+            "missing_case",
+            "missing_tier",
+            "duplicate_tier",
+            "unknown_tier",
+            "filename",
+        ):
             with self.subTest(failure=failure):
                 self.index = copy.deepcopy(original)
                 workload = self.index["workloads"][1]
-                if failure == "missing_tier":
+                if failure == "missing_case":
+                    self.index["workloads"].pop()
+                    self.index["runs"].pop()
+                elif failure == "missing_tier":
                     del workload["size_tier"]
                 elif failure == "duplicate_tier":
                     workload["size_tier"] = "small"
@@ -275,163 +243,70 @@ class ScalingAnalysisTests(ScalingFixture):
                     else "exactly nine fixed-k cases"
                 )
 
-    def test_skip_individual_runs_requires_explicit_cross_size_mode(self):
+    def test_removed_plot_modes_are_rejected_before_loading(self):
         cli = self.cli()
-        with patch.object(
-            sys, "argv", [cli.__file__, str(self.path), "--skip-individual-runs"]
-        ), patch.object(sys, "stderr", io.StringIO()) as stderr, patch.object(
-            cli, "load_study"
-        ) as load, self.assertRaises(
-            SystemExit
-        ) as error:
-            cli.main()
-        self.assertEqual(error.exception.code, 2)
-        self.assertIn(
-            "--skip-individual-runs requires --cross-size", stderr.getvalue()
-        )
-        load.assert_not_called()
-
-    def test_cross_size_mode_preserves_legacy_outputs_and_individual_opt_out(self):
-        cli = self.cli()
-        output = self.root / "plots"
-        for skip in (False, True):
-            args = [
-                cli.__file__,
-                str(self.path),
-                "--output-dir",
-                str(output),
-                "--cross-size",
-            ]
-            if skip:
-                args.append("--skip-individual-runs")
-            with self.subTest(skip=skip), patch.object(sys, "argv", args), patch.object(
-                sys, "stderr", io.StringIO()
-            ), patch.object(
-                cli, "write_outputs"
-            ) as write, patch.object(cli.subprocess, "run") as execute:
+        for option in ("--cross-size", "--skip-individual-runs"):
+            with self.subTest(option=option), patch.object(
+                sys, "argv", [cli.__file__, str(self.path), option]
+            ), patch.object(sys, "stderr", io.StringIO()) as stderr, patch.object(
+                cli, "load_study"
+            ) as load, self.assertRaises(SystemExit) as error:
                 cli.main()
-            write.assert_called_once()
-            self.assertEqual(execute.call_count, 0 if skip else 10)
-            if not skip:
-                commands = [call.args[0] for call in execute.call_args_list]
-                self.assertEqual(
-                    {Path(command[1]).name for command in commands},
-                    {
-                        "plot-database-topn.py",
-                        "plot-token-sampling.py",
-                        "plot-gradient-compression.py",
-                    },
-                )
-                self.assertEqual(
-                    {Path(command[2]).name for command in commands},
-                    {run["csv"] for run in self.index["runs"]},
-                )
-                self.assertTrue(
-                    all(
-                        command[-2:] == ["--output-dir", str(output / "workloads")]
-                        for command in commands
-                    )
-                )
-                self.assertTrue(
-                    all(call.kwargs["check"] for call in execute.call_args_list)
-                )
+            self.assertEqual(error.exception.code, 2)
+            self.assertIn(f"unrecognized arguments: {option}", stderr.getvalue())
+            load.assert_not_called()
 
-    def test_global_choices_do_not_pool_operators_or_retention_modes(self):
+    def test_verified_study_keeps_each_case_and_its_measurements_separate(self):
         rows = analysis.load_study(self.path)
+        workloads = {item["id"]: item for item in self.index["workloads"]}
+        self.assertEqual({row["workload_id"] for row in rows}, set(workloads))
+        self.assertEqual(len(rows), 9 * 30 * 6)
         for row in rows:
+            workload = workloads[row["workload_id"]]
+            self.assertEqual(row["operator"], workload["operator"])
+            self.assertEqual(row["size_tier"], workload["size_tier"])
+            self.assertEqual(row["dataset_id"], workload["dataset_id"])
+            self.assertEqual(row["mode"], "fixed-k")
+            self.assertEqual(
+                Path(row["source_csv"]), self.root / f"{workload['id']}.csv"
+            )
+            self.assertIn(row["k"], (32, 64))
+            self.assertEqual(
+                row["samples"], 1 if row["phase"] == "upload_shared" else 3
+            )
+            self.assertNotIn("scaling_global_selected", row)
             if (
-                row["mode"] != "retention"
-                or row["backend"] != "bits-sq"
-                or row["phase"] != "operator"
+                row["backend"] == "bits-sq"
+                and row["degree"] == 8
+                and row["block_size"] == 128
+                and row["items_per_thread"] == 4
+                and row["phase"] == "operator"
             ):
-                continue
-            config = row["degree"], row["block_size"], row["items_per_thread"]
-            row["median_ms"] = (
-                (1 if row["scenario"] == 0.01 else 100)
-                if config == (8, 128, 4)
-                else 4
-                if config == (32, 512, 8)
-                else 200
-            )
-        selected = analysis.annotate_choices(rows, self.path)
-        for row in selected:
-            if row["backend"] != "bits-sq":
-                continue
-            config = row["degree"], row["block_size"], row["items_per_thread"]
-            expected = (32, 512, 8) if row["mode"] == "retention" else (8, 128, 4)
-            self.assertEqual(row["scaling_global_selected"], config == expected)
-            if row["mode"] == "retention":
-                point = (8, 128, 4) if row["scenario"] == 0.01 else (32, 512, 8)
-                self.assertEqual(row["scaling_selected"], config == point)
+                self.assertAlmostEqual(
+                    row["median_ms"], 1 if row["size_tier"] == "small" else 9
+                )
 
-    def test_verified_study_groups_sizes_and_ratios_without_pooling_or_mixing_choices(
-        self
-    ):
-        rows = analysis.load_study(self.path)
-        self.assertEqual(len(self.index["runs"]), 10)
-        self.assertEqual({row["mode"] for row in rows}, {"fixed-k", "retention"})
-        for row in rows:
-            backend = row["backend"]
-            config = row["degree"], row["block_size"], row["items_per_thread"]
-            small = row["workload_id"].endswith("small")
-            if backend == "bits-sq":
-                self.assertEqual(
-                    row["scaling_selected"],
-                    config == ((8, 128, 4) if small else (32, 512, 8)),
-                )
-                self.assertEqual(row["scaling_global_selected"], config == (8, 128, 4))
-                self.assertEqual(
-                    row["degree_selected"], config in ((8, 128, 4), (32, 512, 8))
-                )
-            elif backend == "bits-prefetch":
-                self.assertEqual(
-                    row["scaling_selected"],
-                    config == ((1, 128, 4) if small else (1, 512, 8)),
-                )
-                self.assertEqual(row["scaling_global_selected"], config == (1, 128, 4))
-            else:
-                for flag in (
-                    "scaling_selected",
-                    "scaling_global_selected",
-                    "degree_selected",
-                ):
-                    self.assertEqual(row[flag], backend != "block-select")
-            if row["mode"] == "retention":
-                self.assertEqual(row["scenario"], row["requested_retention"])
-                self.assertAlmostEqual(row["retention_ratio"], row["k"] / row["rows"])
-            self.assertAlmostEqual(
-                row["throughput_mvalues_per_s"],
-                row["rows"] * row.get("batch_size", 1) / (1000 * row["median_ms"]),
-            )
-        # One global choice spans both workload sizes and both requested ratios;
-        # its isolated-selection measurements follow the operator choice.
-        selected = [
-            row
-            for row in rows
-            if row["mode"] == "retention"
-            and row["backend"] == "bits-sq"
-            and row["scaling_global_selected"]
-        ]
-        self.assertEqual({row["k"] for row in selected}, {5, 10, 20, 41})
-        self.assertEqual(
-            {row["phase"] for row in selected},
-            {
-                "upload_shared",
-                "operator",
-                "download",
-                "selection_isolated",
-                "transform_isolated",
-                "output_isolated",
-            },
-        )
-        self.assertEqual(
-            {
-                round(row["median_ms"], 5)
-                for row in selected
-                if row["phase"] == "selection_isolated"
-            },
-            {20, round(20 / 9, 5)},
-        )
+    def test_saved_fixed_k_studies_accept_empty_legacy_retention_fields(self):
+        expected = analysis.load_study(self.path)
+        self.index["settings"]["retention_ratios"] = []
+        for run in self.index["runs"]:
+            run["requested_retention"] = None
+        self.save_index()
+        self.assertEqual(analysis.load_study(self.path), expected)
+
+    def test_retention_studies_are_rejected_before_outputs(self):
+        original = copy.deepcopy(self.index)
+        for failure in ("ratios", "mode", "requested_retention"):
+            with self.subTest(failure=failure):
+                self.index = copy.deepcopy(original)
+                if failure == "ratios":
+                    self.index["settings"]["retention_ratios"] = [0.01]
+                elif failure == "mode":
+                    self.index["runs"][-1]["mode"] = "retention"
+                else:
+                    self.index["runs"][-1]["requested_retention"] = 0.01
+                self.save_index()
+                self.reject_before_outputs("support fixed-k runs only")
 
     def reject_before_outputs(self, expression):
         output = self.root / "plots"
@@ -457,7 +332,6 @@ class ScalingAnalysisTests(ScalingFixture):
             ("settings_hash", "settings checksum"),
             ("dataset", "dataset does not match"),
             ("missing_run", "every workload"),
-            ("missing_ratio", "every workload"),
             ("failed", "Incomplete study"),
             ("duplicate", "Duplicate study run"),
             ("size", "dimensions are inconsistent"),
@@ -472,8 +346,8 @@ class ScalingAnalysisTests(ScalingFixture):
                     self.index["settings_sha256"] = "0" * 64
                 elif failure == "dataset":
                     self.index["workloads"][0]["dataset_id"] = "0" * 64
-                elif failure in ("missing_run", "missing_ratio"):
-                    self.index["runs"].pop(0 if failure == "missing_run" else -1)
+                elif failure == "missing_run":
+                    self.index["runs"].pop(0)
                 elif failure == "failed":
                     self.index["runs"][0]["status"] = "failed"
                 elif failure == "duplicate":
@@ -502,7 +376,7 @@ class ScalingAnalysisTests(ScalingFixture):
         self.save_index()
         self.reject_before_outputs("do not cover the planned sweep")
 
-    def test_missing_configuration_is_not_accepted_as_a_partial_global_candidate(self):
+    def test_missing_configuration_is_not_accepted_as_a_complete_study(self):
         run = self.index["runs"][0]
         rows = [
             row
@@ -546,12 +420,6 @@ class ScalingAnalysisTests(ScalingFixture):
                 self.save_index()
                 self.reject_before_outputs(pattern)
 
-    def test_retention_scenario_must_match_rounded_requested_ratio(self):
-        run = next(item for item in self.index["runs"] if item["mode"] == "retention")
-        run["actual_retention"] *= 2
-        self.save_index()
-        self.reject_before_outputs("Actual retention")
-
 
 PLOTTING_AVAILABLE = all(
     importlib.util.find_spec(name) is not None
@@ -566,10 +434,6 @@ class ScalingRenderTests(ScalingFixture):
     def test_default_writes_27_original_pdfs_and_selects_globally_within_each_case(
         self
     ):
-        self.index = self.make_study(
-            tiers=("small", "middle", "large"), retention=False
-        )
-        self.save_index()
         output = self.root / "plots"
         spec = importlib.util.spec_from_file_location(
             "plot_application_scaling", SCRIPTS / "plot-application-scaling.py"
@@ -604,7 +468,7 @@ class ScalingRenderTests(ScalingFixture):
                 cli.main()
         cases = {
             f"{operator}-{tier}"
-            for operator in analysis.SIZE_LABELS
+            for operator in analysis.OPERATORS
             for tier in ("small", "middle", "large")
         }
         self.assertEqual(
@@ -630,101 +494,6 @@ class ScalingRenderTests(ScalingFixture):
                 {("8", "128", "4")} if case.endswith("small") else {("32", "512", "8")},
             )
             self.assertTrue(all("scaling_global_selected" not in row for row in rows))
-
-    def test_global_configurations_degree_curves_and_legend_bounds(self):
-        with patch.dict(os.environ, {"MPLCONFIGDIR": str(self.root / "cache")}):
-            import matplotlib
-
-            matplotlib.use("Agg", force=True)
-            import matplotlib.pyplot as plt
-            from matplotlib.container import ErrorbarContainer
-            import numpy as np
-
-            self.addCleanup(plt.close, "all")
-            captured = []
-
-            class CapturePdf:
-                def __init__(self, filename):
-                    self.filename = Path(filename)
-
-                def __enter__(self):
-                    return self
-
-                def __exit__(self, *_args):
-                    return False
-
-                def savefig(self, figure, **_kwargs):
-                    figure.canvas.draw()
-                    captured.append((self.filename, figure))
-
-            rows = analysis.load_study(self.path)
-            output = self.root / "plots"
-            with patch("matplotlib.backends.backend_pdf.PdfPages", CapturePdf):
-                analysis.write_outputs(rows, output)
-            self.assertEqual(len(captured), 24)
-            self.assertEqual(len({path.name for path, _ in captured}), 12)
-            for path, figure in captured:
-                global_plot = path.stem.endswith("-paper-global")
-                degree_plot = path.stem.endswith("-degree")
-                legend = (
-                    figure.axes[0].get_legend() if degree_plot else figure.legends[0]
-                )
-                labels = [text.get_text() for text in legend.get_texts()]
-                self.assertFalse(any("BlockSelect" in label for label in labels))
-                if global_plot:
-                    self.assertEqual(
-                        labels[:2],
-                        [
-                            "bits [block=128, items=4]",
-                            "bits (split) [degree=8, block=128, items=4]",
-                        ],
-                    )
-                renderer = figure.canvas.get_renderer()
-                bounds = legend.get_window_extent(renderer)
-                self.assertGreaterEqual(bounds.x0, figure.bbox.x0)
-                self.assertGreaterEqual(bounds.y0, figure.bbox.y0)
-                self.assertLessEqual(bounds.x1, figure.bbox.x1)
-                self.assertLessEqual(bounds.y1, figure.bbox.y1)
-                if not degree_plot:
-                    self.assertLessEqual(
-                        bounds.y1, min(ax.bbox.y0 for ax in figure.axes)
-                    )
-                    for axis in figure.axes:
-                        self.assertEqual(axis.get_title(), "")
-                if global_plot:
-                    curves = [
-                        item
-                        for item in figure.axes[0].containers
-                        if isinstance(item, ErrorbarContainer)
-                    ]
-                    self.assertEqual(len(curves), 4)
-                    np.testing.assert_allclose(
-                        curves[0].lines[0].get_ydata(orig=False), [2, 8]
-                    )
-                    np.testing.assert_allclose(
-                        curves[1].lines[0].get_ydata(orig=False), [1, 9]
-                    )
-                if degree_plot:
-                    curves = [
-                        item
-                        for item in figure.axes[0].containers
-                        if isinstance(item, ErrorbarContainer)
-                    ]
-                    self.assertEqual(len(curves), 2)
-                    for curve in curves:
-                        np.testing.assert_equal(
-                            curve.lines[0].get_xdata(orig=False), [8, 32]
-                        )
-                    np.testing.assert_allclose(
-                        curves[0].lines[0].get_ydata(orig=False), [20, 5]
-                    )
-                    np.testing.assert_allclose(
-                        curves[1].lines[0].get_ydata(orig=False), [20 / 9, 5]
-                    )
-            with (output / "application-scaling.csv").open(newline="") as source:
-                written = list(csv.DictReader(source))
-            self.assertEqual(len(written), len(rows))
-            self.assertTrue(all("scaling_global_selected" in row for row in written))
 
 
 if __name__ == "__main__":

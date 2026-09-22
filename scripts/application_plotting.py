@@ -4,12 +4,11 @@ from collections import defaultdict
 import math
 
 
-def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
+def select_paper_rows(rows, path, *, selection="per-k"):
     """Choose bits configurations per k or across all k within one workload.
 
     Carry that configuration into every phase, including isolated selection.
     Only split bits may vary degree. Ties prefer block, items, then degree.
-    ``point_fields`` can include workload identity for a shared cross-size choice.
     """
     if selection not in ("per-k", "global"):
         raise ValueError(f"Unknown paper selection mode: {selection}")
@@ -22,7 +21,7 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
         config = tuple(
             row[name] for name in ("degree", "block_size", "items_per_thread")
         )
-        point = (row["backend"],) + tuple(row[name] for name in point_fields)
+        point = (row["backend"], row["k"])
         key = point + (row["phase"],) + config
         if key in seen:
             raise ValueError(
@@ -55,10 +54,10 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
         }
     else:
         candidates = defaultdict(lambda: defaultdict(dict))
-        for (backend, *coordinates), values in operators.items():
+        for (backend, k), values in operators.items():
             for row in values:
                 config = (row["block_size"], row["items_per_thread"], row["degree"])
-                candidates[backend][config][tuple(coordinates)] = row
+                candidates[backend][config][k] = row
         winners = {}
         for backend, configs in candidates.items():
             ks = {k for values in configs.values() for k in values}
@@ -68,11 +67,10 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
                 if set(values) == ks
             }
             if not complete:
-                coverage = "k" if point_fields == ("k",) else "workload point"
                 raise ValueError(
                     f"{path}: global paper selection requires a "
                     "block/item/degree configuration "
-                    f"measured at every {coverage} for {backend}"
+                    f"measured at every k for {backend}"
                 )
             # All eligible configurations share the same k values and AIR baselines.
             # Minimizing mean log latency therefore maximizes geometric-mean
@@ -87,12 +85,12 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
                     config,
                 ),
             )
-            winners.update({(backend,) + k: row for k, row in complete[config].items()})
+            winners.update({(backend, k): row for k, row in complete[config].items()})
     selected = []
     for row in rows:
         if row["backend"] == "block-select":
             continue
-        point = (row["backend"],) + tuple(row[name] for name in point_fields)
+        point = (row["backend"], row["k"])
         winner = winners.get(point)
         if winner is None:
             raise ValueError(f"{path}: paper selection requires full-operator timings")

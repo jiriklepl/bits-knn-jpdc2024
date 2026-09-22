@@ -5,7 +5,6 @@ import argparse
 from collections import Counter
 import csv
 from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
 import fcntl
 import hashlib
 import io
@@ -194,7 +193,7 @@ def load_suite(path):
     return suite, manifests
 
 
-def make_runs(workloads, manifests, ks, degrees, ratios):
+def make_runs(workloads, manifests, ks, degrees):
     runs = []
     stems = set()
     for workload in workloads:
@@ -208,53 +207,35 @@ def make_runs(workloads, manifests, ks, degrees, ratios):
                 "gradient-compression": "elements",
             }[operator]
         ]
-        modes = [("fixed-k", None, ks)]
-        if operator == "gradient-compression":
-            for ratio in ratios:
-                k = max(
-                    1,
-                    int(
-                        (Decimal(str(ratio)) * candidates).to_integral_value(
-                            rounding=ROUND_HALF_UP
-                        )
-                    ),
-                )
-                modes.append(("retention", ratio, [k]))
-        for mode, ratio, selected_ks in modes:
-            suffix = "fixed-k" if ratio is None else f"retention-{ratio}"
-            if "size_tier" in workload:
-                stem = f"{operator}-{workload['size_tier']}"
-                if ratio is not None:
-                    stem += f"-{suffix}"
-            else:
-                stem = f"{identity}-{suffix}"
-            if stem in stems:
-                raise ValueError(f"Study output filenames collide: {stem}")
-            stems.add(stem)
-            record = dict(
-                workload_id=identity,
-                mode=mode,
-                requested_retention=ratio,
-                ks=list(selected_ks),
-                csv=f"{stem}.csv",
-                log=f"{stem}.err",
-                status="pending",
-            )
-            if ratio is not None:
-                record["actual_retention"] = selected_ks[0] / candidates
-            unsupported = []
-            for k in selected_ks:
-                if not 1 <= k <= min(candidates, 2048):
-                    unsupported.append(
-                        f"k={k} requires 1 <= k <= min(candidates={candidates}, 2048)"
-                    )
-            if max(degrees) > candidates:
+        stem = (
+            f"{operator}-{workload['size_tier']}"
+            if "size_tier" in workload
+            else f"{identity}-fixed-k"
+        )
+        if stem in stems:
+            raise ValueError(f"Study output filenames collide: {stem}")
+        stems.add(stem)
+        record = dict(
+            workload_id=identity,
+            mode="fixed-k",
+            ks=list(ks),
+            csv=f"{stem}.csv",
+            log=f"{stem}.err",
+            status="pending",
+        )
+        unsupported = []
+        for k in ks:
+            if not 1 <= k <= min(candidates, 2048):
                 unsupported.append(
-                    f"split degree {max(degrees)} exceeds {candidates} candidates"
+                    f"k={k} requires 1 <= k <= min(candidates={candidates}, 2048)"
                 )
-            if unsupported:
-                record.update(status="unsupported", reason="; ".join(unsupported))
-            runs.append(record)
+        if max(degrees) > candidates:
+            unsupported.append(
+                f"split degree {max(degrees)} exceeds {candidates} candidates"
+            )
+        if unsupported:
+            record.update(status="unsupported", reason="; ".join(unsupported))
+        runs.append(record)
     return runs
 
 
@@ -382,11 +363,6 @@ def execute(args):
     unique_positive(args.degrees, "degrees")
     if args.repeat < 1 or args.warmup < 0:
         raise ValueError("repeat must be positive and warmup nonnegative")
-    if len(set(args.retention_ratios)) != len(args.retention_ratios) or any(
-        not math.isfinite(ratio) or not 0 < ratio <= 1
-        for ratio in args.retention_ratios
-    ):
-        raise ValueError("Retention ratios must be unique finite numbers in (0, 1]")
     suite_path = args.suite.resolve(strict=True)
     suite, manifests = load_suite(suite_path)
     binaries = {
@@ -400,7 +376,6 @@ def execute(args):
         items=list(ITEMS),
         warmup=args.warmup,
         repeat=args.repeat,
-        retention_ratios=args.retention_ratios,
         binaries={operator: sha256_file(path) for operator, path in binaries.items()},
         code_sha256={
             name: sha256_file(SCRIPTS / name)
@@ -421,9 +396,7 @@ def execute(args):
         settings=settings,
         settings_sha256=object_hash(settings),
         workloads=suite["workloads"],
-        runs=make_runs(
-            suite["workloads"], manifests, args.ks, args.degrees, args.retention_ratios
-        ),
+        runs=make_runs(suite["workloads"], manifests, args.ks, args.degrees),
     )
     if args.dry_run:
         print(json.dumps(index, indent=2))
@@ -452,7 +425,6 @@ def execute(args):
                 for name in (
                     "workload_id",
                     "mode",
-                    "requested_retention",
                     "ks",
                     "csv",
                     "log",
@@ -524,13 +496,6 @@ def main():
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--ks", type=int, nargs="+", default=list(DEFAULT_KS))
     parser.add_argument("--degrees", type=int, nargs="+", default=list(DEFAULT_DEGREES))
-    parser.add_argument(
-        "--retention-ratios",
-        type=float,
-        nargs="*",
-        default=[],
-        help="Optional gradient ratios (nearest positive k, half up); default: none",
-    )
     parser.add_argument("--warmup", type=int, default=10)
     parser.add_argument("--repeat", type=int, default=30)
     parser.add_argument("--resume", action="store_true")

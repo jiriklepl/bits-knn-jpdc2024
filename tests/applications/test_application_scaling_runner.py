@@ -28,7 +28,9 @@ import csv, json, os, sys
 options = dict(zip(sys.argv[1::2], sys.argv[2::2]))
 with open(os.environ["SCALING_CALLS"], "a") as output:
     output.write(json.dumps(options) + "\\n")
-if options["-k"] == os.environ.get("SCALING_FAIL_K"):
+with open(os.environ["SCALING_CALLS"]) as calls:
+    call_count = sum(1 for _ in calls)
+if str(call_count) == os.environ.get("SCALING_FAIL_CALL"):
     print("simulated verification failure", file=sys.stderr)
     sys.exit(7)
 writer = csv.writer(sys.stdout)
@@ -52,7 +54,7 @@ for backend in options["--backends"].split(","):
 
 
 class ScalingPlanTests(unittest.TestCase):
-    def test_default_cli_plans_nine_named_cases_without_retention_runs(self):
+    def test_default_cli_plans_nine_named_cases(self):
         with mock.patch.object(
             sys,
             "argv",
@@ -60,7 +62,6 @@ class ScalingPlanTests(unittest.TestCase):
         ), mock.patch.object(runner, "execute", return_value=0) as execute:
             self.assertEqual(runner.main(), 0)
         args = execute.call_args.args[0]
-        self.assertEqual(args.retention_ratios, [])
         self.assertEqual(args.warmup, 10)
         self.assertEqual(args.repeat, 30)
         workloads, manifests = [], {}
@@ -73,9 +74,7 @@ class ScalingPlanTests(unittest.TestCase):
                 identity = f"input-{operator}-{tier}"
                 workloads.append(dict(id=identity, operator=operator, size_tier=tier))
                 manifests[identity] = (None, {field: size})
-        records = runner.make_runs(
-            workloads, manifests, args.ks, args.degrees, args.retention_ratios
-        )
+        records = runner.make_runs(workloads, manifests, args.ks, args.degrees)
         self.assertEqual(len(records), 9)
         self.assertEqual({record["mode"] for record in records}, {"fixed-k"})
         self.assertEqual({record["status"] for record in records}, {"pending"})
@@ -102,26 +101,20 @@ class ScalingPlanTests(unittest.TestCase):
             4212,
         )
 
-    def test_tiered_retention_is_opt_in_and_output_names_cannot_collide(self):
+    def test_tiered_output_names_cannot_collide(self):
         workload = dict(
             id="attention", operator="gradient-compression", size_tier="small"
         )
         manifests = {"attention": (None, {"elements": 589824})}
-        records = runner.make_runs([workload], manifests, [32], [32], [1e-5])
+        records = runner.make_runs([workload], manifests, [32], [32])
         self.assertEqual(
             [record["csv"] for record in records],
-            [
-                "gradient-compression-small.csv",
-                "gradient-compression-small-retention-1e-05.csv",
-            ],
+            ["gradient-compression-small.csv"],
         )
-        self.assertEqual(records[1]["ks"], [6])
-        # Untiered suites retain their historical names, which must not overwrite
-        # a tiered workload when a custom suite mixes both naming conventions.
-        other = dict(id="gradient-compression-small", operator="gradient-compression")
+        other = workload | {"id": "another-attention"}
         manifests[other["id"]] = manifests[workload["id"]]
         with self.assertRaisesRegex(ValueError, "output filenames collide"):
-            runner.make_runs([workload, other], manifests, [32], [32], [1e-5])
+            runner.make_runs([workload, other], manifests, [32], [32])
 
     def test_compute_idle_check_blocks_other_processes_on_benchmark_gpu(self):
         completed = subprocess.CompletedProcess(
@@ -149,22 +142,24 @@ class ScalingPlanTests(unittest.TestCase):
         self.assertEqual(counts[59, "block-select"], 0)
         self.assertEqual(counts[2048, "block-select"], 0)
 
-    def test_retention_rounding_and_unsupported_values_are_explicit(self):
+    def test_untiered_names_and_unsupported_values_are_explicit(self):
         workloads = [dict(id="gradient", operator="gradient-compression")]
         manifests = {"gradient": (None, {"elements": 2359296})}
-        records = runner.make_runs(
-            workloads, manifests, [32], [32], [1e-5, 2.5e-5, 1e-15, 0.01]
-        )
-        self.assertEqual(
-            [record["ks"] for record in records], [[32], [24], [59], [1], [23593]]
-        )
-        self.assertEqual(records[-1]["status"], "unsupported")
-        self.assertIn("k=23593", records[-1]["reason"])
-        self.assertEqual(records[1]["requested_retention"], 1e-5)
-        self.assertEqual(records[1]["actual_retention"], 24 / 2359296)
-        self.assertEqual(len({record["csv"] for record in records}), len(records))
+        records = runner.make_runs(workloads, manifests, [32, 59], [32])
+        self.assertEqual(len(records), 1)
         self.assertEqual(records[0]["csv"], "gradient-fixed-k.csv")
-        self.assertEqual(records[1]["csv"], "gradient-retention-1e-05.csv")
+        self.assertEqual(records[0]["ks"], [32, 59])
+        self.assertEqual(records[0]["status"], "pending")
+        for elements, ks, degrees, reason in (
+            (2359296, [2049], [32], "k=2049"),
+            (16, [32], [8], "candidates=16"),
+            (64, [32], [128], "split degree 128 exceeds 64"),
+        ):
+            with self.subTest(elements=elements, ks=ks, degrees=degrees):
+                manifests["gradient"] = (None, {"elements": elements})
+                record = runner.make_runs(workloads, manifests, ks, degrees)[0]
+                self.assertEqual(record["status"], "unsupported")
+                self.assertIn(reason, record["reason"])
 
     def test_partial_and_duplicate_native_csv_are_rejected(self):
         configuration = dict(
@@ -231,7 +226,6 @@ class ScalingRunnerTests(unittest.TestCase):
                 output_dir=self.root / "results",
                 ks=[32, 64],
                 degrees=[8, 32],
-                retention_ratios=[0.01, 0.025],
                 warmup=0,
                 repeat=2,
                 resume=False,
@@ -269,7 +263,14 @@ class ScalingRunnerTests(unittest.TestCase):
         return len(self.calls.read_text().splitlines())
 
     def test_atomic_failure_checkpoint_resume_and_hash_guards(self):
-        with mock.patch.dict(os.environ, {"SCALING_FAIL_K": "41"}):
+        suite = json.loads(self.suite.read_text())
+        workload = suite["workloads"][0]
+        suite["workloads"] += [
+            workload | {"id": "gradient-second"},
+            workload | {"id": "gradient-third"},
+        ]
+        self.suite.write_text(json.dumps(suite))
+        with mock.patch.dict(os.environ, {"SCALING_FAIL_CALL": "5"}):
             with self.assertRaises(subprocess.CalledProcessError):
                 self.execute()
         index = self.index()
@@ -284,7 +285,7 @@ class ScalingRunnerTests(unittest.TestCase):
         self.assertEqual(self.call_count(), 5)
         self.args.resume = True
         self.assertEqual(self.execute(), 0)
-        self.assertEqual(self.call_count(), 9)
+        self.assertEqual(self.call_count(), 13)
         self.assertEqual(sha256_file(first), first_hash)
         index = self.index()
         self.assertTrue(all(record["status"] == "complete" for record in index["runs"]))
@@ -294,7 +295,7 @@ class ScalingRunnerTests(unittest.TestCase):
                 record["csv_sha256"], sha256_file(self.args.output_dir / record["csv"])
             )
         self.execute()
-        self.assertEqual(self.call_count(), 9)
+        self.assertEqual(self.call_count(), 13)
         with mock.patch.object(
             runner, "gpu_identity", return_value=[{"uuid": "another-gpu"}]
         ):

@@ -207,39 +207,6 @@ class PaperSelectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "measured at every k"):
             select_paper_rows(partial, "test.csv", selection="global")
 
-    def test_custom_points_select_one_configuration_across_sizes_and_retention_ratios(
-        self
-    ):
-        rows = []
-        for dataset, k in (("small", 32), ("large", 128)):
-            for ratio in (0.01, 0.1):
-                for degree in (8, 32):
-                    latency = {
-                        ("small", 8): 1,
-                        ("small", 32): 4,
-                        ("large", 8): 9,
-                        ("large", 32): 4,
-                    }[dataset, degree]
-                    rows += self.rows(
-                        128,
-                        latency,
-                        10 / latency,
-                        k=k,
-                        degree=degree,
-                        workload_id=dataset,
-                        scenario=ratio,
-                    )
-        fields = ("workload_id", "scenario")
-        per_point = select_paper_rows(rows, "test.csv", point_fields=fields)
-        for row in per_point:
-            self.assertEqual(row["degree"], 8 if row["workload_id"] == "small" else 32)
-        global_rows = select_paper_rows(
-            rows, "test.csv", point_fields=fields, selection="global"
-        )
-        self.assertEqual(len(global_rows), 8)
-        self.assertEqual({row["degree"] for row in global_rows}, {8})
-        self.assertEqual({row["k"] for row in global_rows}, {32, 128})
-
     def test_ordinary_bits_requires_degree_one_and_baselines_remain_fixed(self):
         for backend in ("bits", "bits-prefetch"):
             for selection in ("per-k", "global"):

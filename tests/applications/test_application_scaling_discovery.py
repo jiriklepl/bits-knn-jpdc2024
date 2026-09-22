@@ -37,7 +37,7 @@ class ScalingDiscoveryTests(unittest.TestCase):
         return path
 
     @staticmethod
-    def rows(index, *, annotate):
+    def rows(index):
         return [
             dict(
                 source_csv=str(index.parent / f"{operator}-{tier}.csv"),
@@ -46,7 +46,7 @@ class ScalingDiscoveryTests(unittest.TestCase):
                 size_tier=tier,
                 mode="fixed-k",
             )
-            for operator in cli.SIZE_LABELS
+            for operator in cli.OPERATORS
             for tier in ("small", "middle", "large")
         ]
 
@@ -73,7 +73,7 @@ class ScalingDiscoveryTests(unittest.TestCase):
             [call.args[0] for call in read.call_args_list], [first, second]
         )
         self.assertTrue(
-            all(call.kwargs == {"annotate": False} for call in read.call_args_list)
+            all(call.kwargs == {} for call in read.call_args_list)
         )
         self.assertEqual(execute.call_count, 18)
         for call in execute.call_args_list:
@@ -96,7 +96,7 @@ class ScalingDiscoveryTests(unittest.TestCase):
             "--data-dir", root, "--output-dir", "custom plots"
         )
         self.assertEqual(status, 0)
-        read.assert_called_once_with(complete, annotate=False)
+        read.assert_called_once_with(complete)
         for index in incomplete:
             self.assertIn(f"Skipping incomplete study: {index}", stderr)
         self.assertEqual(execute.call_count, 9)
@@ -117,7 +117,7 @@ class ScalingDiscoveryTests(unittest.TestCase):
             with self.subTest(arguments=arguments):
                 status, _, read, execute = self.invoke(explicit, *arguments)
                 self.assertEqual(status, 0)
-                read.assert_called_once_with(explicit, annotate=False)
+                read.assert_called_once_with(explicit)
                 self.assertEqual(execute.call_count, 9)
                 self.assertTrue(
                     all(
@@ -134,7 +134,7 @@ class ScalingDiscoveryTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertIn("run is running", stderr)
         self.assertNotIn("Skipping", stderr)
-        read.assert_called_once_with(index, annotate=False)
+        read.assert_called_once_with(index)
         execute.assert_not_called()
 
     def test_no_indices_is_a_successful_noop(self):
@@ -151,10 +151,10 @@ class ScalingDiscoveryTests(unittest.TestCase):
         corrupt = self.index("b-bad-provenance")
         complete = self.index("c-complete")
 
-        def validate(index, *, annotate):
+        def validate(index):
             if index == corrupt:
                 raise ValueError("CSV hash mismatch")
-            return self.rows(index, annotate=annotate)
+            return self.rows(index)
 
         status, stderr, read, execute = self.invoke(load=validate)
         self.assertEqual(status, 1)
