@@ -143,8 +143,7 @@ class ScalingFixture(unittest.TestCase):
                             seed=42 if operator == "token-sampling" else 0,
                         )
                     rows.append(
-                        config
-                        | dict(iteration=-1, phase="upload_shared", seconds=0.1)
+                        config | dict(iteration=-1, phase="upload_shared", seconds=0.1)
                     )
                     for iteration, factor in enumerate((0.8, 1, 1.2)):
                         for phase in (
@@ -182,14 +181,17 @@ class ScalingAnalysisTests(ScalingFixture):
         spec.loader.exec_module(cli)
         return cli
 
-    def test_default_dispatches_all_nine_cases_to_original_three_version_plotters(self):
+    def test_default_dispatches_nine_detailed_cases_and_combined_papers(self):
         cli = self.cli()
         output = self.root / "plots"
         args = [cli.__file__, str(self.path), "--output-dir", str(output)]
         with patch.object(sys, "argv", args), patch.object(
             sys, "stderr", io.StringIO()
-        ), patch.object(cli.subprocess, "run") as execute:
+        ), patch.object(cli.subprocess, "run") as execute, patch.object(
+            cli, "plot_combined_paper"
+        ) as combined:
             cli.main()
+        combined.assert_called_once()
         self.assertEqual(execute.call_count, 9)
         commands = [call.args[0] for call in execute.call_args_list]
         cases = {
@@ -199,6 +201,7 @@ class ScalingAnalysisTests(ScalingFixture):
         }
         self.assertEqual({Path(command[2]).stem for command in commands}, cases)
         for command in commands:
+            self.assertIn("--detailed-only", command)
             operator = next(
                 name
                 for name in analysis.OPERATORS
@@ -431,9 +434,7 @@ PLOTTING_AVAILABLE = all(
     PLOTTING_AVAILABLE, "Install plotting requirements for Agg render checks"
 )
 class ScalingRenderTests(ScalingFixture):
-    def test_default_writes_27_original_pdfs_and_selects_globally_within_each_case(
-        self
-    ):
+    def test_default_writes_12_combined_paper_pdfs_with_configuration_sidecars(self):
         output = self.root / "plots"
         spec = importlib.util.spec_from_file_location(
             "plot_application_scaling", SCRIPTS / "plot-application-scaling.py"
@@ -473,13 +474,30 @@ class ScalingRenderTests(ScalingFixture):
         }
         self.assertEqual(
             {path.name for path in output.iterdir()},
-            {
-                f"{case}{suffix}"
-                for case in cases
-                for suffix in (".csv", ".pdf", "-paper.pdf", "-paper-global.pdf")
+            {f"{case}{suffix}" for case in cases for suffix in (".csv", ".pdf")}
+            | {
+                f"applications-{tier}-paper{mode}-{phase}{suffix}"
+                for tier in ("small", "middle", "large")
+                for mode in ("", "-global")
+                for phase in ("operator", "selection")
+                for suffix in (".pdf", "-configs.csv")
             },
         )
-        self.assertEqual(len(list(output.glob("*.pdf"))), 27)
+        self.assertEqual(len(list(output.glob("*.pdf"))), 21)
+        for path in output.glob("applications-*-configs.csv"):
+            with path.open(newline="") as source:
+                records = list(csv.DictReader(source))
+            self.assertEqual({r["operator"] for r in records}, set(analysis.OPERATORS))
+            self.assertEqual(
+                {r["phase"] for r in records},
+                {"selection_isolated" if "-selection-" in path.name else "operator"},
+            )
+            self.assertTrue(all(r["source_csv"] and r["dataset_id"] for r in records))
+            if "-global-" in path.name:
+                self.assertEqual(
+                    {r["backend"] for r in records},
+                    {"bits-sq", "air-topk", "grid-select"},
+                )
         for case in cases:
             with (output / f"{case}.csv").open(newline="") as source:
                 rows = list(csv.DictReader(source))

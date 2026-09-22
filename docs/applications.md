@@ -78,17 +78,20 @@ Resume requires the same inputs, settings, binaries, runner code, host and GPU. 
 
 ## Plots
 
-Each application/size case produces four files:
+Each study produces 12 paper PDFs. Every PDF has three panels (database top-N, token sampling, gradient compression), for one size, tuning mode, and measured phase:
 
 | File | Content |
 | --- | --- |
-| `<case>.pdf` | All configurations, one page per split degree |
-| `<case>-paper.pdf` | Best full-operator configuration at each k |
-| `<case>-paper-global.pdf` | One fixed configuration across k, shown in the legend |
-| `<case>.csv` | Median times, quartiles, speedups and selected configurations |
+| `applications-<size>-paper-operator.pdf` | Full operator, configurations selected per k |
+| `applications-<size>-paper-selection.pdf` | Selection alone, using the per-k operator configurations |
+| `applications-<size>-paper-global-operator.pdf` | Full operator, one bits variant and configuration across k per application |
+| `applications-<size>-paper-global-selection.pdf` | Selection alone, using the global operator winner per application |
+| `<paper-stem>-configs.csv` | Each plotted point's backend, degree, block size, items per thread, timings and source CSV |
+| `<case>.pdf` | Detailed configurations for one application/size, one page per split degree |
+| `<case>.csv` | All median times, quartiles, speedups and selection flags |
 
-Per-k selection minimizes median full-operator time. Global selection maximizes geometric-mean speedup across k, using configurations measured at every k. Each bits backend is selected separately within one case and GPU. Paper plots omit BlockSelect; the CSV flags `paper_selected` and `paper_global_selected` identify the configurations used.
+`<size>` is `small`, `middle`, or `large`. Per-k selection minimizes median full-operator time independently for bits and bits (split). Global selection maximizes geometric-mean full-operator speedup across k, using configurations measured at every k, then keeps only the winning bits variant. Exact ties prefer ordinary bits. Each application, size, and GPU chooses independently; the three panels need not use the same variant. Selection-only figures carry the operator choices rather than retuning for selection latency.
 
-The database plot shows the full operator. Tensor plots show the full operator on the left and isolated selection on the right, using the same chosen configuration in both panels.
+Paper legends show algorithm names without settings, and the y axis shows only speedup; operator/selection appears in the filename. Every paper PDF has its own configuration CSV. Paper plots omit BlockSelect; the detailed CSV flags `paper_selected` and `paper_global_selected` identify the plotted configurations, including the global variant choice. Detailed database plots show the full operator, while detailed tensor plots include both phases. The study plotter replaces the old individual `*-paper.pdf` and `*-paper-global.pdf` files with the combined figures. Standalone application plotters retain their individual layout and also export paper configuration CSVs.
 
 Speedup is AIR median time divided by backend median time for the same k and phase: above 1 is faster, below 1 is slower. Error bars show backend latency quartiles converted to speedups, holding the AIR median fixed.

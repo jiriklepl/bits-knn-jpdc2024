@@ -225,7 +225,7 @@ class AnalysisTests(unittest.TestCase):
         pages = analysis.validate_plot_summary(
             summary, self.path, paper=True, selection="global"
         )
-        winners = {"bits-prefetch": (128, 13), "bits-sq": (128, 4)}
+        winners = {"bits-prefetch": (128, 13)}
         per_k_winners = {
             ("bits-prefetch", 32): (128, 13),
             ("bits-prefetch", 64): (128, 4),
@@ -233,7 +233,8 @@ class AnalysisTests(unittest.TestCase):
             ("bits-sq", 64): (128, 13),
         }
         for values in pages.values():
-            self.assertEqual(len(values), 6)
+            self.assertEqual(len(values), 4)
+            self.assertNotIn("bits-sq", {row["backend"] for row in values})
             for row in values:
                 if row["backend"] in winners:
                     self.assertEqual(

@@ -1,6 +1,7 @@
 """Render regression checks; plotting packages are optional for native workflows."""
 
 import importlib.util
+import csv
 import math
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 from application_plotting import (  # noqa: E402
     annotate_paper_selection,
+    plot_combined_paper,
     select_paper_rows,
     speedup_errors,
 )
@@ -247,7 +249,9 @@ class PaperSelectionTests(unittest.TestCase):
                     for k in (32, 64):
                         rows += self.rows(
                             block,
-                            1 if block == winner else 2,
+                            (0.5 if dataset == "b" and backend == "bits-sq" else 1)
+                            if block == winner
+                            else 2,
                             1,
                             dataset_id=dataset,
                             backend=backend,
@@ -260,8 +264,30 @@ class PaperSelectionTests(unittest.TestCase):
                 if (row["dataset_id"] == "a") == (row["backend"] == "bits-prefetch")
                 else 512
             )
-            self.assertEqual(row["paper_global_selected"], row["block_size"] == winner)
+            backend = "bits-prefetch" if row["dataset_id"] == "a" else "bits-sq"
+            self.assertEqual(
+                row["paper_global_selected"],
+                row["block_size"] == winner and row["backend"] == backend,
+            )
         self.assertTrue(all("paper_global_selected" not in row for row in rows))
+
+    def test_global_variant_uses_operator_geometric_mean_and_carries_selection(self):
+        rows = (
+            self.rows(128, 1, 99, k=32, backend="bits-prefetch")
+            + self.rows(128, 100, 99, k=64, backend="bits-prefetch")
+            + self.rows(256, 4, 0.1, k=32)
+            + self.rows(256, 40, 0.1, k=64)
+        )
+        chosen = select_paper_rows(rows, "test.csv", selection="global")
+        self.assertEqual({r["backend"] for r in chosen}, {"bits-prefetch"})
+        self.assertEqual(
+            [r["median_ms"] for r in chosen if r["phase"] == "selection_isolated"],
+            [99, 99],
+        )
+        self.assertEqual(
+            {r["backend"] for r in select_paper_rows(rows, "test.csv")},
+            {"bits-prefetch", "bits-sq"},
+        )
 
 
 @unittest.skipUnless(
@@ -391,10 +417,88 @@ class ApplicationRenderTests(unittest.TestCase):
         )
         return captured
 
+    def test_combined_papers_keep_application_winners_independent_and_export_points(
+        self
+    ):
+        rows = []
+        applications = ("database-topn", "token-sampling", "gradient-compression")
+        for tier in ("small", "middle", "large"):
+            for application in applications:
+                for row in self.summary("token-sampling", "operator"):
+                    winner = (
+                        "bits-sq"
+                        if application == "token-sampling"
+                        else "bits-prefetch"
+                    )
+                    speedup = 8 if row["backend"] == winner else 2
+                    # Selection alone prefers the opposite bits variant.
+                    if row["phase"] == "selection_isolated":
+                        speedup = 1 / speedup
+                    if row["backend"] == "air-topk":
+                        speedup = 1
+                    latency = 1 / speedup
+                    rows.append(
+                        row
+                        | dict(
+                            operator=application,
+                            size_tier=tier,
+                            source_csv=f"{application}-{tier}.csv",
+                            median_ms=latency,
+                            p25_ms=0.8 * latency,
+                            p75_ms=1.2 * latency,
+                            speedup_vs_air=speedup,
+                        )
+                    )
+        captured = []
+
+        def capture(figure, path, **kwargs):
+            figure.canvas.draw()
+            captured.append((Path(path), figure))
+
+        with patch("matplotlib.figure.Figure.savefig", capture):
+            plot_combined_paper(rows, self.root)
+        self.assertEqual(len(captured), 12)
+        for path, figure in captured:
+            global_choice = "-global-" in path.name
+            phase = "selection_isolated" if "-selection" in path.name else "operator"
+            self.assertEqual(len(figure.axes), 3)
+            with path.with_name(path.stem + "-configs.csv").open() as source:
+                records = list(csv.DictReader(source))
+            self.assertEqual({r["phase"] for r in records}, {phase})
+            self.assertEqual(len(records), 18 if global_choice else 24)
+            for ax, application in zip(figure.axes, applications):
+                self.assertNotIn("operator", ax.get_ylabel().lower())
+                self.assertNotIn("selection", ax.get_ylabel().lower())
+                self.assertTrue(ax.get_title())
+                points = [r for r in records if r["operator"] == application]
+                if global_choice:
+                    self.assertEqual(
+                        {
+                            r["backend"]
+                            for r in points
+                            if r["backend"].startswith("bits")
+                        },
+                        {
+                            "bits-sq"
+                            if application == "token-sampling"
+                            else "bits-prefetch"
+                        },
+                    )
+                for container in ax.containers:
+                    label = container.get_label()
+                    expected = [r for r in points if r["label"] == label]
+                    self.np.testing.assert_allclose(
+                        container.lines[0].get_ydata(orig=False),
+                        [float(r["speedup_vs_air"]) for r in expected],
+                    )
+                    self.assertNotIn("=", label)
+
     def assert_render(self, operator, summary, filename, figure):
         paper = filename.stem.endswith(("-paper", "-paper-global"))
         phases = ("operator",) if operator == "database-topn" else PHASES
         visible = BACKENDS[:-1] if paper else BACKENDS
+        if filename.stem.endswith("-paper-global"):
+            visible = ("bits-sq", "air-topk", "grid-select")
         self.assertEqual(len(figure.axes), len(phases))
         first_lines = []
         for axis, phase in zip(figure.axes, phases):
@@ -477,18 +581,9 @@ class ApplicationRenderTests(unittest.TestCase):
         for label, backend in zip(labels, visible):
             self.assertEqual(
                 "degree=" in label,
-                not paper
-                or (filename.stem.endswith("-paper-global") and backend == "bits-sq"),
+                not paper,
             )
-        if filename.stem.endswith("-paper-global"):
-            for label, backend in zip(labels, visible):
-                if backend == "bits-sq":
-                    self.assertTrue(label.endswith("[degree=32, block=512, items=4]"))
-                elif backend == "bits-prefetch":
-                    self.assertTrue(label.endswith("[block=512, items=4]"))
-                else:
-                    self.assertNotIn("block=", label)
-        elif paper:
+        if paper:
             self.assertTrue(all("block=" not in label for label in labels))
         title = figure._suptitle.get_text() if figure._suptitle is not None else ""
         if paper:
@@ -586,7 +681,12 @@ class ApplicationRenderTests(unittest.TestCase):
                             for c in axis.containers
                             if isinstance(c, self.ErrorbarContainer)
                         ]
-                        self.assertEqual(len(containers), 4 if paper else 33)
+                        visible = (
+                            ("bits-sq", "air-topk", "grid-select")
+                            if global_choice
+                            else BACKENDS[:-1]
+                        )
+                        self.assertEqual(len(containers), len(visible) if paper else 33)
                         if not paper:
                             if operator != "database-topn":
                                 self.assertGreater(axis.bbox.height / figure.dpi, 2.5)
@@ -600,7 +700,7 @@ class ApplicationRenderTests(unittest.TestCase):
                             }
                             self.assertEqual(len(styles), len(containers))
                         if paper:
-                            for container, backend in zip(containers, BACKENDS[:-1]):
+                            for container, backend in zip(containers, visible):
                                 expected = [
                                     row
                                     for row in variants
@@ -636,11 +736,8 @@ class ApplicationRenderTests(unittest.TestCase):
                     labels = [text.get_text() for text in legend.get_texts()]
                     if global_choice:
                         self.assertEqual(
-                            labels[:2],
-                            [
-                                "bits [block=128, items=13]",
-                                "bits (split) [degree=8, block=128, items=13]",
-                            ],
+                            labels,
+                            ["bits (split)", "AIR Top-K", "GridSelect"],
                         )
                     if not paper:
                         split_labels = [

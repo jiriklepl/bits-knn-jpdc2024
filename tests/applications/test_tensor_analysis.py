@@ -341,6 +341,9 @@ class TensorAnalysisTests(unittest.TestCase):
                         {(128, 4), (128, 13)},
                     )
                     selected = [row for row in global_rows if row["backend"] == backend]
+                    if backend == "bits-sq":
+                        self.assertEqual(selected, [])
+                        continue
                     self.assertEqual(len(selected), 4)
                     self.assertEqual(
                         {
@@ -371,7 +374,10 @@ class TensorAnalysisTests(unittest.TestCase):
                     pair = (int(row["block_size"]), int(row["items_per_thread"]))
                     self.assertEqual(
                         row["paper_global_selected"],
-                        str(backend == "air-topk" or pair == winners.get(backend)),
+                        str(
+                            backend == "air-topk"
+                            or (backend == "bits-prefetch" and pair == winners[backend])
+                        ),
                     )
                     self.assertEqual(
                         row["paper_selected"],

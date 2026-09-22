@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the three original plot versions for each application and data size."""
+"""Write detailed cases and combined three-application paper plots per data size."""
 
 import argparse
 import json
@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from application_scaling_analysis import OPERATORS, load_study
+from application_plotting import plot_combined_paper
 
 
 def individual_runs(rows):
@@ -37,8 +38,7 @@ def individual_runs(rows):
             "application must have small, middle, and large data."
         )
     if any(
-        Path(path).stem != f"{operator}-{tier}"
-        for path, operator, _, tier, _ in runs
+        Path(path).stem != f"{operator}-{tier}" for path, operator, _, tier, _ in runs
     ):
         raise ValueError(
             "Nine-case timing CSV names must be <application>-<size_tier>.csv"
@@ -59,11 +59,22 @@ def plot_study(index, output):
                 sys.executable,
                 str(Path(__file__).with_name(f"plot-{operator}.py")),
                 path,
+                "--detailed-only",
                 "--output-dir",
                 str(output),
             ],
             check=True,
         )
+    plot_combined_paper(rows, output)
+    # These generated files are superseded by the combined paper figures.
+    for path, _ in runs:
+        for suffix in (
+            "-paper.pdf",
+            "-paper-global.pdf",
+            "-paper-configs.csv",
+            "-paper-global-configs.csv",
+        ):
+            (output / f"{Path(path).stem}{suffix}").unlink(missing_ok=True)
 
 
 def main():

@@ -52,11 +52,13 @@ class ScalingDiscoveryTests(unittest.TestCase):
 
     def invoke(self, *arguments, load=None):
         stderr = io.StringIO()
-        with patch.object(sys, "argv", [cli.__file__, *map(str, arguments)]), (
-            redirect_stderr(stderr)
-        ), patch.object(cli, "load_study", side_effect=load or self.rows) as read, (
-            patch.object(cli.subprocess, "run")
-        ) as execute:
+        with patch.object(
+            sys, "argv", [cli.__file__, *map(str, arguments)]
+        ), redirect_stderr(stderr), patch.object(
+            cli, "load_study", side_effect=load or self.rows
+        ) as read, patch.object(cli.subprocess, "run") as execute, patch.object(
+            cli, "plot_combined_paper"
+        ):
             status = 0
             try:
                 cli.main()
@@ -72,12 +74,11 @@ class ScalingDiscoveryTests(unittest.TestCase):
         self.assertEqual(
             [call.args[0] for call in read.call_args_list], [first, second]
         )
-        self.assertTrue(
-            all(call.kwargs == {} for call in read.call_args_list)
-        )
+        self.assertTrue(all(call.kwargs == {} for call in read.call_args_list))
         self.assertEqual(execute.call_count, 18)
         for call in execute.call_args_list:
             command = call.args[0]
+            self.assertIn("--detailed-only", command)
             relative = Path(command[2]).parent.relative_to(self.data)
             self.assertEqual(
                 command[-2:],

@@ -1,6 +1,7 @@
 """Shared configuration selection and rendering for application speedup plots."""
 
 from collections import defaultdict
+import csv
 import math
 
 
@@ -99,7 +100,47 @@ def select_paper_rows(rows, path, *, selection="per-k"):
             for name in ("degree", "block_size", "items_per_thread")
         ):
             selected.append(row)
+    if selection == "global":
+        selected = select_global_bits_variant(selected, path)
     return selected
+
+
+def select_global_bits_variant(rows, path):
+    """Keep one bits curve per workload, chosen by full-operator geometric mean.
+
+    The selected backend and configuration carry into every measured phase.
+    Prefer ordinary (prefetched) bits on an exact tie.
+    """
+    ordinary = (
+        "bits-prefetch"
+        if any(r["backend"] == "bits-prefetch" for r in rows)
+        else "bits"
+    )
+    backends = (ordinary, "bits-sq")
+    operators = defaultdict(dict)
+    for row in rows:
+        if row["backend"] in backends and row["phase"] == "operator":
+            operators[row["backend"]][row["k"]] = row
+    if not operators:
+        return rows
+    ks = {k for points in operators.values() for k in points}
+    complete = [backend for backend in backends if set(operators[backend]) == ks]
+    if not complete:
+        raise ValueError(f"{path}: global bits comparison requires every k")
+    winner = min(
+        complete,
+        key=lambda backend: (
+            math.fsum(math.log(operators[backend][k]["median_ms"]) for k in sorted(ks))
+            / len(ks),
+            backends.index(backend),
+        ),
+    )
+    return [
+        row
+        for row in rows
+        if row["backend"] not in ("bits", "bits-prefetch", "bits-sq")
+        or row["backend"] == winner
+    ]
 
 
 def configuration_pages(pages, *, paper):
@@ -125,12 +166,94 @@ def configuration_pages(pages, *, paper):
                 )
 
 
-def global_configuration_label(backend, row):
-    """Describe the one configuration shared by all points of a global curve."""
-    if backend not in ("bits", "bits-prefetch", "bits-sq"):
-        return ""
-    degree = f"degree={row['degree']}, " if backend == "bits-sq" else ""
-    return f" [{degree}block={row['block_size']}, items={row['items_per_thread']}]"
+def write_configuration_csv(path, rows, *, selection):
+    """Record every displayed point, its configuration, timings and provenance."""
+    records = [row | {"selection_mode": selection} for row in rows]
+    fields = list(dict.fromkeys(field for row in records for field in row))
+    with path.open("w", newline="") as target:
+        writer = csv.DictWriter(target, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(records)
+
+
+def plot_combined_paper(rows, output_dir):
+    """Write one three-application PDF and configuration CSV per size/mode/phase."""
+    import matplotlib.pyplot as plt
+    import utils
+
+    applications = (
+        ("database-topn", "Database top-N"),
+        ("token-sampling", "Token sampling"),
+        ("gradient-compression", "Gradient compression"),
+    )
+    backends = ("bits-prefetch", "bits-sq", "air-topk", "grid-select", "bits")
+    labels = ("bits", "bits (split)", "AIR Top-K", "GridSelect", "bits (no prefetch)")
+    # Select independently for each application/size, never across applications.
+    cases = defaultdict(list)
+    for row in rows:
+        cases[row["size_tier"], row["operator"]].append(row)
+    selections = {
+        (tier, application, mode): select_paper_rows(
+            values, values[0]["source_csv"], selection=mode
+        )
+        for (tier, application), values in cases.items()
+        for mode in ("per-k", "global")
+    }
+    for tier in ("small", "middle", "large"):
+        for mode in ("per-k", "global"):
+            suffix = "-global" if mode == "global" else ""
+            for phase, phase_name in (
+                ("operator", "operator"),
+                ("selection_isolated", "selection"),
+            ):
+                stem = f"applications-{tier}-paper{suffix}-{phase_name}"
+                fig, axes = plt.subplots(1, 3, figsize=(13.5, 3.8), sharey=True)
+                handles, records = {}, []
+                for ax, (application, title) in zip(axes, applications):
+                    values = [
+                        row
+                        for row in selections[tier, application, mode]
+                        if row["phase"] == phase
+                    ]
+                    for index, backend in enumerate(backends):
+                        points = sorted(
+                            (row for row in values if row["backend"] == backend),
+                            key=lambda row: row["k"],
+                        )
+                        if not points:
+                            continue
+                        handles[backend] = add_speedup_series(
+                            ax,
+                            points,
+                            label=labels[index],
+                            color=utils.COLORS[index],
+                            marker=utils.SHAPES[index],
+                            linestyle="-",
+                        )
+                        records.extend(row | {"label": labels[index]} for row in points)
+                    ks = sorted({row["k"] for row in values})
+                    ax.set_xscale("log", base=2)
+                    ax.set_xticks(ks, labels=[str(k) for k in ks])
+                    ax.set_xlabel("k")
+                    ax.set_title(title)
+                    ax.axhline(1, color="gray", linewidth=0.8, linestyle=":")
+                    ax.grid(alpha=0.4, linestyle="--")
+                axes[0].set_ylabel("Speedup vs AIR Top-K [×]")
+                fit_speedup_axes(axes)
+                ordered = [backend for backend in backends if backend in handles]
+                fig.legend(
+                    [handles[backend] for backend in ordered],
+                    [labels[backends.index(backend)] for backend in ordered],
+                    loc="lower center",
+                    ncol=len(ordered),
+                    frameon=False,
+                )
+                fig.tight_layout(rect=(0, 0.12, 1, 1))
+                fig.savefig(output_dir / f"{stem}.pdf", bbox_inches="tight")
+                plt.close(fig)
+                write_configuration_csv(
+                    output_dir / f"{stem}-configs.csv", records, selection=mode
+                )
 
 
 def annotate_paper_selection(summary, workload, path):
