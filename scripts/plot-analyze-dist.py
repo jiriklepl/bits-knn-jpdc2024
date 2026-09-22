@@ -17,6 +17,7 @@ gpu_dict = {
     "ampere02": "A100",
     "volta05": "V100",
     "hopper01": "H100",
+    "bw01": "RTX-PRO-6000",
 }
 
 if not files:

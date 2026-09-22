@@ -24,6 +24,9 @@ def MEMORY_FLOAT_THROUGHPUT(hostname):
     elif hostname.startswith("hopper01"):
         # NVIDIA H100 PCIe: https://resources.nvidia.com/en-us-tensor-core
         return 2039.0 * 1024 * 1024 * 1024 / 4
+    elif hostname.startswith("bw01"):
+        # RTX PRO 6000 Blackwell Server Edition: https://resources.nvidia.com/en-us-rtx-pro-6000
+        return 1597.0 * 1024 * 1024 * 1024 / 4
     else:
         return 0
 

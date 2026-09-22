@@ -23,8 +23,10 @@ gpu_deduce() {
                 GPU="A100"
             elif [ "$worker" == "hopper01" ]; then
                 GPU="H100"
-            elif [ "$worker" == "volta05" ]; then
-                GPU="V100"
+            elif [ "$worker" == "bw01" ]; then
+                GPU="RTX-PRO-6000"
+	    elif [ "$worker" == "volta05" ]; then
+		GPU="V100"
             else                                                     # default values
                 print_warning "unknown worker, using default values" # see below
                 if [ -z "$CUDA_ARCHITECTURES" ]; then
