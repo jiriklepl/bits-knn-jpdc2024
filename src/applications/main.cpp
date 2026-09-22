@@ -39,11 +39,11 @@ try
         "k,topn", "Output rows", cxxopts::value<std::string>()->default_value("32"))(
         "backends", "Comma-separated comparison backends",
         cxxopts::value<std::string>()->default_value("bits-sq,air-topk,grid-select,block-select"))(
-        "degree", "BITS split degree", cxxopts::value<std::string>()->default_value("32"))(
-        "bits-block-size", "BITS thread block size: 128,256,512",
+        "degree", "bits split degree", cxxopts::value<std::string>()->default_value("32"))(
+        "bits-block-size", "bits thread block size: 128,256,512",
         cxxopts::value<std::string>()->default_value("512"))(
         "items-per-thread",
-        "BITS batch override: 1,4,7,8,13,16 (default: bits/bits-prefetch=7, bits-sq=4)",
+        "bits batch override: 1,4,7,8,13,16 (default: bits/bits-prefetch=7, bits-sq=4)",
         cxxopts::value<std::string>())("repeat", "Measured repetitions",
                                        cxxopts::value<std::string>()->default_value("20"))(
         "warmup", "Untimed warmup repetitions", cxxopts::value<std::string>()->default_value("3"))(
@@ -95,7 +95,7 @@ try
         if (!seen.insert(name).second)
             throw std::invalid_argument{"Duplicate backend: " + name};
         if (name == "bits-sq" && (degree == 0 || degree > n))
-            throw std::invalid_argument{"BITS split degree must be between 1 and rows"};
+            throw std::invalid_argument{"bits split degree must be between 1 and rows"};
         auto item = make_backend(name, k, degree, items, bits_block_size);
         knn_args args{};
         args.query_count = 1;

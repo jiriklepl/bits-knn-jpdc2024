@@ -15,7 +15,7 @@ import tensor_analysis
 
 
 BACKENDS = ("bits-prefetch", "bits-sq", "air-topk", "grid-select")
-LABELS = ("BITS", "BITS (split)", "AIR Top-K", "GridSelect")
+LABELS = ("bits", "bits (split)", "AIR Top-K", "GridSelect")
 POINT = ("workload_id", "scenario")
 CONFIG = ("degree", "block_size", "items_per_thread")
 SIZE_LABELS = {

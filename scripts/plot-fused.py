@@ -48,7 +48,7 @@ def plot(file, hostname, jobid):
             linewidth=1.5,
             capsize=3,
             marker='.',
-            label="fused kernel")
+            label="bits-fused (without MAGMA)")
         i += 1
 
     # compute mean baseline throughput
@@ -72,7 +72,7 @@ def plot(file, hostname, jobid):
             linewidth=1.5,
             capsize=3,
             marker='.',
-            label="MAGMA distance + bits")
+            label="bits + MAGMA")
         ax.hlines(y=values["harm_mean"][0], xmin=min(xticks), xmax=32, linestyle=':', linewidth=1.5, color='C1')
         ax.grid(alpha=0.4, linestyle="--")
         i += 1

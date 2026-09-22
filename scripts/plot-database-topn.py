@@ -44,11 +44,11 @@ BACKENDS = (
     "block-select",
 )
 LABELS = (
-    "BITS",
-    "BITS (split)",
+    "bits",
+    "bits (split)",
     "AIR Top-K",
     "GridSelect",
-    "BITS (no prefetch)",
+    "bits (no prefetch)",
     "BlockSelect",
 )
 WORKLOAD = ("dataset_id", "rows", "k", "phase")

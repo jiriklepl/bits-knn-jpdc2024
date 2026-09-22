@@ -10,6 +10,7 @@ The benchmarking binary `knn` described in [knn.md](knn.md) can run the followin
 - The proposed `bits` algorithm for top-k selection
   - In the benchmarking binary `knn`, the `bits` algorithm with prefetching enabled is run with the `-a bits-prefetch` argument
     - `-a bits` runs the algorithm without prefetching; for the tested problems, their performance is quite similar
+    - `-a bits-sq` runs the split variant, labeled `bits (split)` in application plots
   - Implemented in the  `bits_kernel` kernel in [include/bits/topk/singlepass/detail/bits_kernel.cuh](../include/bits/topk/singlepass/detail/bits_kernel.cuh), line 320
   - In the visualized benchmarks, we always enable prefetching, and we set block size and batch size (items per thread) parameters based on the [tuning experiments](../README.md#optional-tuning-the-algorithm-parameters).
 

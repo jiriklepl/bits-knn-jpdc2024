@@ -148,7 +148,7 @@ TEST_CASE("GridSelect reinitializes workspace and returns sorted arbitrary-k res
     REQUIRE_THROWS_AS(selector.initialize(invalid), std::invalid_argument);
 }
 
-TEMPLATE_TEST_CASE("Database BITS configurations handle partial blocks and maximum k",
+TEMPLATE_TEST_CASE("Database bits configurations handle partial blocks and maximum k",
                    "[applications][database]", bits_knn, bits_prefetch_knn, single_query_bits)
 {
     const auto columns = table(2053);

@@ -671,15 +671,15 @@ class ApplicationRenderTests(unittest.TestCase):
                         self.assertEqual(
                             labels[:2],
                             [
-                                "BITS [block=128, items=13]",
-                                "BITS (split) [degree=8, block=128, items=13]",
+                                "bits [block=128, items=13]",
+                                "bits (split) [degree=8, block=128, items=13]",
                             ],
                         )
                     if not paper:
                         split_labels = [
                             label
                             for label in labels
-                            if label.startswith("BITS (split)")
+                            if label.startswith("bits (split)")
                         ]
                         degree = int(split_labels[0].split("degree=")[1].split(",")[0])
                         plotted_split_degrees.append(degree)
@@ -697,7 +697,7 @@ class ApplicationRenderTests(unittest.TestCase):
                             self.assertEqual(
                                 sum(
                                     f"block={block}," in label
-                                    and label.startswith("BITS")
+                                    and label.startswith("bits")
                                     for label in labels
                                 ),
                                 10,

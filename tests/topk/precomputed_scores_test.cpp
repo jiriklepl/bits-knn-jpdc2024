@@ -161,7 +161,7 @@ TEMPLATE_TEST_CASE("Selection backends consume changing application scores", "[s
     }
 }
 
-TEST_CASE("BITS split-and-merge supports arbitrary k and reinitialization to one partition",
+TEST_CASE("bits split-and-merge supports arbitrary k and reinitialization to one partition",
           "[scores]")
 {
     single_query_bits algorithm;
@@ -183,7 +183,7 @@ TEST_CASE("BITS split-and-merge supports arbitrary k and reinitialization to one
     }
 }
 
-TEMPLATE_TEST_CASE("BITS finds finite tail scores after fully masked partitions", "[scores]",
+TEMPLATE_TEST_CASE("bits finds finite tail scores after fully masked partitions", "[scores]",
                    bits_knn, bits_prefetch_knn, single_query_bits)
 {
     constexpr std::size_t rows = 3, columns = 1027, k = 65, degree = 8;
@@ -232,14 +232,14 @@ TEST_CASE("Score transformations preserve largest values and signed magnitudes",
     }
 }
 
-TEST_CASE("BITS rejects invalid partition degrees before touching input", "[scores]")
+TEST_CASE("bits rejects invalid partition degrees before touching input", "[scores]")
 {
     single_query_bits algorithm;
     REQUIRE_THROWS_AS(algorithm.initialize(score_args(1, 17, 3, 0)), std::invalid_argument);
     REQUIRE_THROWS_AS(algorithm.initialize(score_args(1, 17, 3, 18)), std::invalid_argument);
 }
 
-TEST_CASE("BITS split selection bounds uneven and pitched input rows", "[scores]")
+TEST_CASE("bits split selection bounds uneven and pitched input rows", "[scores]")
 {
     class pitched_scores : public cuda_distance
     {

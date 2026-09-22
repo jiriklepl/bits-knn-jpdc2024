@@ -5,10 +5,10 @@ import math
 
 
 def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
-    """Choose BITS configurations per k or across all k within one workload.
+    """Choose bits configurations per k or across all k within one workload.
 
     Carry that configuration into every phase, including isolated selection.
-    Only split BITS may vary degree. Ties prefer block, items, then degree.
+    Only split bits may vary degree. Ties prefer block, items, then degree.
     ``point_fields`` can include workload identity for a shared cross-size choice.
     """
     if selection not in ("per-k", "global"):
@@ -30,7 +30,7 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
             )
         seen.add(key)
         if row["backend"] in ("bits", "bits-prefetch") and row["degree"] != 1:
-            raise ValueError(f"{path}: ordinary BITS requires degree=1")
+            raise ValueError(f"{path}: ordinary bits requires degree=1")
         fixed = () if row["backend"] in ("bits", "bits-prefetch", "bits-sq") else config
         configurations[row["backend"]].add(fixed)
         if row["phase"] == "operator":
@@ -38,7 +38,7 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
     if any(len(values) > 1 for values in configurations.values()):
         raise ValueError(
             f"{path}: paper plots require one fixed configuration per backend "
-            "apart from BITS block size/items and split BITS degree"
+            "apart from bits block size/items and split bits degree"
         )
     if selection == "per-k":
         winners = {
@@ -107,7 +107,7 @@ def select_paper_rows(rows, path, *, selection="per-k", point_fields=("k",)):
 def configuration_pages(pages, *, paper):
     """Bound detailed page size by showing one split degree with all comparisons.
 
-    Repeat every ordinary BITS variant and baseline for each split-degree page.
+    Repeat every ordinary bits variant and baseline for each split-degree page.
     Single-degree inputs retain their existing one-page layout.
     """
     for key, rows in sorted(pages.items()):

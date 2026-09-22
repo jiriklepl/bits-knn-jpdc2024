@@ -170,7 +170,7 @@ int run_benchmark(Pipeline& pipeline, const cxxopts::ParseResult& params, std::s
         if (!seen.insert(name).second)
             throw std::invalid_argument{"Duplicate backend: " + name};
         if (name == "bits-sq" && (degree == 0 || degree > rows))
-            throw std::invalid_argument{"BITS split degree must be between 1 and candidate count"};
+            throw std::invalid_argument{"bits split degree must be between 1 and candidate count"};
         auto item = make_backend(name, k, degree, items, block);
         knn_args args{};
         args.point_count = rows;
@@ -257,10 +257,10 @@ try
                           cxxopts::value<std::string>()->default_value("32"))(
         "backends", "Comma-separated backends",
         cxxopts::value<std::string>()->default_value("bits-sq,air-topk,grid-select,block-select"))(
-        "degree", "BITS split degree", cxxopts::value<std::string>()->default_value("32"))(
-        "bits-block-size", "BITS block size", cxxopts::value<std::string>()->default_value("512"))(
+        "degree", "bits split degree", cxxopts::value<std::string>()->default_value("32"))(
+        "bits-block-size", "bits block size", cxxopts::value<std::string>()->default_value("512"))(
         "items-per-thread",
-        "BITS batch override: 1,4,7,8,13,16 (default: bits/bits-prefetch=7, bits-sq=4)",
+        "bits batch override: 1,4,7,8,13,16 (default: bits/bits-prefetch=7, bits-sq=4)",
         cxxopts::value<std::string>())("repeat", "Measured repetitions",
                                        cxxopts::value<std::string>()->default_value("20"))(
         "warmup", "Untimed warmups", cxxopts::value<std::string>()->default_value("3"))(

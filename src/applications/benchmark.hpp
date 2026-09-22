@@ -56,9 +56,9 @@ inline backend make_backend(const std::string& name, std::size_t k, std::size_t 
     if (name == "bits" || name == "bits-prefetch" || name == "bits-sq")
     {
         if (items != 1 && items != 4 && items != 7 && items != 8 && items != 13 && items != 16)
-            throw std::invalid_argument{"BITS items-per-thread must be 1, 4, 7, 8, 13 or 16"};
+            throw std::invalid_argument{"bits items-per-thread must be 1, 4, 7, 8, 13 or 16"};
         if (bits_block_size != 128 && bits_block_size != 256 && bits_block_size != 512)
-            throw std::invalid_argument{"BITS block size must be 128, 256 or 512"};
+            throw std::invalid_argument{"bits block size must be 128, 256 or 512"};
     }
     if (name == "bits")
         return {std::make_unique<bits_knn>(), 1, bits_block_size, items, true};

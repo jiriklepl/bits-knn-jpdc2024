@@ -18,7 +18,7 @@ Each configuration uses 10 warmups and 30 measured repetitions, with CPU correct
 
 Transformation, selection and output are also measured separately. These isolated timings come from separate invocations and must not be added to reconstruct full-operator time. Sampling latency covers the complete batch.
 
-Larger database and gradient inputs lengthen one query; larger sampling batches add independent queries. Ordinary BITS uses one block per query, while split BITS distributes each query across blocks. At fixed k, the retained fraction decreases as the candidate count grows. Gradient parameters also have different value distributions, so these cases do not isolate size alone or measure training quality.
+Larger database and gradient inputs lengthen one query; larger sampling batches add independent queries. Ordinary bits uses one block per query, while split bits distributes each query across blocks. At fixed k, the retained fraction decreases as the candidate count grows. Gradient parameters also have different value distributions, so these cases do not isolate size alone or measure training quality.
 
 ## Parameters
 
@@ -26,8 +26,8 @@ The applications use k = 32, 64, 128, 256, 512 and 1024. For each k, the batch s
 
 | Backend | Threads per block | Items per thread | Split degree |
 | --- | --- | --- | --- |
-| BITS (`bits-prefetch`) | 128, 256, 512 | 4, 7, 8, 13, 16 | 1 |
-| Split BITS (`bits-sq`) | 128, 256, 512 | 4, 7, 8, 13, 16 | 8, 32, 128, 512 |
+| bits (`bits-prefetch`) | 128, 256, 512 | 4, 7, 8, 13, 16 | 1 |
+| bits (split) (`bits-sq`) | 128, 256, 512 | 4, 7, 8, 13, 16 | 8, 32, 128, 512 |
 
 Split degree is the number of partitions selected independently before merging. Both variants enable prefetch. AIR Top-K, GridSelect and BlockSelect each run once per k.
 
@@ -87,7 +87,7 @@ Each application/size case produces four files:
 | `<case>-paper-global.pdf` | One fixed configuration across k, shown in the legend |
 | `<case>.csv` | Median times, quartiles, speedups and selected configurations |
 
-Per-k selection minimizes median full-operator time. Global selection maximizes geometric-mean speedup across k, using configurations measured at every k. Each BITS backend is selected separately within one case and GPU. Paper plots omit BlockSelect; the CSV flags `paper_selected` and `paper_global_selected` identify the configurations used.
+Per-k selection minimizes median full-operator time. Global selection maximizes geometric-mean speedup across k, using configurations measured at every k. Each bits backend is selected separately within one case and GPU. Paper plots omit BlockSelect; the CSV flags `paper_selected` and `paper_global_selected` identify the configurations used.
 
 The database plot shows the full operator. Tensor plots show the full operator on the left and isolated selection on the right, using the same chosen configuration in both panels.
 

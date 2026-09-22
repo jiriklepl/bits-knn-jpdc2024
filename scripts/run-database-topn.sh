@@ -45,7 +45,7 @@ for k in "$@"; do
     seen[$k]=1
 done
 
-# Plain BITS is measured once per pair; split BITS also sweeps the degree.
+# Plain bits is measured once per pair; split bits also sweeps the degree.
 read -r -a split_degrees <<< "${BITS_SPLIT_DEGREES:-8 32 128 512}"
 if [ "${#split_degrees[@]}" -eq 0 ]; then
     print_error "BITS_SPLIT_DEGREES must contain positive integers"
@@ -71,7 +71,7 @@ for k in "$@"; do
                 backends=bits-sq
                 if [ "$degree" = "${split_degrees[0]}" ]; then
                     backends=bits-prefetch,$backends
-                    # Comparison backends ignore all BITS tuning options.
+                    # Comparison backends ignore all bits tuning options.
                     if [ "$block_size" -eq 512 ] && [ "$items_per_thread" -eq 16 ]; then
                         backends+=,air-topk,grid-select,block-select
                     fi

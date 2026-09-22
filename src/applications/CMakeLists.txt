@@ -1,4 +1,4 @@
-# Reuse the selection implementations with a bounded set of BITS configurations.
+# Reuse the selection implementations with a bounded set of bits configurations.
 # Keep this target independent of the unrelated fused and distance benchmarks.
 add_library(application-selectors STATIC EXCLUDE_FROM_ALL
     ${SRC_DIR}/knn.cpp

@@ -25,11 +25,11 @@ BACKENDS = (
     "block-select",
 )
 LABELS = (
-    "BITS",
-    "BITS (split)",
+    "bits",
+    "bits (split)",
     "AIR Top-K",
     "GridSelect",
-    "BITS (no prefetch)",
+    "bits (no prefetch)",
     "BlockSelect",
 )
 WORKLOAD = ("operator", "dataset_id", "rows", "batch_size", "k", "temperature", "seed")

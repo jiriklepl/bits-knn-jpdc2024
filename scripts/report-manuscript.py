@@ -173,14 +173,14 @@ def report_host(data_dir, host):
     sel = matrix(data["kselection"])
     speed = (sel.reindex(columns=COMPETITORS).min(axis=1) / sel["bits-prefetch"]).dropna()
     rate = sel.index.get_level_values("point_count") * sel.index.get_level_values("query_count") / sel["bits-prefetch"]
-    out["BITS speedup vs best competitor: mean / min / max"] = triple(speed)
-    out["BITS peak-speedup workload"] = witness(speed)
-    out["BITS minimum-speedup workload"] = witness(speed, maximum=False)
-    out["BITS speedup at q=64: mean"] = number(speed.xs(64, level="query_count").mean(), "×")
-    out["BITS wins vs best competitor"] = wins(speed)
-    out["BITS throughput: peak (distances/s)"] = f"{rate.max():.4e}"
+    out["bits speedup vs best competitor: mean / min / max"] = triple(speed)
+    out["bits peak-speedup workload"] = witness(speed)
+    out["bits minimum-speedup workload"] = witness(speed, maximum=False)
+    out["bits speedup at q=64: mean"] = number(speed.xs(64, level="query_count").mean(), "×")
+    out["bits wins vs best competitor"] = wins(speed)
+    out["bits throughput: peak (distances/s)"] = f"{rate.max():.4e}"
     utilization = rate / bandwidth * 100
-    out["BITS bandwidth utilization: mean / peak"] = f"{utilization.mean():.2f}% / {utilization.max():.2f}%"
+    out["bits bandwidth utilization: mean / peak"] = f"{utilization.mean():.2f}% / {utilization.max():.2f}%"
     out["Prefetch speedup gain: mean / min / max"] = triple(100 * (ratio(sel, "bits", "bits-prefetch") - 1), "%")
     measured = pd.concat([data[f] for f in ("kselection", "bitonic-sort", "buffer", "distances", "fused")])
     out["Timing variation (std/mean): maximum"] = number(100 * measured.cv.max(), "%")
@@ -198,8 +198,8 @@ def report_host(data_dir, host):
         out[f"Buffer speedup ({order}): mean / min / max"] = triple(ratio(buf, "partial-bitonic-regs", "bits"))
 
     fixed = fixed_parameters(data["opt-ipt"].query("algorithm == 'bits-prefetch'"))
-    out["Fixed BITS parameters: block; items; degree"] = parameters(fixed)
-    out["Fixed BITS worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
+    out["Fixed bits parameters: block; items; degree"] = parameters(fixed)
+    out["Fixed bits worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
 
     dist = matrix(data["distances"])
     reference = dist.reindex(columns=["baseline-dist", "cublas-dist"]).min(axis=1)
@@ -213,18 +213,18 @@ def report_host(data_dir, host):
     raft = ratio(fused, "rapidsai-fused", "fused-cache")
     two_phase = ratio(fused, "bits-prefetch", "fused-cache")
     low_dim = raft[raft.index.get_level_values("dim") <= 8]
-    out["Fused vs RAFT, d<=8: mean / min / max"] = triple(low_dim)
-    out["Fused vs RAFT, d<=8: speedup >2×"] = wins(low_dim, 2)
-    out["Fused wins vs RAFT"] = wins(raft)
-    out["Fused vs two-phase: mean / min / max"] = triple(two_phase)
-    out["Fused wins vs two-phase"] = wins(two_phase)
+    out["bits-fused vs RAFT, d<=8: mean / min / max"] = triple(low_dim)
+    out["bits-fused vs RAFT, d<=8: speedup >2×"] = wins(low_dim, 2)
+    out["bits-fused wins vs RAFT"] = wins(raft)
+    out["bits-fused vs two-phase: mean / min / max"] = triple(two_phase)
+    out["bits-fused wins vs two-phase"] = wins(two_phase)
     for d in FUSED_DIMS:
-        out[f"Fused wins vs two-phase, d={d}"] = wins(two_phase.xs(d, level="dim"))
+        out[f"bits-fused wins vs two-phase, d={d}"] = wins(two_phase.xs(d, level="dim"))
     raft_k = fused.reindex(columns=["rapidsai-fused"])["rapidsai-fused"].unstack("k")
     loss = (100 * (1 - raft_k[8] / raft_k[64])).dropna()
     out["RAFT throughput loss at k=64 vs k=8: mean / min / max"] = triple(loss, "%")
     fused_k = fused["fused-cache"].unstack("k")
-    out["Fused throughput loss at k=256 vs k=8: mean / min / max"] = triple(100 * (1 - fused_k[8] / fused_k[256]), "%")
+    out["bits-fused throughput loss at k=256 vs k=8: mean / min / max"] = triple(100 * (1 - fused_k[8] / fused_k[256]), "%")
 
     # Bandwidth is in floats/s, following the existing plots (including bw01).
     n, q, d = (fused.index.get_level_values(c) for c in WORKLOAD[:3])
@@ -232,18 +232,18 @@ def report_host(data_dir, host):
     ideal = raw_selection + ((n + q) * d + n * q) / bandwidth
     speed = (ideal / fused["fused-cache"]).dropna()
     for dim in FUSED_DIMS:
-        out[f"Fused wins vs BITS + zero computation, d={dim}"] = wins(speed.xs(dim, level="dim"))
+        out[f"bits-fused wins vs bits + zero computation, d={dim}"] = wins(speed.xs(dim, level="dim"))
     out["Two-phase distance matrix (GiB)"] = number(float((FLOAT_BYTES * n * q / 2**30).max()))
 
     fixed = fixed_parameters(data["fused-cache-params"])
-    out["Fixed fused parameters: query tile; items tuple; degree"] = parameters(fixed)
-    out["Fixed fused worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
+    out["Fixed bits-fused parameters: query tile; items tuple; degree"] = parameters(fixed)
+    out["Fixed bits-fused worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
     fixed_time = fixed.set_index(WORKLOAD).time
     overhead = 100 * (fixed_time / fused.reindex(columns=["rapidsai-fused"])["rapidsai-fused"] - 1)
     overhead = overhead.dropna()
-    out["Fixed fused vs RAFT: worst overhead (tuning/eval)"] = number(overhead.max(), "%")
-    out["Fixed fused vs RAFT: worst workload"] = witness(overhead)
-    out["Fixed fused wins vs two-phase (tuning/eval)"] = wins((fused["bits-prefetch"] / fixed_time).dropna())
+    out["Fixed bits-fused vs RAFT: worst overhead (tuning/eval)"] = number(overhead.max(), "%")
+    out["Fixed bits-fused vs RAFT: worst workload"] = witness(overhead)
+    out["Fixed bits-fused wins vs two-phase (tuning/eval)"] = wins((fused["bits-prefetch"] / fixed_time).dropna())
     return out
 
 

@@ -33,7 +33,7 @@ To print the manuscript's experimental numbers from the saved runs for all five 
 .venv/bin/python scripts/report-manuscript.py --show-runs --output plots/manuscript-numbers.md
 ```
 
-The script needs NumPy and pandas, and does not run benchmarks or regenerate plots. Edit `RUNS`, the workload ranges, and the other constants at the top of the script to select different recorded experiments. Defaults use the latest evaluation jobs for each GPU and the saved parameter sweeps for tuning comparisons. The output covers selection, sorting, buffering, prefetching, distance computation, fused kernels, bandwidth utilization, and fixed-parameter slowdowns. Means discard the first ten iterations; the BITS tuning runs retain twenty samples and other runs retain ten. `--data-dir` selects another data directory.
+The script needs NumPy and pandas, and does not run benchmarks or regenerate plots. Edit `RUNS`, the workload ranges, and the other constants at the top of the script to select different recorded experiments. Defaults use the latest evaluation jobs for each GPU and the saved parameter sweeps for tuning comparisons. The output covers selection, sorting, buffering, prefetching, distance computation, fused kernels, bandwidth utilization, and fixed-parameter slowdowns. Means discard the first ten iterations; the bits tuning runs retain twenty samples and other runs retain ten. `--data-dir` selects another data directory.
 
 
 ### Manuscript numbers and report rows
@@ -42,30 +42,30 @@ The table below maps the experimental numbers in the manuscript to the row label
 
 | Manuscript location | Reported number | Script output row / value |
 |---|---|---|
-| Abstract; §5.2.3, p. 30 | BITS **2.1× mean**, **1.3× minimum**, **2.9× peak** speedup | `BITS speedup vs best competitor: mean / min / max`, in that order |
-| Abstract; §5.2.3, p. 30 | H100 **73% mean**, **over 87% peak** bandwidth utilization | `BITS bandwidth utilization: mean / peak` |
-| §5.2.3, p. 30 | A100 **79%**, V100 **89%** peak bandwidth utilization | Peak value in `BITS bandwidth utilization: mean / peak`, columns `ampere02` and `volta05` |
+| Abstract; §5.2.3, p. 30 | bits **2.1× mean**, **1.3× minimum**, **2.9× peak** speedup | `bits speedup vs best competitor: mean / min / max`, in that order |
+| Abstract; §5.2.3, p. 30 | H100 **73% mean**, **over 87% peak** bandwidth utilization | `bits bandwidth utilization: mean / peak` |
+| §5.2.3, p. 30 | A100 **79%**, V100 **89%** peak bandwidth utilization | Peak value in `bits bandwidth utilization: mean / peak`, columns `ampere02` and `volta05` |
 | §5.1, p. 27 | Timing variation **within 1%** | `Timing variation (std/mean): maximum` (over the selected evaluation algorithms) |
 | §5.2.1, p. 28 | Sort-in-registers speedup **about 2×** for most cases | `Sort-in-registers speedup: median`; distribution summary in `Sort-in-registers speedup: mean / min / max` |
 | §5.2.1, p. 28 | Fixed block **128**, baseline slowdown **31%** | `Fixed partial-bitonic: block; worst slowdown` |
 | §5.2.1, p. 28 | Fixed block **128**, warp-shuffle slowdown **29%** | `Fixed partial-bitonic-warp: block; worst slowdown` |
 | §5.2.1, p. 28 | Fixed block **128**, sort-in-registers slowdown **21%** | `Fixed partial-bitonic-regs: block; worst slowdown` |
 | §5.2.2, p. 29 | Prefetch gain **below 5%** overall | Mean value in `Prefetch speedup gain: mean / min / max` |
-| §5.2.3, p. 30 | Mean speedup **1.8×** at **q=64** | `BITS speedup at q=64: mean` |
-| §5.2.3, p. 31; footnote 12 | Fixed BITS slowdown **32% H100**, **27% A100** | `Fixed BITS worst slowdown`, columns `hopper01` and `ampere02` |
-| Same | H100 block **256**, **13** items/thread; A100 block **512**, **7** items/thread | `Fixed BITS parameters: block; items; degree` (first component of the items tuple is the batch size) |
+| §5.2.3, p. 30 | Mean speedup **1.8×** at **q=64** | `bits speedup at q=64: mean` |
+| §5.2.3, p. 31; footnote 12 | Fixed bits slowdown **32% H100**, **27% A100** | `Fixed bits worst slowdown`, columns `hopper01` and `ampere02` |
+| Same | H100 block **256**, **13** items/thread; A100 block **512**, **7** items/thread | `Fixed bits parameters: block; items; degree` (first component of the items tuple is the batch size) |
 | §5.3.1, p. 33 | Distance tuning by d alone: slowdown **at most 1.4%** | `Distance parameters fixed per d: worst slowdown` |
 | §5.3.2, p. 33 | Extra distance-matrix storage **4 GiB** | `Two-phase distance matrix (GiB)` |
-| §5.3.2, p. 34 | Fused speedup **over 2×** versus RAFT for most **d<=8** cases | `Fused vs RAFT, d<=8: speedup >2×` gives the count; ratios are in `Fused vs RAFT, d<=8: mean / min / max` |
+| §5.3.2, p. 34 | bits-fused speedup **over 2×** versus RAFT for most **d<=8** cases | `bits-fused vs RAFT, d<=8: speedup >2×` gives the count; ratios are in `bits-fused vs RAFT, d<=8: mean / min / max` |
 | §5.3.2, p. 34 | RAFT throughput drops by **almost 50%** at larger k | `RAFT throughput loss at k=64 vs k=8: mean / min / max` (the script uses k=8 as the explicit small-k reference) |
-| §5.3.2, p. 35 | Fixed fused slowdown **27% H100**, **42% A100** | `Fixed fused worst slowdown`, columns `hopper01` and `ampere02` |
-| §5.3.2, p. 35 | Fixed fused is **6%** slower than RAFT in the worst case | `Fixed fused vs RAFT: worst overhead (tuning/eval)` |
-| Same | Worst case **d=16, q=1024, k=8** | `Fixed fused vs RAFT: worst workload` |
-| Conclusion, p. 35 | Peak throughput **over 75%** of the bandwidth limit | Peak value in `BITS bandwidth utilization: mean / peak` |
+| §5.3.2, p. 35 | Fixed bits-fused slowdown **27% H100**, **42% A100** | `Fixed bits-fused worst slowdown`, columns `hopper01` and `ampere02` |
+| §5.3.2, p. 35 | Fixed bits-fused is **6%** slower than RAFT in the worst case | `Fixed bits-fused vs RAFT: worst overhead (tuning/eval)` |
+| Same | Worst case **d=16, q=1024, k=8** | `Fixed bits-fused vs RAFT: worst workload` |
+| Conclusion, p. 35 | Peak throughput **over 75%** of the bandwidth limit | Peak value in `bits bandwidth utilization: mean / peak` |
 
-The manuscript's "all" and "most" comparisons correspond to the rows `BITS wins vs best competitor`, `Sort-in-registers fastest`, `MAGMA-distance wins vs other plotted kernels`, `Fused wins vs RAFT`, and `Fused wins vs two-phase`. These counts are winning cases / comparable cases. The per-dimension `Fused wins vs BITS + zero computation` rows cover the ideal two-phase comparison in §5.3.2.
+The manuscript's "all" and "most" comparisons correspond to the rows `bits wins vs best competitor`, `Sort-in-registers fastest`, `MAGMA-distance wins vs other plotted kernels`, `bits-fused wins vs RAFT`, and `bits-fused wins vs two-phase`. These counts are winning cases / comparable cases. The per-dimension `bits-fused wins vs bits + zero computation` rows cover the ideal two-phase comparison in §5.3.2.
 
-Fixed-fused versus RAFT comparisons combine the saved tuning and evaluation runs, as indicated by `(tuning/eval)` in the output.
+Fixed bits-fused versus RAFT comparisons combine the saved tuning and evaluation runs, as indicated by `(tuning/eval)` in the output.
 
 
 ### Requirements
@@ -283,7 +283,7 @@ Some parts of the source code come from third-party projects. Their licenses are
 
 ## Application benchmarks
 
-Three applications compare BITS, split BITS, AIR Top-K, GridSelect and BlockSelect on GPU-resident data:
+Three applications compare bits, split bits, AIR Top-K, GridSelect and BlockSelect on GPU-resident data:
 
 | Application | Operation | Small / middle / large inputs |
 | --- | --- | --- |
@@ -291,7 +291,7 @@ Three applications compare BITS, split BITS, AIR Top-K, GridSelect and BlockSele
 | Token sampling | Select the top-k logits, normalize their probabilities and draw a token | 8 / 128 / 512 sequences, each with 50,257 logits |
 | Gradient compression | Select the largest gradient magnitudes and gather their signed values | 0.59 / 2.36 / 38.60 million elements |
 
-The nine cases vary k from 32 to 1024 and sweep BITS configurations. Medians use 30 repetitions after 10 warmups, with correctness checks. Full-operator timings cover score preparation, selection and output processing, including launch/synchronization costs. Loading, transfers and model inference/training are excluded.
+The nine cases vary k from 32 to 1024 and sweep bits configurations. Medians use 30 repetitions after 10 warmups, with correctness checks. Full-operator timings cover score preparation, selection and output processing, including launch/synchronization costs. Loading, transfers and model inference/training are excluded.
 
 After the [Python setup](docs/applications.md#requirements), run from the repository root, using `NAME` and `CUDA_ARCHITECTURES` as above:
 

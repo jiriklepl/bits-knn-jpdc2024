@@ -28,7 +28,7 @@ def main():
     parser.add_argument("--bits-block-size", default="512")
     parser.add_argument(
         "--items-per-thread",
-        help="Override BITS batches (default: bits/bits-prefetch=7, bits-sq=4)",
+        help="Override bits batches (default: bits/bits-prefetch=7, bits-sq=4)",
     )
     parser.add_argument("--repeat", default="20")
     parser.add_argument("--warmup", default="3")

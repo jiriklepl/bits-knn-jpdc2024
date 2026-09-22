@@ -675,8 +675,8 @@ class ScalingRenderTests(ScalingFixture):
                     self.assertEqual(
                         labels[:2],
                         [
-                            "BITS [block=128, items=4]",
-                            "BITS (split) [degree=8, block=128, items=4]",
+                            "bits [block=128, items=4]",
+                            "bits (split) [degree=8, block=128, items=4]",
                         ],
                     )
                 renderer = figure.canvas.get_renderer()

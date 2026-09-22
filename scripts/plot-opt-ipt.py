@@ -10,6 +10,8 @@ import os
 # the file name is data/opt-ipt-HOSTNAME-JOBID.csv
 files = glob.glob("data/opt-ipt-*-*.csv")
 
+LABELS = {"bits": "bits (no prefetch)", "bits-prefetch": "bits", "bits-sq": "bits (split)"}
+
 def plot(file, hostname, jobid):
     data = pd.read_csv(file, sep=',')
 
@@ -95,6 +97,7 @@ def plot(file, hostname, jobid):
             min_time = subgroup["items_per_thread"].unique().astype(int)[min_time_index]
 
             # plot speed-up
+            name, separator, degree = alg.partition(" (deg=")
             ax.errorbar(
                 x=subgroup["items_per_thread"].unique().astype(int),
                 y=speedup,
@@ -102,7 +105,7 @@ def plot(file, hostname, jobid):
                 capsize=5,
                 markersize=2,
                 marker=utils.SHAPES[algs[alg]],
-                label=alg,
+                label=LABELS.get(name, name) + separator + degree,
                 color=utils.COLORS[algs[alg]])
 
             # get color from the errorbar

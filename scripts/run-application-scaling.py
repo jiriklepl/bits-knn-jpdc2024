@@ -122,7 +122,7 @@ def unique_positive(values, name):
 
 
 def configurations(ks, degrees):
-    """Plain BITS once/pair, split once/triple, comparison backends once/k."""
+    """Plain bits once/pair, split once/triple, comparison backends once/k."""
     for k in ks:
         for block in BLOCKS:
             for items in ITEMS:
@@ -291,7 +291,7 @@ def validate_chunk(output, configuration, dataset_id, repeat):
                 int(row["block_size"]),
                 int(row["items_per_thread"]),
             ) != (expected_degree, configuration["block"], configuration["items"]):
-                raise ValueError("Native timing row has a different BITS configuration")
+                raise ValueError("Native timing row has a different bits configuration")
         observed[(row["backend"], row["phase"], int(row["iteration"]))] += 1
     expected = Counter(
         (backend, phase, iteration)
