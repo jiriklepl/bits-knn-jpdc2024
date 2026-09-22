@@ -10,6 +10,7 @@ WARMUP = 10
 SHAPES = ["o", "s", "D", "v", "P", "X", "H", "d", "p", ">", "<", "h", "8", "1", "2", "3", "4", "8", "s", "p", "P", "x", "X", "D", "d", "h", "H", "v", "^", "<", ">", "1", "2", "3", "4"]
 COLORS = sns.color_palette("colorblind", 10)
 
+
 def MEMORY_FLOAT_THROUGHPUT(hostname):
     """The peak Global Memory Bandwidth (in floats) for the given hostname"""
     if hostname.startswith("volta05"):
@@ -30,12 +31,14 @@ def MEMORY_FLOAT_THROUGHPUT(hostname):
     else:
         return 0
 
+
 plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
 plt.rcParams['pgf.texsystem'] = 'pdflatex'
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.size'] = 14
 plt.rcParams['pgf.rcfonts'] = False
 # plt.rcParams['text.usetex'] = True
+
 
 def restricted_size(data, axis):
     if type(axis) is int:
@@ -47,10 +50,12 @@ def restricted_size(data, axis):
         n *= data.shape[a]
     return n
 
+
 # compute harmonic mean
 def harm_mean(data, axis=None):
     n = restricted_size(data, axis)
     return n / np.sum(1.0 / data, axis=axis)
+
 
 # compute standard deviation of harmonic mean
 def harm_std(data, axis=None):
