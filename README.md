@@ -224,11 +224,6 @@ The figures in the paper show the following plots:
 For more information about the setup used to collect the benchmarking results, see the [used-setup.md](docs/used-setup.md) file.
 
 
-## Database top-N benchmark
-
-The GPU database operator ranks exported TPC-H rows using FP32 discounted price and compares BITS, split BITS, AIR Top-K, GridSelect and BlockSelect. Its `database-build` / `database-test` commands work with the same `*-build.sh` wrappers, and `scripts/run-database-topn.sh` produces the usual per-job data files. Analyze them with `scripts/plot-all.sh database-topn`.
-
-
 ## Demonstration and testing
 
 If you want to quickly demonstrate the proposed algorithms and run the tests validating the correctness of the algorithms, run the following commands (replace `CUDA_ARCHITECTURES` with the compute capability of your GPU, e.g., `90` for NVIDIA H100, and `NAME` with the chosen name that distinguishes your build from others):
@@ -284,3 +279,29 @@ In the example output above, `bits` outperforms the state-of-the-art algorithms 
 The source code and the replication package are licensed under the MIT License. The license text is available in the `LICENSE.txt` file.
 
 Some parts of the source code come from third-party projects. Their licenses are available in the `licenses.txt` file. The relevant parts of the source code are marked with the original license text.
+
+
+## Application benchmarks
+
+Three applications compare BITS, split BITS, AIR Top-K, GridSelect and BlockSelect on GPU-resident data:
+
+| Application | Operation | Small / middle / large inputs |
+| --- | --- | --- |
+| Database top-N | Rank TPC-H rows by discounted price and gather the selected rows | 0.6 / 6 / 60 million rows |
+| Token sampling | Select the top-k logits, normalize their probabilities and draw a token | 8 / 128 / 512 sequences, each with 50,257 logits |
+| Gradient compression | Select the largest gradient magnitudes and gather their signed values | 0.59 / 2.36 / 38.60 million elements |
+
+The nine cases vary k from 32 to 1024 and sweep BITS configurations. Medians use 30 repetitions after 10 warmups, with correctness checks. Full-operator timings cover score preparation, selection and output processing, including launch/synchronization costs. Loading, transfers and model inference/training are excluded.
+
+After the [Python setup](docs/applications.md#requirements), run from the repository root, using `NAME` and `CUDA_ARCHITECTURES` as above:
+
+```bash
+./local-build.sh NAME CUDA_ARCHITECTURES applications-prepare
+./local-build.sh NAME CUDA_ARCHITECTURES applications-build
+./local-build.sh NAME CUDA_ARCHITECTURES applications-run
+scripts/plot-all.sh application-scaling
+```
+
+Plotting discovers studies under `data/application-scaling/` and writes AIR-relative speedups to `plots/application-scaling/`. Each case produces detailed, per-k tuned and fixed-configuration paper PDFs, plus a CSV. Tensor plots show both the full operator and selection alone.
+
+See [applications.md](docs/applications.md) for input sizes, measurements, configuration selection and resuming runs.

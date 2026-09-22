@@ -20,7 +20,7 @@ fi
 if [ ! -f "$manifest" ]; then
     print_error "Input manifest not found: $manifest
 Capture the model input before submitting the GPU job, or pass an existing manifest.
-See docs/model-applications.md for the pinned exporter setup and:
+See docs/applications.md for setup and:
   .venv-model/bin/python scripts/export-application-inputs.py $application --output data/application-inputs/$application"
 fi
 if [ "$#" -eq 0 ]; then
