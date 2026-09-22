@@ -30,7 +30,7 @@ def genFig(df: DataFrame, ax: Axes, title: str, algorithms: list, max_throughput
         ax.axhline(y=MEMORY_FLOAT_THROUGHPUT, color='black', linestyle='--', label='Throughput limit')
 
         ax2 = ax.twinx()
-        ax2.set_ylim([0.0, 110])
+        ax2.set_ylim((0.0, 110.0))
         ax2.plot([], [])
         ax2.set_yticks([0, 25, 50, 75, 100])
         if is_last:

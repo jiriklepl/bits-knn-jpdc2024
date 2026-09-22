@@ -11,6 +11,7 @@ import os
 # the file name is data/params-warp-select-HOSTNAME-JOBID.csv
 files = glob.glob("data/params-warp-select-*-*.csv")
 
+
 def plot(file, hostname, jobid):
     data = pd.read_csv(file, sep=',')
     data = data.loc[(data["iteration"] >= utils.WARMUP) &
@@ -122,6 +123,11 @@ def plot(file, hostname, jobid):
 
     plt.close(fig)
 
-for file in files:
-    hostname, jobid = file.split(".")[-2].split("-")[-2:]
-    plot(file, hostname, jobid)
+
+if __name__ == "__main__":
+    for file in files:
+        hostname, jobid = file.split(".")[-2].split("-")[-2:]
+        try:
+            plot(file, hostname, jobid)
+        except Exception as e:
+            print(f"Error processing {file}: {e}")

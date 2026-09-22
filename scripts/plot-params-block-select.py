@@ -10,12 +10,17 @@ import os
 # the file name is data/params-block-select-HOSTNAME-JOBID.csv
 files = glob.glob("data/params-block-select-*-*.csv")
 
+
 def plot(file, hostname, jobid):
     data = pd.read_csv(file, sep=',')
     data = data.loc[(data["iteration"] >= utils.WARMUP) &
                     (data["phase"] == "selection") &
                     (data["point_count"] == 1024 * 1024)]
     data["thread_queue"] = data["items_per_thread"].apply(lambda x: int(x.split(',')[0]))
+
+    if data.empty:
+        print(f"Error: No data found for {file}")
+        return
 
     num_points = data['point_count'].iat[0]
     num_queries = data['query_count'].iat[0]
@@ -80,6 +85,11 @@ def plot(file, hostname, jobid):
 
     plt.close(fig)
 
-for file in files:
-    hostname, jobid = file.split(".")[-2].split("-")[-2:]
-    plot(file, hostname, jobid)
+
+if __name__ == "__main__":
+    for file in files:
+        hostname, jobid = file.split(".")[-2].split("-")[-2:]
+        try:
+            plot(file, hostname, jobid)
+        except Exception as e:
+            print(f"Error plotting {file}: {e}")

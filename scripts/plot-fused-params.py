@@ -9,6 +9,7 @@ import os
 # the file name is data/fused-params-HOSTNAME-JOBID.csv
 files = glob.glob("data/fused-params-*-*.csv")
 
+
 def plot(file, hostname, jobid):
     fig, ax = plt.subplots(nrows=3, ncols=2, sharey=True)
     fig.subplots_adjust(bottom=0.19, top=0.93, hspace=0.45, wspace=0.1)
@@ -55,6 +56,11 @@ def plot(file, hostname, jobid):
 
     plt.close(fig)
 
-for file in files:
-    hostname, jobid = file.split(".")[-2].split("-")[-2:]
-    plot(file, hostname, jobid)
+
+if __name__ == "__main__":
+    for file in files:
+        hostname, jobid = file.split(".")[-2].split("-")[-2:]
+        try:
+            plot(file, hostname, jobid)
+        except Exception as e:
+            print(f"Error processing {file}: {e}")
