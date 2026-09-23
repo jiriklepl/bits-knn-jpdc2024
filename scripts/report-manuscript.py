@@ -37,9 +37,9 @@ RUNS = {
     "bw01": {
         "bitonic-sort": [35760909], "buffer": [35760910, 35760911, 35760912],
         "kselection": [35760913], "distances": [35760914], "fused": [35760915],
-        "opt-bitonic-sort": [], "opt-ipt": [],
-        "opt-distances": [],
-        "fused-cache-params": [],
+        "opt-bitonic-sort": [35835597], "opt-ipt": [35835590, 35835591, 35835592],
+        "opt-distances": [35835600],
+        "fused-cache-params": [35835594, 35835595, 35835596],
     },
 }
 # Same bandwidth constants/convention as utils.py, without importing plotting code.
