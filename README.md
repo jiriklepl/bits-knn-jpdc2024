@@ -45,7 +45,6 @@ The table below maps the experimental numbers in the manuscript to the row label
 | Abstract; §5.2.3, p. 30 | bits **2.1× mean**, **1.3× minimum**, **2.9× peak** speedup | `bits speedup vs best competitor: mean / min / max`, in that order |
 | Abstract; §5.2.3, p. 30 | H100 **73% mean**, **over 87% peak** bandwidth utilization | `bits bandwidth utilization: mean / peak` |
 | §5.2.3, p. 30 | A100 **79%**, V100 **89%** peak bandwidth utilization | Peak value in `bits bandwidth utilization: mean / peak`, columns `ampere02` and `volta05` |
-| §5.1, p. 27 | Timing variation **within 1%** | `Timing variation (std/mean): maximum` (over the selected evaluation algorithms) |
 | §5.2.1, p. 28 | Sort-in-registers speedup **about 2×** for most cases | `Sort-in-registers speedup: median`; distribution summary in `Sort-in-registers speedup: mean / min / max` |
 | §5.2.1, p. 28 | Fixed block **128**, baseline slowdown **31%** | `Fixed partial-bitonic: block; worst slowdown` |
 | §5.2.1, p. 28 | Fixed block **128**, warp-shuffle slowdown **29%** | `Fixed partial-bitonic-warp: block; worst slowdown` |
@@ -207,7 +206,7 @@ scripts/plot-all.sh distances
 scripts/plot-all.sh kselection
 ```
 
-The plots are stored in the `plots/` directory; the names of the plots correspond to the names of the data files in the `data/` directory (they share the same `EXPERIMENT-NAME-TIMESTAMP`). The only exception to this rule is the plots produced by the `multibuffer` command, which are stored in the `plots/multibuffer-NAME.pdf` files as it merges all results sharing the same `NAME` prefix. All plots are accompanied by a `plots/EXPERIMENT-NAME-TIMESTAMP.csv` file that contains the data being visualized.
+The plots are stored in the `plots/` directory; their names normally share the data files' `EXPERIMENT-NAME-TIMESTAMP`. Multibuffer plots combine only matching identity/ascending/descending runs. The original paper groups are recorded in [`scripts/multibuffer-runs.json`](scripts/multibuffer-runs.json) and retain `multibuffer-NAME.pdf`. New groups require consecutive job IDs in identity/ascending/descending order and identical measurement settings, phases and repetitions; they produce `multibuffer-NAME-FIRSTJOB-LASTJOB.pdf`. Incomplete or incompatible groups are reported and skipped.
 
 The `data/kselection-stats.csv` file contains the statistics for the `kselection` experiment that show the speedup of the proposed algorithm over the state-of-the-art algorithms (maximum, minimum, and average speedup) for each sub-plot and the whole experiment and the relative throughput as a fraction of the throughput limit deduced from the memory bandwidth of the given GPU (the maximum memory throughput divided by the size of one input item in bytes). These reported statistics are used in Section 5.2 of the paper and the Abstract.
 
@@ -302,6 +301,6 @@ After the [Python setup](docs/applications.md#requirements), run from the reposi
 scripts/plot-all.sh application-scaling
 ```
 
-Plotting discovers studies under `data/application-scaling/` and writes AIR-relative speedups to `plots/application-scaling/`. Each case produces detailed, per-k tuned and fixed-configuration paper PDFs, plus a CSV. Tensor plots show both the full operator and selection alone.
+Plotting discovers studies under `data/application-scaling/` and writes AIR-relative speedups to `plots/application-scaling/`. Each study produces 12 combined paper PDFs: three sizes × per-k/global tuning × operator/selection, with all three applications in each file. Every paper PDF has a `-configs.csv` companion; legends contain only algorithm names. Global plots select one bits variant and fixed configuration independently for each application and size. Detailed PDFs and summary CSVs remain available for each case.
 
 See [applications.md](docs/applications.md) for input sizes, measurements, configuration selection and resuming runs.

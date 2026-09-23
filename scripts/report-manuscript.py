@@ -23,23 +23,23 @@ RUNS = {
         "opt-distances": [108256], "fused-cache-params": [108241, 108245, 108248],
     },
     "ampere02": {
-        "bitonic-sort": [35757456], "buffer": [35757457, 35757458, 35757459],
-        "kselection": [35757460], "distances": [35757461], "fused": [35757462],
+        "bitonic-sort": [108430], "buffer": [108405, 108411, 108413],
+        "kselection": [108427], "distances": [108420], "fused": [108417],
         "opt-bitonic-sort": [108291], "opt-ipt": [108188, 108200, 108206],
         "opt-distances": [108255], "fused-cache-params": [108240, 108243, 108247],
     },
     "hopper01": {
-        "bitonic-sort": [35757470], "buffer": [35757471, 35757472, 35757473],
-        "kselection": [35757474], "distances": [35757475], "fused": [35757476],
+        "bitonic-sort": [108431], "buffer": [108407, 108408, 108412],
+        "kselection": [108424], "distances": [108423], "fused": [108416],
         "opt-bitonic-sort": [101133], "opt-ipt": [108189, 108201, 108204],
         "opt-distances": [101154], "fused-cache-params": [108239, 108244, 108249],
     },
     "bw01": {
-        "bitonic-sort": [35757463], "buffer": [35757464, 35757465, 35757466],
-        "kselection": [35757467], "distances": [35757468], "fused": [35757469],
-        "opt-bitonic-sort": [35746911], "opt-ipt": [35746903, 35746904, 35746905],
-        "opt-distances": [35746923],
-        "fused-cache-params": [35746908, 35746909, 35746910],
+        "bitonic-sort": [35760909], "buffer": [35760910, 35760911, 35760912],
+        "kselection": [35760913], "distances": [35760914], "fused": [35760915],
+        "opt-bitonic-sort": [], "opt-ipt": [],
+        "opt-distances": [],
+        "fused-cache-params": [],
     },
 }
 # Same bandwidth constants/convention as utils.py, without importing plotting code.
@@ -113,7 +113,10 @@ def load(data_dir, host, family):
         path = data_dir / f"{family}-{host}-{job}.csv"
         data = pd.read_csv(path, usecols=CONFIG + ["iteration", "phase", "time"])
         data = data[in_scope(data, family) & data.phase.isin(phases)]
-        chunks.append(data)
+        if not data.empty:
+            chunks.append(data)
+    if not chunks:
+        return pd.DataFrame(columns=CONFIG + ["time", "std", "count", "cv"])
     return summarize(pd.concat(chunks, ignore_index=True), phases, REPEATS.get(family, 20))
 
 
@@ -182,8 +185,6 @@ def report_host(data_dir, host):
     utilization = rate / bandwidth * 100
     out["bits bandwidth utilization: mean / peak"] = f"{utilization.mean():.2f}% / {utilization.max():.2f}%"
     out["Prefetch speedup gain: mean / min / max"] = triple(100 * (ratio(sel, "bits", "bits-prefetch") - 1), "%")
-    measured = pd.concat([data[f] for f in ("kselection", "bitonic-sort", "buffer", "distances", "fused")])
-    out["Timing variation (std/mean): maximum"] = number(100 * measured.cv.max(), "%")
 
     sort = matrix(data["bitonic-sort"])
     speed = ratio(sort, "partial-bitonic", "partial-bitonic-regs")
@@ -192,22 +193,31 @@ def report_host(data_dir, host):
     out["Sort-in-registers fastest"] = f"{(sort['partial-bitonic-regs'] == sort.min(axis=1)).sum()}/{len(sort)}"
     for alg in ["partial-bitonic", "partial-bitonic-warp", "partial-bitonic-warp-static", "partial-bitonic-regs"]:
         fixed = fixed_parameters(data["opt-bitonic-sort"].query("algorithm == @alg"))
-        out[f"Fixed {alg}: block; worst slowdown"] = f"{int(fixed.iloc[0].block_size)}; {100 * (fixed.slowdown.max() - 1):.2f}%"
+        if fixed.empty:
+            out[f"Fixed {alg}: block; worst slowdown"] = "—"
+        else:
+            out[f"Fixed {alg}: block; worst slowdown"] = f"{int(fixed.iloc[0].block_size)}; {100 * (fixed.slowdown.max() - 1):.2f}%"
     for order in ("ascending", "identity", "descending"):
         buf = matrix(data["buffer"].query("preprocessor == @order"))
         out[f"Buffer speedup ({order}): mean / min / max"] = triple(ratio(buf, "partial-bitonic-regs", "bits"))
 
     fixed = fixed_parameters(data["opt-ipt"].query("algorithm == 'bits-prefetch'"))
     out["Fixed bits parameters: block; items; degree"] = parameters(fixed)
-    out["Fixed bits worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
+    if fixed.empty:
+        out["Fixed bits worst slowdown"] = "—"
+    else:
+        out["Fixed bits worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
 
     dist = matrix(data["distances"])
     reference = dist.reindex(columns=["baseline-dist", "cublas-dist"]).min(axis=1)
     out["MAGMA-distance wins vs other plotted kernels"] = wins((reference / dist["magma-part-dist"]).dropna())
     tuning = data["opt-distances"]
     tuning = tuning[tuning.algorithm.isin(["baseline-dist", "cublas-dist", "magma-dist", "magma-part-dist"])]
-    fixed_dist = pd.concat([fixed_parameters(group) for _, group in tuning.groupby(["algorithm", "dim"])])
-    out["Distance parameters fixed per d: worst slowdown"] = number(100 * (fixed_dist.slowdown.max() - 1), "%")
+    if tuning.empty:
+        out["Distance parameters fixed per d: worst slowdown"] = "—"
+    else:
+        fixed_dist = pd.concat([fixed_parameters(group) for _, group in tuning.groupby(["algorithm", "dim"])])
+        out["Distance parameters fixed per d: worst slowdown"] = number(100 * (fixed_dist.slowdown.max() - 1), "%")
 
     fused = matrix(data["fused"])
     raft = ratio(fused, "rapidsai-fused", "fused-cache")
@@ -237,7 +247,10 @@ def report_host(data_dir, host):
 
     fixed = fixed_parameters(data["fused-cache-params"])
     out["Fixed bits-fused parameters: query tile; items tuple; degree"] = parameters(fixed)
-    out["Fixed bits-fused worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
+    if fixed.empty:
+        out["Fixed bits-fused worst slowdown"] = "—"
+    else:
+        out["Fixed bits-fused worst slowdown"] = number(100 * (fixed.slowdown.max() - 1), "%")
     fixed_time = fixed.set_index(WORKLOAD).time
     overhead = 100 * (fixed_time / fused.reindex(columns=["rapidsai-fused"])["rapidsai-fused"] - 1)
     overhead = overhead.dropna()
@@ -251,7 +264,11 @@ def load_selection_component(data_dir, host):
     chunks = []
     for job in RUNS[host]["fused"]:
         frame = pd.read_csv(data_dir / f"fused-{host}-{job}.csv")
-        chunks.append(frame[in_scope(frame, "fused") & frame.algorithm.eq("bits-prefetch")])
+        data = frame[in_scope(frame, "fused") & frame.algorithm.eq("bits-prefetch")]
+        if not data.empty:
+            chunks.append(data)
+    if not chunks:
+        return pd.DataFrame(columns=WORKLOAD + ["time"])
     means = summarize(pd.concat(chunks), ["selection"], REPEATS.get("fused", 20))
     return means.set_index(WORKLOAD).time
 

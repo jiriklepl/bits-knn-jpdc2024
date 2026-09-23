@@ -1,0 +1,366 @@
+{
+  "runs": [
+    {
+      "completed_at": "2026-09-22T10:20:03.537290+00:00",
+      "configurations": 468,
+      "csv": "database-topn-small.csv",
+      "csv_sha256": "0f6452ee6f0ab245e71043d62bdf5316722766b2169ee883071a827b710220ad",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "database-topn-small.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T10:14:57.920634+00:00",
+      "status": "complete",
+      "workload_id": "database-sf01"
+    },
+    {
+      "completed_at": "2026-09-22T10:26:35.258945+00:00",
+      "configurations": 468,
+      "csv": "database-topn-middle.csv",
+      "csv_sha256": "935c188cd27b28e03812a68d3b95f90af94242c956e978bcbdc0ec14182da71e",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "database-topn-middle.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T10:20:03.540961+00:00",
+      "status": "complete",
+      "workload_id": "database-sf1"
+    },
+    {
+      "completed_at": "2026-09-22T10:47:49.380842+00:00",
+      "configurations": 468,
+      "csv": "database-topn-large.csv",
+      "csv_sha256": "03e3a8a354cf847087c773bd6384fdbb80f42ffafb75fe24fd1d7a3983d31eba",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "database-topn-large.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T10:26:35.262837+00:00",
+      "status": "complete",
+      "workload_id": "database-sf10"
+    },
+    {
+      "completed_at": "2026-09-22T10:52:48.864576+00:00",
+      "configurations": 468,
+      "csv": "token-sampling-small.csv",
+      "csv_sha256": "35f9bc99e7070a104bd7febb75a306c157ee0b7ba6dd6832b6b91d6ab4a0da7e",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "token-sampling-small.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T10:47:49.384742+00:00",
+      "status": "complete",
+      "workload_id": "sampling-b8"
+    },
+    {
+      "completed_at": "2026-09-22T10:59:18.557128+00:00",
+      "configurations": 468,
+      "csv": "token-sampling-middle.csv",
+      "csv_sha256": "2cecdc050ced4d43438b0e98d9a6037429c8e7a3abedd4de231eaee230cf4f85",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "token-sampling-middle.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T10:52:48.868421+00:00",
+      "status": "complete",
+      "workload_id": "sampling-b128"
+    },
+    {
+      "completed_at": "2026-09-22T11:09:55.632654+00:00",
+      "configurations": 468,
+      "csv": "token-sampling-large.csv",
+      "csv_sha256": "c179fce5b1802ea4be6e55f6906b214b770f1c83fb4212c27960984959fa5e71",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "token-sampling-large.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T10:59:18.996193+00:00",
+      "status": "complete",
+      "workload_id": "sampling-b512"
+    },
+    {
+      "completed_at": "2026-09-22T11:15:00.879348+00:00",
+      "configurations": 468,
+      "csv": "gradient-compression-small.csv",
+      "csv_sha256": "07efa4fbbec5bee7ce9d5358ad5c63e6bf93cf8e961fc2d324d5f050e62c19b0",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "gradient-compression-small.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T11:09:55.636786+00:00",
+      "status": "complete",
+      "workload_id": "gradient-attention"
+    },
+    {
+      "completed_at": "2026-09-22T11:20:34.203207+00:00",
+      "configurations": 468,
+      "csv": "gradient-compression-middle.csv",
+      "csv_sha256": "e6b37429f1e7c7ab0e373e916cdc2b793fb5c4ecf984c859ed4d55407f771529",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "gradient-compression-middle.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T11:15:00.886245+00:00",
+      "status": "complete",
+      "workload_id": "gradient-mlp"
+    },
+    {
+      "completed_at": "2026-09-22T11:29:53.065813+00:00",
+      "configurations": 468,
+      "csv": "gradient-compression-large.csv",
+      "csv_sha256": "e6788c4cf46c615d12ad46c720abf2a1ceffda9b115ea0a2dc021ad0bc267f0b",
+      "ks": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "log": "gradient-compression-large.err",
+      "mode": "fixed-k",
+      "started_at": "2026-09-22T11:20:34.207179+00:00",
+      "status": "complete",
+      "workload_id": "gradient-embedding"
+    }
+  ],
+  "settings": {
+    "binaries": {
+      "database-topn": "b762b767811906ec97ff88282e098fae95bcb2481b8b3283e94079cb3c2447b3",
+      "gradient-compression": "d32dd3f935457703fbf140f96e1aeddc264bebdcf24722a636914e30a9854e6f",
+      "token-sampling": "acb3fb0f914f3c0c3d2f896a12c59f6ee86354b06aa0193f2cbdc8fa10daec7c"
+    },
+    "blocks": [
+      128,
+      256,
+      512
+    ],
+    "code_sha256": {
+      "application_inputs.py": "9f46da073d5410b5cb6efb7c67bc7c8df5de742ae4ea28441478b2caf34a1c64",
+      "run-application-scaling.py": "2b311af496c03877daafada14309a54eb89547db935533bc983471f8307220ec",
+      "run-applications.py": "28e778483b9a7999e53601dea91121b8728e6e5d4de42f601d5a32a828410964"
+    },
+    "cuda_visible_devices": "0,1",
+    "degrees": [
+      8,
+      32,
+      128,
+      512
+    ],
+    "gpu": [
+      {
+        "driver_version": "615.71.09",
+        "index": "0",
+        "name": "NVIDIA H100 PCIe",
+        "uuid": "GPU-ed03bc47-ee11-140d-ecca-55556caed925"
+      },
+      {
+        "driver_version": "615.71.09",
+        "index": "1",
+        "name": "NVIDIA H100 PCIe",
+        "uuid": "GPU-49303f03-71ca-ef75-e9e9-6706715a42f5"
+      }
+    ],
+    "hostname": "hopper01.hpc.troja.mff.cuni.cz",
+    "items": [
+      4,
+      7,
+      8,
+      13,
+      16
+    ],
+    "ks": [
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024
+    ],
+    "repeat": 30,
+    "warmup": 10
+  },
+  "settings_sha256": "d3a5777d088ee10b516834c2307582b78d8afdaf103cd527d58b096ebd89b41a",
+  "suite": "/work/kleplj/bits-knn-jpdc2024/data/application-inputs/scaling/suite.json",
+  "suite_sha256": "3169ff4c2b79c29cb45d7a610710bb1644c868382db72199a8f7f2ea11ce0ed3",
+  "version": 1,
+  "workloads": [
+    {
+      "dataset_id": "3fb8ea1c5cea68ee8159f3d984c6b8c2e2f70bb5e3ede1cd79af7121a0225a38",
+      "id": "database-sf01",
+      "label": "TPC-H SF 0.1",
+      "manifest": "../tpch-sf01/manifest.json",
+      "operator": "database-topn",
+      "rows": 600572,
+      "scale_factor": 0.1,
+      "score_bytes": 2402288,
+      "size": 600572,
+      "size_tier": "small",
+      "size_unit": "rows"
+    },
+    {
+      "dataset_id": "3477e494de0e1677418b4764a19e7ba3b12289dd4ce39a5c36b60f52b30dde33",
+      "id": "database-sf1",
+      "label": "TPC-H SF 1",
+      "manifest": "database-sf1/manifest.json",
+      "operator": "database-topn",
+      "rows": 6001215,
+      "scale_factor": 1,
+      "score_bytes": 24004860,
+      "size": 6001215,
+      "size_tier": "middle",
+      "size_unit": "rows"
+    },
+    {
+      "dataset_id": "2749d31664905c24a21b64a3a74ce59d83e4f5ee9b5495dd2530667804fffa96",
+      "id": "database-sf10",
+      "label": "TPC-H SF 10",
+      "manifest": "database-sf10/manifest.json",
+      "operator": "database-topn",
+      "rows": 59986052,
+      "scale_factor": 10,
+      "score_bytes": 239944208,
+      "size": 59986052,
+      "size_tier": "large",
+      "size_unit": "rows"
+    },
+    {
+      "batch_size": 8,
+      "dataset_id": "1b1ee7bd0ae5fbfbce2b6b7ec2af32e055433daa4e52558b72964d7c106d320c",
+      "id": "sampling-b8",
+      "label": "Batch 8",
+      "manifest": "../token-sampling/manifest.json",
+      "operator": "token-sampling",
+      "score_bytes": 1608224,
+      "size": 8,
+      "size_tier": "small",
+      "size_unit": "batch",
+      "vocabulary_size": 50257
+    },
+    {
+      "batch_size": 128,
+      "dataset_id": "38c661ffe41eeab82ce3542031ee8742cd1926efb0cd79943e2cb503d879310e",
+      "id": "sampling-b128",
+      "label": "Batch 128",
+      "manifest": "sampling-b128/manifest.json",
+      "operator": "token-sampling",
+      "score_bytes": 25731584,
+      "size": 128,
+      "size_tier": "middle",
+      "size_unit": "batch",
+      "vocabulary_size": 50257
+    },
+    {
+      "batch_size": 512,
+      "dataset_id": "b398319ce26ea990982d28f9cb21e0c6b3243b92fe67ebefaecb413da7cd562f",
+      "id": "sampling-b512",
+      "label": "Batch 512",
+      "manifest": "sampling-b512/manifest.json",
+      "operator": "token-sampling",
+      "score_bytes": 102926336,
+      "size": 512,
+      "size_tier": "large",
+      "size_unit": "batch",
+      "vocabulary_size": 50257
+    },
+    {
+      "dataset_id": "773ccccc257597721840d373c9f3e73e670a8d255c39e3a3e354a1d2571356c3",
+      "elements": 589824,
+      "id": "gradient-attention",
+      "label": "Attention projection weight",
+      "manifest": "gradient-attention/manifest.json",
+      "operator": "gradient-compression",
+      "parameter": "transformer.h.0.attn.c_proj.weight",
+      "score_bytes": 2359296,
+      "size": 589824,
+      "size_tier": "small",
+      "size_unit": "elements",
+      "tensor_shape": [
+        768,
+        768
+      ]
+    },
+    {
+      "dataset_id": "e77ffd0b75f255761df3bc4c0830771bb75243da7d366a0e80be0186efb789d4",
+      "elements": 2359296,
+      "id": "gradient-mlp",
+      "label": "MLP weight",
+      "manifest": "../gradient-compression/manifest.json",
+      "operator": "gradient-compression",
+      "parameter": "transformer.h.0.mlp.c_fc.weight",
+      "score_bytes": 9437184,
+      "size": 2359296,
+      "size_tier": "middle",
+      "size_unit": "elements",
+      "tensor_shape": [
+        768,
+        3072
+      ]
+    },
+    {
+      "dataset_id": "9a73940e35f1757752ed4c0cd9abf2e554e2884d5280d921429875bf192f46b6",
+      "elements": 38597376,
+      "id": "gradient-embedding",
+      "label": "Token embedding weight",
+      "manifest": "gradient-embedding/manifest.json",
+      "operator": "gradient-compression",
+      "parameter": "transformer.wte.weight",
+      "score_bytes": 154389504,
+      "size": 38597376,
+      "size_tier": "large",
+      "size_unit": "elements",
+      "tensor_shape": [
+        50257,
+        768
+      ]
+    }
+  ]
+}

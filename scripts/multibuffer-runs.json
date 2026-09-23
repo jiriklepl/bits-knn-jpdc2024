@@ -1,9 +1,12 @@
 {
   "version": 1,
   "groups": [
-    {"hostname": "ampere01", "jobs": [108404, 108409, 108415], "output": "multibuffer-ampere01"},
-    {"hostname": "ampere02", "jobs": [108405, 108411, 108413], "output": "multibuffer-ampere02"},
-    {"hostname": "hopper01", "jobs": [108407, 108408, 108412], "output": "multibuffer-hopper01"},
-    {"hostname": "volta05", "jobs": [108406, 108410, 108414], "output": "multibuffer-volta05"}
+    {"hostname": "ampere01", "jobs": [108404, 108409, 108415], "output": "multibuffer-ampere01-108404-108415"},
+    {"hostname": "ampere02", "jobs": [108405, 108411, 108413], "output": "multibuffer-ampere02-108405-108413"},
+    {"hostname": "hopper01", "jobs": [108407, 108408, 108412], "output": "multibuffer-hopper01-108407-108412"},
+    {"hostname": "volta05", "jobs": [108406, 108410, 108414], "output": "multibuffer-volta05-108406-108414"},
+    {"hostname": "ampere02", "jobs": [35760917, 35760918, 35760919], "output": "multibuffer-ampere02-35760917-35760919"},
+    {"hostname": "hopper01", "jobs": [35760903, 35760904, 35760905], "output": "multibuffer-hopper01-35760903-35760905"},
+    {"hostname": "bw01", "jobs": [35760910, 35760911, 35760912], "output": "multibuffer-bw01-35760910-35760912"}
   ]
 }

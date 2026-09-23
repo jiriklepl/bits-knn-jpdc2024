@@ -1,0 +1,10 @@
+Application study directory: /work/kleplj/bits-knn-jpdc2024/data/application-scaling/ampere02-35760925
+[1/9] running database-topn-small.csv
+[2/9] running database-topn-middle.csv
+[3/9] running database-topn-large.csv
+[4/9] running token-sampling-small.csv
+[5/9] running token-sampling-middle.csv
+[6/9] running token-sampling-large.csv
+[7/9] running gradient-compression-small.csv
+[8/9] running gradient-compression-middle.csv
+[9/9] running gradient-compression-large.csv
