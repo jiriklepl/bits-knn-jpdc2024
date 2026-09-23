@@ -94,4 +94,4 @@ Each study produces 12 paper PDFs. Every PDF has three panels (database top-N, t
 
 Paper legends show algorithm names without settings, and the y axis shows only speedup; operator/selection appears in the filename. Every paper PDF has its own configuration CSV. Paper plots omit BlockSelect; the detailed CSV flags `paper_selected` and `paper_global_selected` identify the plotted configurations, including the global variant choice. Detailed database plots show the full operator, while detailed tensor plots include both phases. The study plotter replaces the old individual `*-paper.pdf` and `*-paper-global.pdf` files with the combined figures. Standalone application plotters retain their individual layout and also export paper configuration CSVs.
 
-Speedup is AIR median time divided by backend median time for the same k and phase: above 1 is faster, below 1 is slower. Error bars show backend latency quartiles converted to speedups, holding the AIR median fixed.
+Speedup is AIR median time divided by backend median time for the same k and phase: above 1 is faster, below 1 is slower.

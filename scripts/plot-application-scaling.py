@@ -48,7 +48,7 @@ def individual_runs(rows):
     return sorted((path, operator) for path, operator, *_ in runs)
 
 
-def plot_study(index, output):
+def plot_study(index, output, *, error_bars=False):
     rows = load_study(index)
     if output.resolve() == index.parent.resolve():
         raise ValueError("Choose a plot directory separate from raw study outputs")
@@ -65,7 +65,7 @@ def plot_study(index, output):
             ],
             check=True,
         )
-    plot_combined_paper(rows, output)
+    plot_combined_paper(rows, output, error_bars=error_bars)
     # These generated files are superseded by the combined paper figures.
     for path, _ in runs:
         for suffix in (
@@ -100,6 +100,11 @@ def main():
             "preserving study subdirectories"
         ),
     )
+    parser.add_argument(
+        "--error-bars",
+        action="store_true",
+        help="Show latency-quartile error bars in the combined paper figures",
+    )
     args = parser.parse_args()
     indices = [args.index] if args.index else sorted(args.data_dir.rglob("index.json"))
     if not indices:
@@ -119,7 +124,7 @@ def main():
                     index.parent.relative_to(args.data_dir)
                 )
             print(f"Plotting {index} -> {output}", file=sys.stderr)
-            plot_study(index, output)
+            plot_study(index, output, error_bars=args.error_bars)
         except (
             ValueError,
             OSError,

@@ -176,7 +176,7 @@ def write_configuration_csv(path, rows, *, selection):
         writer.writerows(records)
 
 
-def plot_combined_paper(rows, output_dir):
+def plot_combined_paper(rows, output_dir, *, error_bars=False):
     """Write one three-application PDF and configuration CSV per size/mode/phase."""
     import matplotlib.pyplot as plt
     import utils
@@ -207,7 +207,7 @@ def plot_combined_paper(rows, output_dir):
                 ("selection_isolated", "selection"),
             ):
                 stem = f"applications-{tier}-paper{suffix}-{phase_name}"
-                fig, axes = plt.subplots(1, 3, figsize=(13.5, 3.8), sharey=True)
+                fig, axes = plt.subplots(1, 3, figsize=(13.5, 5.2), sharey=True)
                 handles, records = {}, []
                 for ax, (application, title) in zip(axes, applications):
                     values = [
@@ -229,6 +229,7 @@ def plot_combined_paper(rows, output_dir):
                             color=utils.COLORS[index],
                             marker=utils.SHAPES[index],
                             linestyle="-",
+                            error_bars=error_bars,
                         )
                         records.extend(row | {"label": labels[index]} for row in points)
                     ks = sorted({row["k"] for row in values})
@@ -247,8 +248,10 @@ def plot_combined_paper(rows, output_dir):
                     loc="lower center",
                     ncol=len(ordered),
                     frameon=False,
+                    borderpad=0.1,
+                    borderaxespad=0.2,
                 )
-                fig.tight_layout(rect=(0, 0.12, 1, 1))
+                fig.tight_layout(rect=(0, 0.02, 1, 1))
                 fig.savefig(output_dir / f"{stem}.pdf", bbox_inches="tight")
                 plt.close(fig)
                 write_configuration_csv(
@@ -292,9 +295,13 @@ def speedup_errors(points):
     return centers, [lower, upper]
 
 
-def add_speedup_series(ax, points, **style):
-    """Draw a median/IQR curve and return its line/marker for a clean legend."""
-    centers, errors = speedup_errors(points)
+def add_speedup_series(ax, points, *, error_bars=True, **style):
+    """Draw median speedups with optional IQR bars and return the legend line."""
+    if error_bars:
+        centers, errors = speedup_errors(points)
+    else:
+        centers = [row["speedup_vs_air"] for row in points]
+        errors = None
     artist = ax.errorbar(
         [row["k"] for row in points],
         centers,
