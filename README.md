@@ -286,7 +286,7 @@ Three applications compare bits, split bits, AIR Top-K, GridSelect and BlockSele
 
 | Application | Operation | Small / middle / large inputs |
 | --- | --- | --- |
-| Database top-N | Rank TPC-H rows by discounted price and gather the selected rows | 0.6 / 6 / 60 million rows |
+| Database top-N | Rank TPC-H rows by discounted price and gather the best N rows | 0.6 / 6 / 60 million rows |
 | Token sampling | Select the top-k logits, normalize their probabilities and draw a token | 8 / 128 / 512 sequences, each with 50,257 logits |
 | Gradient compression | Select the largest gradient magnitudes and gather their signed values | 0.59 / 2.36 / 38.60 million elements |
 
